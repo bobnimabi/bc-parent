@@ -22,7 +22,6 @@ public class ConnectTest {
         String cookies = store.getCookies().toString();
         cookies = cookies.replace("[", "");
         cookies = cookies.replace("]", "");
-
         return cookies;
     }
 
