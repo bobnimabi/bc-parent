@@ -60,28 +60,8 @@ class AuthorizationServerConfig extends AuthorizationServerConfigurerAdapter {
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
         clients.jdbc(this.dataSource).clients(this.clientDetails());
-       /* clients.inMemory()
-                .withClient("XcWebApp")//客户端id
-                .secret("XcWebApp")//密码，要保密
-                .accessTokenValiditySeconds(60)//访问令牌有效期
-                .refreshTokenValiditySeconds(60)//刷新令牌有效期
-                //授权客户端请求认证服务的类型authorization_code：根据授权码生成令牌，
-                // client_credentials:客户端认证，refresh_token：刷新令牌，password：密码方式认证
-                .authorizedGrantTypes("authorization_code", "client_credentials", "refresh_token", "password")
-                .scopes("app");//客户端范围，名称自定义，必填*/
     }
 
-    //token的存储方法
-//    @Bean
-//    public InMemoryTokenStore tokenStore() {
-//        //将令牌存储到内存
-//        return new InMemoryTokenStore();
-//    }
-//    @Bean
-//    public TokenStore tokenStore(RedisConnectionFactory redisConnectionFactory){
-//        RedisTokenStore redisTokenStore = new RedisTokenStore(redisConnectionFactory);
-//        return redisTokenStore;
-//    }
     @Bean
     @Autowired
     public TokenStore tokenStore(JwtAccessTokenConverter jwtAccessTokenConverter) {
@@ -102,23 +82,6 @@ class AuthorizationServerConfig extends AuthorizationServerConfigurerAdapter {
     //授权服务器端点配置
     @Override
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
-        /*Collection<TokenEnhancer> tokenEnhancers = applicationContext.getBeansOfType(TokenEnhancer.class).values();
-        TokenEnhancerChain tokenEnhancerChain=new TokenEnhancerChain();
-        tokenEnhancerChain.setTokenEnhancers(new ArrayList<>(tokenEnhancers));
-
-        DefaultTokenServices defaultTokenServices = new DefaultTokenServices();
-        defaultTokenServices.setReuseRefreshToken(true);
-        defaultTokenServices.setSupportRefreshToken(true);
-        defaultTokenServices.setTokenStore(tokenStore);
-        defaultTokenServices.setAccessTokenValiditySeconds(1111111);
-        defaultTokenServices.setRefreshTokenValiditySeconds(1111111);
-        defaultTokenServices.setTokenEnhancer(tokenEnhancerChain);
-
-        endpoints
-                .authenticationManager(authenticationManager)
-                .userDetailsService(userDetailsService)
-                        //.tokenStore(tokenStore);
-                .tokenServices(defaultTokenServices);*/
         endpoints.accessTokenConverter(jwtAccessTokenConverter)
                 .authenticationManager(authenticationManager)//认证管理器
                 .tokenStore(tokenStore)//令牌存储
@@ -130,12 +93,9 @@ class AuthorizationServerConfig extends AuthorizationServerConfigurerAdapter {
     public void configure(AuthorizationServerSecurityConfigurer oauthServer) throws Exception {
 //        oauthServer.checkTokenAccess("isAuthenticated()");//校验token需要认证通过，可采用http basic认证
         oauthServer.allowFormAuthenticationForClients()
-                .passwordEncoder(new BCryptPasswordEncoder())
+                .passwordEncoder(new BCryptPasswordEncoder()) //配置password的加密方式
                 .tokenKeyAccess("permitAll()")
                 .checkTokenAccess("isAuthenticated()");
     }
-
-
-
 }
 

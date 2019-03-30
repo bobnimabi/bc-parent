@@ -23,6 +23,15 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Autowired
     ClientDetailsService clientDetailsService;
 
+    /**
+     *授权码模式：申请授权码的的时候
+     * 密码模式：申请令牌的时候
+     * 会进入到如下方法（携带账号和密码）
+     * 校验用户的账号和密码是否正确（我们编码）
+     * @param username
+     * @return
+     * @throws UsernameNotFoundException
+     */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         //取出身份，如果身份为空说明没有认证

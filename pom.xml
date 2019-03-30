@@ -68,6 +68,11 @@
                 <artifactId>mybatis-spring-boot-starter</artifactId>
                 <version>${mybatis-spring-boot.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-generator</artifactId>
+                <version>${mybaits-plus.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>com.baomidou</groupId>

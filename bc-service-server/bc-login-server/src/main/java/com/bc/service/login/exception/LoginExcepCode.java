@@ -1,4 +1,4 @@
-package com.bc.service.login.special.entity;
+package com.bc.service.login.exception;
 
 import com.bc.common.response.ResultCode;
 import com.google.common.collect.ImmutableMap;
@@ -7,7 +7,7 @@ import lombok.ToString;
 
 
 @ToString
-public enum UcenterCode implements ResultCode {
+public enum LoginExcepCode implements ResultCode {
     UCENTER_USERNAME_NONE(false,23001,"请输入账号！"),
     UCENTER_PASSWORD_NONE(false,23002,"请输入密码！"),
     UCENTER_VERIFYCODE_NONE(false,23003,"请输入验证码！"),
@@ -25,16 +25,16 @@ public enum UcenterCode implements ResultCode {
     //提示信息
     @ApiModelProperty(value = "操作提示", example = "操作过于频繁！", required = true)
     String message;
-    private UcenterCode(boolean success, int code, String message){
+    private LoginExcepCode(boolean success, int code, String message){
         this.success = success;
         this.code = code;
         this.message = message;
     }
-    private static final ImmutableMap<Integer, UcenterCode> CACHE;
+    private static final ImmutableMap<Integer, LoginExcepCode> CACHE;
 
     static {
-        final ImmutableMap.Builder<Integer, UcenterCode> builder = ImmutableMap.builder();
-        for (UcenterCode commonCode : values()) {
+        final ImmutableMap.Builder<Integer, LoginExcepCode> builder = ImmutableMap.builder();
+        for (LoginExcepCode commonCode : values()) {
             builder.put(commonCode.code(), commonCode);
         }
         CACHE = builder.build();

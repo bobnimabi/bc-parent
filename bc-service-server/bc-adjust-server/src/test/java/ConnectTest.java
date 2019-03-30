@@ -10,7 +10,6 @@ public class ConnectTest {
         getcookies();
     }
 
-
     public static String getcookies() throws IOException {
         CookieManager manager=new CookieManager();
         manager.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
@@ -24,6 +23,5 @@ public class ConnectTest {
         cookies = cookies.replace("]", "");
         return cookies;
     }
-
 
 }
