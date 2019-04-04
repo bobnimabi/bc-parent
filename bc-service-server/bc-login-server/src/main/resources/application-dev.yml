@@ -12,13 +12,15 @@ eureka:
 
 auth:
   tokenValiditySeconds: 1200  #token存储到redis的过期时间
-  clientId: XcWebApp
-  clientSecret: XcWebApp
-  cookieDomain: xuecheng.com
+  clientId: BcWebApp
+  clientSecret: BcWebApp
+  cookieDomain: bc.com
   cookieMaxAge: -1
 encrypt:
   key-store:
-    location: classpath:/xc.keystore
-    secret: xuechengkeystore
-    alias: xckey
-    password: xuecheng
+    location: classpath:/bc.keystore
+    secret: bckeystore
+    alias: bckey
+    password: bc9527
+authParams:
+  loginReturnType: JSON

@@ -3,8 +3,8 @@ package com.bc.service.login.service;
 import com.alibaba.fastjson.JSON;
 import com.bc.common.Exception.ExceptionCast;
 import com.bc.common.client.BcServiceList;
-import com.bc.service.login.special.entity.AuthCode;
-import com.bc.service.login.special.entity.AuthToken;
+import com.bc.service.login.exception.AuthCode;
+import com.bc.service.login.pojo.AuthToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.ServiceInstance;
@@ -32,9 +32,9 @@ import java.util.concurrent.TimeUnit;
  **/
 @Service
 public class AuthService {
-
     @Value("${auth.tokenValiditySeconds}")
     int tokenValiditySeconds;
+
     @Autowired
     LoadBalancerClient loadBalancerClient;
 
@@ -60,6 +60,8 @@ public class AuthService {
         if (!result) {
             ExceptionCast.cast(AuthCode.AUTH_LOGIN_TOKEN_SAVEFAIL);
         }
+        //这里可能需要加一些用户的信息给前台展示
+
         return authToken;
 
     }
@@ -97,7 +99,6 @@ public class AuthService {
             e.printStackTrace();
             return null;
         }
-
     }
     //申请令牌
     private AuthToken applyToken(String username, String password, String clientId, String clientSecret){
@@ -158,8 +159,6 @@ public class AuthService {
         authToken.setJwt_token((String) bodyMap.get("access_token"));//jwt令牌
         return authToken;
     }
-
-
 
     //获取httpbasic的串
     private String getHttpBasic(String clientId,String clientSecret){

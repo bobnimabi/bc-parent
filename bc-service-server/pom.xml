@@ -17,11 +17,17 @@
     </modules>
 
     <dependencies>
-
-        <!--api-->
+        <!--common-->
         <dependency>
             <groupId>siemReap</groupId>
-            <artifactId>bc-service-api</artifactId>
+            <artifactId>bc-common</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
+        <!--utils-->
+        <dependency>
+            <groupId>siemReap</groupId>
+            <artifactId>bc-utils</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
 
@@ -42,6 +48,7 @@
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
+
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-openfeign</artifactId>
@@ -75,22 +82,10 @@
             <artifactId>mysql-connector-java</artifactId>
         </dependency>
 
-        <!--mybaits-->
-        <dependency>
-            <groupId>org.mybatis.spring.boot</groupId>
-            <artifactId>mybatis-spring-boot-starter</artifactId>
-        </dependency>
-
-        <!--mybatis plus-->
+        <!-- mybaits-plus 内置了mybaits,所以不用引用mybaits-->
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-boot-starter</artifactId>
-            <exclusions>
-                <exclusion>
-                    <artifactId>spring-boot-starter-jdbc</artifactId>
-                    <groupId>org.springframework.boot</groupId>
-                </exclusion>
-            </exclusions>
         </dependency>
 
         <!--redis-->
@@ -125,11 +120,23 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
         </dependency>
+        <dependency>
+            <groupId>commons-collections</groupId>
+            <artifactId>commons-collections</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>commons-beanutils</groupId>
+            <artifactId>commons-beanutils</artifactId>
+        </dependency>
 
         <!--权限认证-->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-oauth2</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-security</artifactId>
         </dependency>
 
         <dependency>
@@ -149,13 +156,8 @@
             <version>${springframework.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-security</artifactId>
-        </dependency>
 
     </dependencies>
-
 
     <build>
         <plugins>

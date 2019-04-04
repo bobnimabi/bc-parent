@@ -15,7 +15,7 @@
         <module>bc-common</module>
         <module>bc-utils</module>
         <module>bc-service-common</module>
-        <module>bc-service-api</module>
+        <module>bc-codeGeneral</module>
     </modules>
 
     <parent>
@@ -25,6 +25,11 @@
     </parent>
 
     <properties>
+        <!-- 文件拷贝时的编码 -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <!-- 编译时的编码 -->
+        <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
         <!--多环境配置标识符-->
         <resource.delimiter>#</resource.delimiter>
         <java.version>1.8</java.version>
@@ -44,9 +49,12 @@
         <springfox-swagger.version>2.7.0</springfox-swagger.version>
         <fastjson.version>1.2.30</fastjson.version>
         <fastdfs-client-java.version>1.27.0.0</fastdfs-client-java.version>
-        <mysql-connector-java.version>5.1.40</mysql-connector-java.version>
+        <mysql-connector-java.version>8.0.15</mysql-connector-java.version>
         <elasticsearch.version>6.2.1</elasticsearch.version>
         <guava.version>24.0-jre</guava.version>
+        <commons-collections.version>3.2.1</commons-collections.version>
+        <commons-beanutils.version>1.7.0</commons-beanutils.version>
+        <springfox-swagger.version>2.7.0</springfox-swagger.version>
     </properties>
     <!--test-->
     <dependencyManagement>
@@ -57,6 +65,16 @@
                 <version>Finchley.SR1</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.springfox</groupId>
+                <artifactId>springfox-swagger2</artifactId>
+                <version>${springfox-swagger.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.springfox</groupId>
+                <artifactId>springfox-swagger-ui</artifactId>
+                <version>${springfox-swagger.version}</version>
             </dependency>
             <dependency>
                 <groupId>mysql</groupId>
@@ -114,6 +132,16 @@
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
                 <version>${commons-lang3.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-collections</groupId>
+                <artifactId>commons-collections</artifactId>
+                <version>${commons-collections.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-beanutils</groupId>
+                <artifactId>commons-beanutils</artifactId>
+                <version>${commons-beanutils.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.projectlombok</groupId>

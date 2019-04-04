@@ -24,7 +24,9 @@ import javax.annotation.Resource;
 import javax.sql.DataSource;
 import java.security.KeyPair;
 
-
+/**
+ * 授权服务器配置
+ */
 @Configuration
 @EnableAuthorizationServer
 class AuthorizationServerConfig extends AuthorizationServerConfigurerAdapter {
@@ -38,7 +40,7 @@ class AuthorizationServerConfig extends AuthorizationServerConfigurerAdapter {
     @Autowired
     AuthenticationManager authenticationManager;
     @Autowired
-    TokenStore tokenStore;
+    TokenStore jwtTokenStore;
     @Autowired
     private CustomUserAuthenticationConverter customUserAuthenticationConverter;
 
@@ -79,12 +81,13 @@ class AuthorizationServerConfig extends AuthorizationServerConfigurerAdapter {
         accessTokenConverter.setUserTokenConverter(customUserAuthenticationConverter);
         return converter;
     }
+
     //授权服务器端点配置
     @Override
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
         endpoints.accessTokenConverter(jwtAccessTokenConverter)
                 .authenticationManager(authenticationManager)//认证管理器
-                .tokenStore(tokenStore)//令牌存储
+                .tokenStore(jwtTokenStore)//令牌存储
                 .userDetailsService(userDetailsService);//用户信息service
     }
 
