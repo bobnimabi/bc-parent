@@ -9,10 +9,8 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class RegisterService {
-    //注册的时候用于对密码加密
+    //用户注册的时候用于对密码加密
     @Autowired
     private PasswordEncoder passwordEncoder;
-
-
 
 }

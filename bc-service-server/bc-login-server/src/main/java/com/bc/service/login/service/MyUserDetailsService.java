@@ -1,6 +1,10 @@
 package com.bc.service.login.service;
 
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.bc.service.common.login.entity.XcAuth;
+import com.bc.service.common.login.entity.XcUser;
+import com.bc.service.common.login.service.*;
 import com.bc.service.login.pojo.UserJwt;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -22,12 +26,23 @@ import java.util.List;
 @Service
 @Slf4j
 public class MyUserDetailsService implements UserDetailsService {
-
     @Autowired
     ClientDetailsService clientDetailsService;
 
-    //用户信息
+    @Autowired
+    private IXcAuthService authService;
+    @Autowired
+    private IXcRoleAuthService roleAuthService;
+    @Autowired
+    private IXcRoleService roleService;
+    @Autowired
+    private IXcUserRoleService userRoleService;
+    @Autowired
+    private IXcUserService userService;
 
+
+
+    //用户信息
     /**
      *授权码模式：申请授权码的的时候
      * 密码模式：申请令牌的时候
@@ -54,19 +69,22 @@ public class MyUserDetailsService implements UserDetailsService {
             return null;
         }
         //使用username从数据库获取用户完整信息
-        XcUserExt userext = userClient.getUserext(username);
-        if(userext == null){
+        XcUser xcUser = userService.getOne(
+                new QueryWrapper<XcUser>()
+                        .eq("username", username)
+        );
+        if(xcUser == null){
             //返回空给spring security表示用户不存在
             return null;
         }
-
         //取出正确密码（hash值）
-        String password = userext.getPassword();
+        String password = xcUser.getPassword();
+
 
         //从数据库获取权限
-        List<XcMenu> permissions = userext.getPermissions();
+        List<XcAuth> permissions = authService.selectAllAuth(xcUser.getId());
         if(permissions == null){
-            permissions = new ArrayList<XcMenu>();
+            permissions = new ArrayList<XcAuth>();
         }
         List<String> user_permission = new ArrayList<>();
         permissions.forEach(item-> user_permission.add(item.getCode()));
@@ -82,7 +100,6 @@ public class MyUserDetailsService implements UserDetailsService {
         userJwt.setUtype(userext.getUtype());//用户类型
         userJwt.setName(userext.getName());//用户名称
         userJwt.setUserpic(userext.getUserpic());//用户头像
-
         userJwt.isAccountNonExpired(true);
         userJwt.isAccountNonLocked(true);
 

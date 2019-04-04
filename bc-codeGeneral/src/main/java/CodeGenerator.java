@@ -12,14 +12,13 @@ import java.util.List;
 public class CodeGenerator {
     public static void main(String[] args) {
         //项目路径
-        String projectPath="F:\\javaCode\\bc-parent\\bc-service-common\\bc-login-common\\";
+        String projectPath="F:\\javaCode\\bc-parent\\bc-service-common\\bc-login-common"+"\\";
         //父package
         String parentName="com.bc.service.common";
         //模块名
         String modelName="login";
         //生成表的名称
         String[] tables={
-                "oauth_client_details",
                 "xc_auth",
                 "xc_role",
                 "xc_role_auth",
@@ -32,7 +31,6 @@ public class CodeGenerator {
         String username = "root";
         String password = "W_y1:478!";
 
-
 /***************************************以下配置不要动****************************************/
         // 代码生成器
         AutoGenerator mpg = new AutoGenerator();
@@ -42,7 +40,8 @@ public class CodeGenerator {
         gc.setOutputDir(projectPath + "src/main/java");
         gc.setAuthor("admin");
         gc.setOpen(false);
-        // gc.setSwagger2(true); 实体属性 Swagger2 注解
+        gc.setSwagger2(true); //实体属性 Swagger2 注解
+        gc.setFileOverride(true);
         mpg.setGlobalConfig(gc);
 
         // 数据源配置
@@ -68,8 +67,6 @@ public class CodeGenerator {
             }
         };
 
-        // 如果模板引擎是 freemarker
-//        String templatePath = "/templates/mapper.xml.ftl";
         // 如果模板引擎是 velocity
          String templatePath = "/templates/mapper.xml.vm";
 
@@ -107,9 +104,9 @@ public class CodeGenerator {
 //        strategy.setSuperEntityClass("com.baomidou.ant.common.BaseEntity");
         strategy.setEntityLombokModel(true);
         strategy.setRestControllerStyle(true);
-        strategy.setSuperControllerClass("com.baomidou.ant.common.BaseController");
+//        strategy.setSuperControllerClass("com.baomidou.ant.common.BaseController");
         strategy.setInclude(tables);
-        strategy.setSuperEntityColumns("id");
+//        strategy.setSuperEntityColumns("id");
         strategy.setControllerMappingHyphenStyle(true);
         strategy.setTablePrefix(pc.getModuleName() + "_");
         mpg.setStrategy(strategy);
