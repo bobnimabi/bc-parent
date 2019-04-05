@@ -14,8 +14,13 @@ import java.util.Map;
 @Component
 public class CustomUserAuthenticationConverter extends DefaultUserAuthenticationConverter {
     @Autowired
-    UserDetailsService userDetailsService;
+    UserDetailsService myUserDetailsService;
 
+    /**
+     * 用户登录（或刷新）成功后返回给用户的信息
+     * @param authentication
+     * @return
+     */
     @Override
     public Map<String, ?> convertUserAuthentication(Authentication authentication) {
         LinkedHashMap response = new LinkedHashMap();
@@ -27,8 +32,8 @@ public class CustomUserAuthenticationConverter extends DefaultUserAuthentication
         if(principal instanceof  UserJwt){
             userJwt = (UserJwt) principal;
         }else{
-            //refresh_token默认不去调用userdetailService获取用户信息，这里我们手动去调用，得到 UserJwt
-            UserDetails userDetails = userDetailsService.loadUserByUsername(name);
+            //refresh_token时候默认不去调用userdetailService获取用户信息，这里我们手动去调用，得到 UserJwt
+            UserDetails userDetails = myUserDetailsService.loadUserByUsername(name);
             userJwt = (UserJwt) userDetails;
         }
         response.put("name", userJwt.getName());

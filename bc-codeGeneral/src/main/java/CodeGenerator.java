@@ -19,11 +19,11 @@ public class CodeGenerator {
         String modelName="login";
         //生成表的名称
         String[] tables={
-                "xc_auth",
-                "xc_role",
-                "xc_role_auth",
+//                "xc_auth",
+//                "xc_role",
+//                "xc_role_auth",
                 "xc_user",
-                "xc_user_role",
+//                "xc_user_role",
         };
 
         //配置数据库信息

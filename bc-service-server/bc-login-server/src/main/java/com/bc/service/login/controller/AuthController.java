@@ -57,6 +57,7 @@ public class AuthController implements AuthControllerApi {
         }
         //账号
         String username = loginRequest.getUsername();
+
         //密码
         String password = loginRequest.getPassword();
 

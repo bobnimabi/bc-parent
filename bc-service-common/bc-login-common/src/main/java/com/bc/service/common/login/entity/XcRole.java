@@ -45,7 +45,7 @@ public class XcRole implements Serializable {
     private LocalDateTime updateTime;
 
     @ApiModelProperty(value = "状态 0不可用  1可用")
-    private Boolean status;
+    private Integer status;
 
 
 }

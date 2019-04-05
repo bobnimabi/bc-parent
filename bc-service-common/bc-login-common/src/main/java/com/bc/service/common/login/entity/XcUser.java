@@ -16,7 +16,7 @@ import lombok.experimental.Accessors;
  * </p>
  *
  * @author admin
- * @since 2019-04-04
+ * @since 2019-04-05
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -40,19 +40,22 @@ public class XcUser implements Serializable {
     private String name;
 
     @ApiModelProperty(value = "用户类型 0超级管理员 1普通用户")
-    private Boolean utype;
+    private Integer utype;
 
-    @ApiModelProperty(value = "用户状态：1有效; 2删除")
-    private Boolean status;
+    @ApiModelProperty(value = "用户状态：1有效 0无效")
+    private Integer status;
 
-    @ApiModelProperty(value = "性别 1男 2女 ")
-    private Boolean sex;
+    @ApiModelProperty(value = "性别 1男 2女")
+    private Integer sex;
 
     @ApiModelProperty(value = "电话")
     private String phone;
 
     @ApiModelProperty(value = "盐值")
     private String salt;
+
+    @ApiModelProperty(value = "公司id")
+    private Long companyId;
 
     @ApiModelProperty(value = "头像")
     private String headUrl;

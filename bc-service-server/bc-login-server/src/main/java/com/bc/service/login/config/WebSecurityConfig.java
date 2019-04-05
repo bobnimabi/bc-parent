@@ -67,8 +67,8 @@ class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .formLogin()
 //                .loginPage("/authentication/require")
 //                .loginProcessingUrl("/authentication/form")//默认/login的post会被拦截作为登录，这里自定义
-                .successHandler(bcAuthenticationSuccessHandler)
-                .failureHandler(bcAuthenticationFailureHandler)
+//                .successHandler(bcAuthenticationSuccessHandler)
+//                .failureHandler(bcAuthenticationFailureHandler)
                 .and()
                 .authorizeRequests()
                 .anyRequest().authenticated();

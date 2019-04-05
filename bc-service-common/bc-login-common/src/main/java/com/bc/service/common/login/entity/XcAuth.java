@@ -42,7 +42,7 @@ public class XcAuth implements Serializable {
     private String url;
 
     @ApiModelProperty(value = "是否是按钮 0不是 1是")
-    private Boolean isMenu;
+    private Integer isMenu;
 
     @ApiModelProperty(value = "菜单等级 ")
     private Integer level;
@@ -51,7 +51,7 @@ public class XcAuth implements Serializable {
     private Integer sort;
 
     @ApiModelProperty(value = "状态 0不可用  1可用")
-    private Boolean status;
+    private Integer status;
 
     @ApiModelProperty(value = "创建时间")
     private LocalDateTime createTime;

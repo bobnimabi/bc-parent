@@ -36,7 +36,7 @@ class AuthorizationServerConfig extends AuthorizationServerConfigurerAdapter {
     @Autowired
     private JwtAccessTokenConverter jwtAccessTokenConverter;
     @Autowired
-    UserDetailsService userDetailsService;
+    UserDetailsService myUserDetailsService;
     @Autowired
     AuthenticationManager authenticationManager;
     @Autowired
@@ -88,7 +88,7 @@ class AuthorizationServerConfig extends AuthorizationServerConfigurerAdapter {
         endpoints.accessTokenConverter(jwtAccessTokenConverter)
                 .authenticationManager(authenticationManager)//认证管理器
                 .tokenStore(jwtTokenStore)//令牌存储
-                .userDetailsService(userDetailsService);//用户信息service
+                .userDetailsService(myUserDetailsService);//用户信息service
     }
 
     //授权服务器的安全配置

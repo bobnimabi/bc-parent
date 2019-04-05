@@ -65,10 +65,8 @@ public class AuthService {
         return authToken;
 
     }
-    //存储到令牌到redis
-
     /**
-     *
+     * 存储到令牌到redis
      * @param access_token 用户身份令牌
      * @param content  内容就是AuthToken对象的内容
      * @param ttl 过期时间

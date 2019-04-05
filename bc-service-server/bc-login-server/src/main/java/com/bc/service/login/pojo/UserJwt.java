@@ -14,10 +14,10 @@ import java.util.Collection;
 @Data
 @ToString
 public class UserJwt extends User {
-    private String id;
+    private Long id;
     private String name;
     private String userpic;
-    private String utype;
+    private Integer utype;
     private Long companyId;
 
     //简化版（boolean默认都是true）

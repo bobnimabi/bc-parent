@@ -2,6 +2,7 @@ package com.bc.service.login.service;
 
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.bc.service.common.login.entity.XcAuth;
 import com.bc.service.common.login.entity.XcUser;
 import com.bc.service.common.login.service.*;
@@ -40,10 +41,7 @@ public class MyUserDetailsService implements UserDetailsService {
     @Autowired
     private IXcUserService userService;
 
-
-
-    //用户信息
-    /**
+    /**UserDetailsService
      *授权码模式：申请授权码的的时候
      * 密码模式：申请令牌的时候
      * 会进入到如下方法（携带账号和密码）
@@ -65,44 +63,33 @@ public class MyUserDetailsService implements UserDetailsService {
                 return new User(username,clientSecret,AuthorityUtils.commaSeparatedStringToAuthorityList(""));
             }
         }
-        if (StringUtils.isEmpty(username)) {
-            return null;
-        }
+        if (StringUtils.isEmpty(username)) return null;
         //使用username从数据库获取用户完整信息
         XcUser xcUser = userService.getOne(
                 new QueryWrapper<XcUser>()
                         .eq("username", username)
         );
-        if(xcUser == null){
-            //返回空给spring security表示用户不存在
-            return null;
-        }
-        //取出正确密码（hash值）
-        String password = xcUser.getPassword();
+        if (null == xcUser) return null;
 
-
-        //从数据库获取权限
+        //从数据库获取用户所有权限
         List<XcAuth> permissions = authService.selectAllAuth(xcUser.getId());
-        if(permissions == null){
-            permissions = new ArrayList<XcAuth>();
-        }
+        if(CollectionUtils.isEmpty(permissions)) permissions = new ArrayList<XcAuth>();
         List<String> user_permission = new ArrayList<>();
-        permissions.forEach(item-> user_permission.add(item.getCode()));
+        permissions.forEach(item-> user_permission.add(item.getAuthCode()));
 
         //使用静态的权限表示用户所拥有的权限
         String user_permission_string  = StringUtils.join(user_permission.toArray(), ",");
         UserJwt userJwt = new UserJwt(
                 username,//用户输入的username
-                password,//从数据库拿出来的密码
+                xcUser.getPassword(),//从数据库拿出来的密码
                 AuthorityUtils.commaSeparatedStringToAuthorityList(user_permission_string)//从数据库拿出来的授权
         );
-        userJwt.setId(userext.getId());
-        userJwt.setUtype(userext.getUtype());//用户类型
-        userJwt.setName(userext.getName());//用户名称
-        userJwt.setUserpic(userext.getUserpic());//用户头像
-        userJwt.isAccountNonExpired(true);
-        userJwt.isAccountNonLocked(true);
 
+        //UserDetails补充信息
+        userJwt.setId(xcUser.getId());
+        userJwt.setUtype(xcUser.getUtype());//用户类型
+        userJwt.setName(xcUser.getName());//用户昵称
+        userJwt.setUserpic(xcUser.getHeadUrl());//用户头像
         return userJwt;
     }
 }
