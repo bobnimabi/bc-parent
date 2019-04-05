@@ -16,7 +16,7 @@ import java.util.Collection;
 public class UserJwt extends User {
     private Long id;
     private String name;
-    private String userpic;
+    private String headUrl;
     private Integer utype;
     private Long companyId;
 

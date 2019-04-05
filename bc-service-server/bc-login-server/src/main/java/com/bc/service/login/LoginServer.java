@@ -1,8 +1,11 @@
 package com.bc.service.login;
 
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Bean;
@@ -13,9 +16,11 @@ import org.springframework.web.client.RestTemplate;
 
 @EnableDiscoveryClient
 @EnableFeignClients
-@EntityScan("")//扫描实体类
-@ComponentScan(basePackages={"com.bc.service.api"})//扫描接口
-@ComponentScan(basePackages={"com.bc.common"})//扫描common下的所有类
+@ComponentScan(basePackages={"com.bc.service.common.login"})//扫描bc-login-common下的所有类
+@ComponentScan(basePackages={"com.bc.service.login"})//扫描bc-login-server下的所有类
+@ComponentScan(basePackages ={"com.bc.common"}) //扫描common
+@EntityScan("com.bc.service.common.login.entity")//扫描实体类
+@MapperScan("com.bc.service.common.login.mapper")//扫描mapper
 @SpringBootApplication
 public class LoginServer {
     public static void main(String[] args) {
@@ -26,5 +31,4 @@ public class LoginServer {
     public RestTemplate restTemplate() {
         return new RestTemplate(new OkHttp3ClientHttpRequestFactory());
     }
-
 }

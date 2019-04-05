@@ -1,4 +1,4 @@
-package com.bc.test;
+package com.bc.service.login;
 
 import com.alibaba.fastjson.JSON;
 import org.junit.Test;

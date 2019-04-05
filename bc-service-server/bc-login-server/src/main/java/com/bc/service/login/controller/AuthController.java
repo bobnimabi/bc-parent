@@ -4,6 +4,8 @@ package com.bc.service.login.controller;
 import com.bc.common.Exception.ExceptionCast;
 import com.bc.common.response.CommonCode;
 import com.bc.common.response.ResponseResult;
+import com.bc.service.common.login.entity.XcRoleAuth;
+import com.bc.service.common.login.service.IXcRoleAuthService;
 import com.bc.service.login.api.AuthControllerApi;
 import com.bc.service.login.dto.*;
 import com.bc.service.login.exception.AuthCode;
@@ -43,8 +45,20 @@ public class AuthController implements AuthControllerApi {
     @Value("${auth.cookieMaxAge}")
     int cookieMaxAge;
 
+
     @Autowired
     AuthService authService;
+
+    @Autowired
+    IXcRoleAuthService xcRoleAuthService;
+    @GetMapping("test")
+    public String test(){
+        XcRoleAuth xcRoleAuth =  new XcRoleAuth();
+        xcRoleAuth.setAuthId(10L);
+        xcRoleAuth.setRoleId(19L);
+        xcRoleAuthService.save(xcRoleAuth);
+        return "已存入一个进去";
+    }
 
     @Override
     @PostMapping("/userlogin")

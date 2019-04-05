@@ -1,6 +1,6 @@
 spring:
   application:
-    name: bc-service-adjust
+    name: bc-redPacket-adjust
   datasource:
     username: root
     password: W_y1:478!

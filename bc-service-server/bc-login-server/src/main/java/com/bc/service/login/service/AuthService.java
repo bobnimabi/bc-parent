@@ -5,6 +5,7 @@ import com.bc.common.Exception.ExceptionCast;
 import com.bc.common.client.BcServiceList;
 import com.bc.service.login.exception.AuthCode;
 import com.bc.service.login.pojo.AuthToken;
+import org.omg.CORBA.INTERNAL;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.ServiceInstance;
@@ -25,7 +26,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
 /**
  * @author Administrator
  * @version 1.0
@@ -33,7 +33,9 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class AuthService {
     @Value("${auth.tokenValiditySeconds}")
-    int tokenValiditySeconds;
+    private Integer tokenValiditySeconds;
+    @Value("${server.port}")
+    private Integer serverPort;
 
     @Autowired
     LoadBalancerClient loadBalancerClient;
@@ -100,11 +102,7 @@ public class AuthService {
     }
     //申请令牌
     private AuthToken applyToken(String username, String password, String clientId, String clientSecret){
-        //从eureka中获取认证服务的地址（因为spring security在认证服务中）
-        //从eureka中获取认证服务的一个实例的地址
-        ServiceInstance serviceInstance = loadBalancerClient.choose(BcServiceList.BC_LOGIN_SERVER);
-        //此地址就是http://ip:port
-        URI uri = serviceInstance.getUri();
+        String uri = "http://localhost:"+serverPort;
         //令牌申请的地址 http://localhost:40400/auth/oauth/token
         String authUrl = uri+ "/auth/oauth/token";
         //定义header

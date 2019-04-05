@@ -29,9 +29,9 @@ public class XcRoleAuth implements Serializable {
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    private String roleId;
+    private Long roleId;
 
-    private String authId;
+    private Long authId;
 
     private LocalDateTime createTime;
 

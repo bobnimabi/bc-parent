@@ -21,7 +21,7 @@ public class XcOauth2Util {
         userJwt.setName(jwtClaims.get("name"));
         userJwt.setCompanyId(jwtClaims.get("companyId"));
         userJwt.setUtype(jwtClaims.get("utype"));
-        userJwt.setUserpic(jwtClaims.get("userpic"));
+        userJwt.setUserpic(jwtClaims.get("headUrl"));
         return userJwt;
     }
 

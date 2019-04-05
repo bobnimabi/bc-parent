@@ -89,7 +89,7 @@ public class MyUserDetailsService implements UserDetailsService {
         userJwt.setId(xcUser.getId());
         userJwt.setUtype(xcUser.getUtype());//用户类型
         userJwt.setName(xcUser.getName());//用户昵称
-        userJwt.setUserpic(xcUser.getHeadUrl());//用户头像
+        userJwt.setHeadUrl(xcUser.getHeadUrl());//用户头像
         return userJwt;
     }
 }

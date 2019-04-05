@@ -31,10 +31,10 @@ public class XcUserRole implements Serializable {
     private Long id;
 
     @ApiModelProperty(value = "用户id ")
-    private String userId;
+    private Long userId;
 
     @ApiModelProperty(value = "用户角色id")
-    private String roleId;
+    private Long roleId;
 
     @ApiModelProperty(value = "创建时间 ")
     private LocalDateTime createTime;

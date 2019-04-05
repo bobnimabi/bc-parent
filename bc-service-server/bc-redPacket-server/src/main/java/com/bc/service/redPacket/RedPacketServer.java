@@ -1,4 +1,4 @@
-package com.bc.service.adjust;
+package com.bc.service.redPacket;
 
 import com.bc.common.feign.interceptor.FeignClientInterceptor;
 import org.springframework.boot.SpringApplication;
@@ -6,7 +6,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
-import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -17,12 +16,10 @@ import org.springframework.web.client.RestTemplate;
 @EnableDiscoveryClient
 @SpringBootApplication
 @EntityScan("")//扫描实体类
-@ComponentScan(basePackages={"com.bc.service.api"})//扫描接口
-@ComponentScan(basePackages={"com.bc.service.adjust"})//扫描本服务
 @ComponentScan(basePackages={"com.bc.common"})//扫描common下的所有类
-public class AdjustServer {
+public class RedPacketServer {
     public static void main(String[] args) {
-        SpringApplication.run(AdjustServer.class,args);
+        SpringApplication.run(RedPacketServer.class,args);
     }
 
     @Bean

@@ -12,8 +12,8 @@
     <artifactId>bc-service-common</artifactId>
     <packaging>pom</packaging>
     <modules>
-        <module>bc-adjust-common</module>
         <module>bc-login-common</module>
+        <module>bc-redPacket-common</module>
     </modules>
 
     <dependencies>
@@ -21,19 +21,12 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <optional>true</optional>
         </dependency>
 
         <!--mybatis plus-->
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-boot-starter</artifactId>
-            <exclusions>
-                <exclusion>
-                    <artifactId>spring-boot-starter-jdbc</artifactId>
-                    <groupId>org.springframework.boot</groupId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>io.springfox</groupId>
@@ -44,7 +37,5 @@
             <artifactId>springfox-swagger-ui</artifactId>
         </dependency>
     </dependencies>
-
-
 
 </project>

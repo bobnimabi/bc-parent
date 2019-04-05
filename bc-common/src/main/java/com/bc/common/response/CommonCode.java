@@ -1,6 +1,9 @@
 package com.bc.common.response;
 
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import lombok.experimental.Accessors;
 
 /**
  * @Author: mrt.

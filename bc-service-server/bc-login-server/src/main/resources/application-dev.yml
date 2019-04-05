@@ -1,19 +1,55 @@
 spring:
   application:
-    name: bc-service-login
+    name: bc-login-server
+  cloud:
+    refresh:
+      refreshable: none #防止循环依赖
+  redis:
+    host: 103.44.30.46
+    port: 6379
+    password: W_y1:478!
+    timeout: 5000 #连接超时 毫秒
+    database: 0
+    jedis:
+      pool:
+        maxActive: 3
+        maxIdle: 3
+        minIdle: 1
+        maxWait: -1 #连接池最大等行时间 -1没有限制
+
+  datasource:
+    username: root
+    password: W_y1:478!
+    driver-class-name: com.mysql.jdbc.Driver
+    url: jdbc:mysql://103.44.30.46:3306/xc_user?characterEncoding=utf8
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      auto-commit: true
+      idle-timeout: 30000
+      pool-name: DatebookHikariCP
+      max-lifetime: 1800000
+      connection-timeout: 10000
+      connection-test-query: SELECT 1
 
 server:
   port: 8081
+  servlet:
+    context-path: /auth
 
 eureka:
   client:
     serviceUrl:
       defaultZone: http://localhost:8761/eureka
+    #表示是否将自己注册到Eureka Server，默认为true。
+    register-with-eureka: false
+    #表示是否从Eureka Server获取注册信息，默认为true。
+    fetch-registry: false
 
 auth:
   tokenValiditySeconds: 1200  #token存储到redis的过期时间
   clientId: BcWebApp
-  clientSecret: BcWebApp
+  clientSecret: w90582144
   cookieDomain: bc.com
   cookieMaxAge: -1
 encrypt:
@@ -22,5 +58,7 @@ encrypt:
     secret: bckeystore
     alias: bckey
     password: bc9527
+
 authParams:
   loginReturnType: JSON
+

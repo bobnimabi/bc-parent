@@ -3,6 +3,7 @@ package com.bc.common.Exception;
 import com.bc.common.response.CommonCode;
 import com.bc.common.response.ResponseResult;
 import com.bc.common.response.ResultCode;
+import com.fasterxml.jackson.databind.util.JSONPObject;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,8 +33,8 @@ public class ExceptionCatch {
     @ResponseBody
     public ResponseResult customException(CustomException customException){
         //记录日志
-        LOGGER.error("catch exception:{}",customException.getMessage());
         ResultCode resultCode = customException.getResultCode();
+        LOGGER.error(resultCode.message());
         return new ResponseResult(resultCode);
     }
     //捕获Exception此类异常

@@ -4,7 +4,7 @@ import com.bc.common.response.ResultCode;
 import com.google.common.collect.ImmutableMap;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.ToString;
-
+import lombok.experimental.Accessors;
 
 @ToString
 public enum LoginExcepCode implements ResultCode {

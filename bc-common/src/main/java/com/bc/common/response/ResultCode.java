@@ -1,5 +1,7 @@
 package com.bc.common.response;
 
+import lombok.experimental.Accessors;
+
 /**
  * Created by mrt on 2018/3/5.
  * 10000-- 通用错误代码
