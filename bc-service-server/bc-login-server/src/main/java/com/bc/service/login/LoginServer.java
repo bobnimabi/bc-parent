@@ -17,7 +17,7 @@ import org.springframework.web.client.RestTemplate;
 @EnableDiscoveryClient
 @EnableFeignClients
 @ComponentScan(basePackages={"com.bc.service.common.login"})//扫描bc-login-common下的所有类
-@ComponentScan(basePackages={"com.bc.service.login"})//扫描bc-login-server下的所有类
+@ComponentScan(basePackages={"com.bc.service.login"})//扫描本服务下的所有类
 @ComponentScan(basePackages ={"com.bc.common"}) //扫描common
 @EntityScan("com.bc.service.common.login.entity")//扫描实体类
 @MapperScan("com.bc.service.common.login.mapper")//扫描mapper

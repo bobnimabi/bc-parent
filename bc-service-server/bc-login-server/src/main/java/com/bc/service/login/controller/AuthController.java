@@ -1,6 +1,5 @@
 package com.bc.service.login.controller;
 
-
 import com.bc.common.Exception.ExceptionCast;
 import com.bc.common.response.CommonCode;
 import com.bc.common.response.ResponseResult;
@@ -27,7 +26,6 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.Map;
-
 /**
  * @author Administrator
  * @version 1.0
@@ -44,8 +42,6 @@ public class AuthController implements AuthControllerApi {
     String cookieDomain;
     @Value("${auth.cookieMaxAge}")
     int cookieMaxAge;
-
-
     @Autowired
     AuthService authService;
 
