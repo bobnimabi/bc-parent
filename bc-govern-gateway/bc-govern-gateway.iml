@@ -27,6 +27,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="bc-utils" />
     <orderEntry type="module" module-name="bc-common" />
+    <orderEntry type="library" name="Maven: org.projectlombok:lombok:1.16.16" level="project" />
     <orderEntry type="library" name="Maven: org.springframework.cloud:spring-cloud-starter-netflix-zuul:2.0.1.RELEASE" level="project" />
     <orderEntry type="library" name="Maven: org.springframework.cloud:spring-cloud-netflix-zuul:2.0.1.RELEASE" level="project" />
     <orderEntry type="library" name="Maven: org.apache.httpcomponents:httpclient:4.5.3" level="project" />

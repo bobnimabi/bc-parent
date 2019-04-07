@@ -3,6 +3,7 @@ package com.bc.service.redPacket;
 import com.bc.common.feign.interceptor.FeignClientInterceptor;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
@@ -13,6 +14,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.client.OkHttp3ClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
+@EnableAutoConfiguration
 @EnableDiscoveryClient
 @EnableFeignClients
 //@ComponentScan(basePackages={"com.bc.service.common.login"})//扫描bc-login-common下的所有类

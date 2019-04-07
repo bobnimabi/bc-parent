@@ -236,10 +236,7 @@
                 <directory>src/main/resources.${spring.profiles.active}</directory>
                 <filtering>false</filtering>
             </resource>
-
-
         </resources>
-
 
         <!-- 以下插件打包时会跳过测试方法-->
         <plugins>

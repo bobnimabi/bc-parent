@@ -7,17 +7,19 @@ import com.bc.service.login.vo.LoginResult;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 
+import javax.servlet.http.HttpServletRequest;
+
 /**
  * Created by mrt.
  */
 @Api(value = "用户认证",description = "用户认证接口")
 public interface AuthControllerApi {
     @ApiOperation("登录")
-    public LoginResult login(LoginRequest loginRequest);
+    public LoginResult login(LoginRequest loginRequest, HttpServletRequest httpRequest);
 
     @ApiOperation("退出")
-    public ResponseResult logout();
+    public ResponseResult logout(HttpServletRequest httpRequest);
 
     @ApiOperation("查询用户jwt令牌")
-    public JwtResult userjwt();
+    public JwtResult userjwt(HttpServletRequest httpRequest);
 }

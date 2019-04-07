@@ -1,14 +1,29 @@
 spring:
   application:
-    name: bc-redPacket-adjust
+    name: bc-redPacket-server
+  cloud:
+    refresh:
+      refreshable: none #防止循环依赖
+  redis:
+    host: 103.44.30.46
+    port: 6379
+    password: W_y1:478!
+    timeout: 5000 #连接超时 毫秒
+    database: 1
+    jedis:
+      pool:
+        maxActive: 3
+        maxIdle: 3
+        minIdle: 1
+        maxWait: -1 #连接池最大等行时间 -1没有限制
   datasource:
     username: root
     password: W_y1:478!
     driver-class-name: com.mysql.jdbc.Driver
-    url: jdbc:mysql://103.44.30.46:3306/siemReap?characterEncoding=utf8
+    url: jdbc:mysql://103.44.30.46:3306/red_packet?characterEncoding=utf8
     hikari:
       minimum-idle: 5
-      maximum-pool-size: 15
+      maximum-pool-size: 20
       auto-commit: true
       idle-timeout: 30000
       pool-name: DatebookHikariCP
@@ -16,34 +31,16 @@ spring:
       connection-timeout: 10000
       connection-test-query: SELECT 1
 
-  redis:
-    host: 103.44.30.46
-    port: 6379
-    password: W_y1:478!
-#  redis:
-#    #数据库索引
-#    database: 0
-#    host: 103.44.30.46
-#    port: 6379
-#    password: W_y1:478!
-#    jedis:
-#      pool:
-#        #最大连接数
-#        max-active: 8
-#        #最大阻塞等待时间(负数表示没限制)
-#        max-wait: -1
-#        #最大空闲
-#        max-idle: 8
-#        #最小空闲
-#        min-idle: 0
-#    #连接超时时间
-#    timeout: 10000
-
-
 server:
   port: 8080
+  servlet:
+    context-path: /redPacket
 
 eureka:
   client:
     serviceUrl:
       defaultZone: http://localhost:8761/eureka
+      #表示是否将自己注册到Eureka Server，默认为true。测试环境下关闭注册，都在热部署会报错
+      # register-with-eureka: false
+      #表示是否从Eureka Server获取注册信息，默认为true。
+      # fetch-registry: false

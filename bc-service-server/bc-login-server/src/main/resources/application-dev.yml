@@ -4,6 +4,8 @@ spring:
   cloud:
     refresh:
       refreshable: none #防止循环依赖
+  jackson:
+    default-property-inclusion: non_null #不返回空值和null
   redis:
     host: 103.44.30.46
     port: 6379
@@ -42,16 +44,20 @@ eureka:
     serviceUrl:
       defaultZone: http://localhost:8761/eureka
     #表示是否将自己注册到Eureka Server，默认为true。
-    register-with-eureka: false
+#    register-with-eureka: false
     #表示是否从Eureka Server获取注册信息，默认为true。
-    fetch-registry: false
+#    fetch-registry: false
 
+
+#客户端账号
 auth:
   tokenValiditySeconds: 1200  #token存储到redis的过期时间
   clientId: BcWebApp
   clientSecret: w90582144
-  cookieDomain: bc.com
+  cookieDomain: localhost #cookie只会写到访问这个域名的请求下
   cookieMaxAge: -1
+
+#秘钥参数
 encrypt:
   key-store:
     location: classpath:/bc.keystore

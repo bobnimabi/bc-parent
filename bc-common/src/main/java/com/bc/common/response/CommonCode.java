@@ -47,5 +47,10 @@ public enum CommonCode implements ResultCode{
         return message;
     }
 
+    @Override
+    public void setMes(String mes) {
+        this.message= mes;
+    }
+
 
 }

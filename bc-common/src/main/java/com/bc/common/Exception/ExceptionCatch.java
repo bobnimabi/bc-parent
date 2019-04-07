@@ -34,13 +34,14 @@ public class ExceptionCatch {
     public ResponseResult customException(CustomException customException){
         //记录日志
         ResultCode resultCode = customException.getResultCode();
-        LOGGER.error(resultCode.message());
+        LOGGER.error(resultCode.code()+":"+resultCode.message());
         return new ResponseResult(resultCode);
     }
     //捕获Exception此类异常
     @ExceptionHandler(Exception.class)
     @ResponseBody
     public ResponseResult exception(Exception exception){
+        exception.printStackTrace();
         //记录日志
         LOGGER.error("catch exception:{}",exception.getMessage());
         if(EXCEPTIONS == null){

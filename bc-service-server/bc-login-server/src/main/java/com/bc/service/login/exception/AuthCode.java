@@ -16,7 +16,14 @@ public enum AuthCode implements ResultCode {
     AUTH_LOGIN_ERROR(false,23006,"登陆过程出现异常请尝试重新操作！"),
     AUTH_LOGIN_APPLYTOKEN_FAIL(false,23007,"申请令牌失败！"),
     AUTH_LOGIN_TOKEN_SAVEFAIL(false,23008,"存储令牌失败！"),
-    AUTH_LOGOUT_FAIL(false,23009,"退出失败！");
+    AUTH_LOGOUT_FAIL(false,23009,"退出失败！"),
+    AUTH_LOGIN_SAME_REPETITION(false,23010,"在同一地点重复登录"),
+    AUTH_LOGIN_DIFF_REPETITION(false,23011,"异地已登录，请先退出登录"),
+    AUTH_ACCOUNT_FORBIDDEN(false,23012,"账户被禁用"),
+
+    ;
+
+
 
     //操作代码
     @ApiModelProperty(value = "操作是否成功", example = "true", required = true)
@@ -56,5 +63,10 @@ public enum AuthCode implements ResultCode {
     @Override
     public String message() {
         return message;
+    }
+
+    @Override
+    public void setMes(String mes) {
+        this.message = mes;
     }
 }

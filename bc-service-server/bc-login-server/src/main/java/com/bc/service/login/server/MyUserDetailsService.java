@@ -1,11 +1,13 @@
-package com.bc.service.login.service;
+package com.bc.service.login.server;
 
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.bc.common.Exception.ExceptionCast;
 import com.bc.service.common.login.entity.XcAuth;
 import com.bc.service.common.login.entity.XcUser;
 import com.bc.service.common.login.service.*;
+import com.bc.service.login.exception.AuthCode;
 import com.bc.service.login.pojo.UserJwt;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -70,6 +72,8 @@ public class MyUserDetailsService implements UserDetailsService {
                         .eq("username", username)
         );
         if (null == xcUser) return null;
+        if (1 != xcUser.getStatus())
+            ExceptionCast.cast(AuthCode.AUTH_ACCOUNT_FORBIDDEN);
 
         //从数据库获取用户所有权限
         List<XcAuth> permissions = authService.selectAllAuth(xcUser.getId());
@@ -81,15 +85,15 @@ public class MyUserDetailsService implements UserDetailsService {
         String user_permission_string  = StringUtils.join(user_permission.toArray(), ",");
         UserJwt userJwt = new UserJwt(
                 username,//用户输入的username
-                xcUser.getPassword(),//从数据库拿出来的密码
+                xcUser.getPassword(),//从数据库拿出来的密码，会自动和我们http传过来的密码做校验
                 AuthorityUtils.commaSeparatedStringToAuthorityList(user_permission_string)//从数据库拿出来的授权
         );
 
         //UserDetails补充信息
-        userJwt.setId(xcUser.getId());
-        userJwt.setUtype(xcUser.getUtype());//用户类型
-        userJwt.setName(xcUser.getName());//用户昵称
-        userJwt.setHeadUrl(xcUser.getHeadUrl());//用户头像
+//        userJwt.setId(xcUser.getId());
+//        userJwt.setUtype(xcUser.getUtype());//用户类型
+//        userJwt.setName(xcUser.getName());//用户昵称
+//        userJwt.setHeadUrl(xcUser.getHeadUrl());//用户头像
         return userJwt;
     }
 }

@@ -7,6 +7,7 @@ import com.bc.common.response.ResponseResult;
 import com.netflix.zuul.ZuulFilter;
 import com.netflix.zuul.context.RequestContext;
 import com.netflix.zuul.exception.ZuulException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -18,7 +19,7 @@ import javax.servlet.http.HttpServletResponse;
  * @author Administrator
  * @version 1.0
  **/
-
+@Slf4j
 @Component
 public class LoginFilter extends ZuulFilter {
 
@@ -58,28 +59,51 @@ public class LoginFilter extends ZuulFilter {
         HttpServletRequest request = requestContext.getRequest();
         //得到response
         HttpServletResponse response = requestContext.getResponse();
-        //取cookie中的身份令牌
+
+        String requestURI = request.getRequestURI();
+
+        System.out.println("请求url:"+requestURI);
+
+
+        //放行登录,获取jwt长令牌,图片验证码
+        if (requestURI.contains("/auth/userlogin")
+            || requestURI.contains("/auth/userjwt")
+            || requestURI.contains("/auth/validateImage")
+
+        ) return null;
+
+        //1.取cookie中的短令牌
         String tokenFromCookie = authService.getTokenFromCookie(request);
         if(StringUtils.isEmpty(tokenFromCookie)){
             //拒绝访问
             access_denied();
             return null;
         }
-        //从header中取jwt
+//        String jwtToken = authService.getJwtToken(tokenFromCookie);
+//        if(StringUtils.isEmpty(jwtToken)){
+//            //拒绝访问
+//            access_denied();
+//            return null;
+//        }
+        //2.从header中取jwt长令牌（里面加密这用户的信息）
         String jwtFromHeader = authService.getJwtFromHeader(request);
         if(StringUtils.isEmpty(jwtFromHeader)){
             //拒绝访问
             access_denied();
             return null;
         }
-        //从redis取出jwt的过期时间
+        //3.从redis校验短令牌的过期时间(1和3共同保证jwt长令牌没有过期)
         long expire = authService.getExpire(tokenFromCookie);
         if(expire<0){
             //拒绝访问
             access_denied();
             return null;
         }
-        //************************
+        /**
+         * 记录所有用户的行为
+         */
+
+
         return null;
     }
     //拒绝访问

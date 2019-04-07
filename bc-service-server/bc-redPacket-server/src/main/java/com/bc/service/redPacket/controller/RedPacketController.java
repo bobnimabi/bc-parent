@@ -8,13 +8,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 @CrossOrigin("*")
 @RestController
-@RequestMapping("/adjust")
-public class AdjustController {
+@RequestMapping("/")
+public class RedPacketController {
 
     @GetMapping("/test")
     public String test(){
         return  "测试成功";
     }
-
-
 }

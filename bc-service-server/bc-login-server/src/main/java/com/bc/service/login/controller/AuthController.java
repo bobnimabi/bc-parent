@@ -1,31 +1,35 @@
 package com.bc.service.login.controller;
 
 import com.bc.common.Exception.ExceptionCast;
+import com.bc.common.constant.VarParam;
 import com.bc.common.response.CommonCode;
 import com.bc.common.response.ResponseResult;
-import com.bc.service.common.login.entity.XcRoleAuth;
-import com.bc.service.common.login.service.IXcRoleAuthService;
 import com.bc.service.login.api.AuthControllerApi;
 import com.bc.service.login.dto.*;
 import com.bc.service.login.exception.AuthCode;
-import com.bc.service.login.pojo.AuthToken;
-import com.bc.service.login.service.AuthService;
+import com.bc.common.pojo.AuthToken;
+import com.bc.service.login.server.AuthService;
+import com.bc.service.login.valImage.ImageCode;
+import com.bc.service.login.valImage.ValidateCodeGenerator;
 import com.bc.service.login.vo.JwtResult;
 import com.bc.service.login.vo.LoginResult;
-import com.bc.utils.CookieUtil;
+import com.bc.utils.project.XcCookieUtil;
+import com.bc.utils.project.XcTokenUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
+import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.Map;
+import javax.servlet.http.HttpSession;
+import java.io.IOException;
+
 /**
  * @author Administrator
  * @version 1.0
@@ -33,96 +37,89 @@ import java.util.Map;
 @RestController
 @RequestMapping("/")
 public class AuthController implements AuthControllerApi {
-
     @Value("${auth.clientId}")
-    String clientId;
+    private String clientId;
     @Value("${auth.clientSecret}")
-    String clientSecret;
+    private String clientSecret;
     @Value("${auth.cookieDomain}")
-    String cookieDomain;
+    private String cookieDomain;
     @Value("${auth.cookieMaxAge}")
-    int cookieMaxAge;
+    private int cookieMaxAge;
     @Autowired
-    AuthService authService;
+    private AuthService authService;
+    @Autowired
+    private ValidateCodeGenerator validateCodeGenerator;
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
 
-    @Autowired
-    IXcRoleAuthService xcRoleAuthService;
     @GetMapping("test")
     public String test(){
-        XcRoleAuth xcRoleAuth =  new XcRoleAuth();
-        xcRoleAuth.setAuthId(10L);
-        xcRoleAuth.setRoleId(19L);
-        xcRoleAuthService.save(xcRoleAuth);
-        return "已存入一个进去";
+        return "OK";
     }
 
     @Override
     @PostMapping("/userlogin")
-    public LoginResult login(LoginRequest loginRequest) {
+    public LoginResult login(LoginRequest loginRequest, HttpServletRequest httpRequest) {
         if(loginRequest == null || StringUtils.isEmpty(loginRequest.getUsername())){
             ExceptionCast.cast(AuthCode.AUTH_USERNAME_NONE);
         }
         if(loginRequest == null || StringUtils.isEmpty(loginRequest.getPassword())){
             ExceptionCast.cast(AuthCode.AUTH_PASSWORD_NONE);
         }
-        //账号
         String username = loginRequest.getUsername();
-
-        //密码
         String password = loginRequest.getPassword();
 
         //申请令牌
-        AuthToken authToken =  authService.login(username,password,clientId,clientSecret);
-
-        //用户身份令牌
+        AuthToken authToken =  authService.login(username,password,clientId,clientSecret,httpRequest.getRemoteHost());
         String access_token = authToken.getAccess_token();
-        //将令牌存储到cookie
-        this.saveCookie(access_token);
-
+        XcCookieUtil.saveCookie(access_token,cookieDomain,cookieMaxAge);
+        //将username写入session
+        httpRequest.getSession().setAttribute("username",username);
         return new LoginResult(CommonCode.SUCCESS,access_token);
     }
 
-    //将令牌存储到cookie
-    private void saveCookie(String token){
-
-        HttpServletResponse response = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getResponse();
-        //HttpServletResponse response,String domain,String path, String name, String value, int maxAge,boolean httpOnly
-        CookieUtil.addCookie(response,cookieDomain,"/","uid",token,cookieMaxAge,false);
-
+    //图片验证码
+    @GetMapping("/validateImage")
+    public void createCode(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        ImageCode imageCode = validateCodeGenerator.createImageCode(request);
+        request.getSession().setAttribute(VarParam.Login.SESSION_KEY_VALIDATE_IMAGE, imageCode);
+        ImageIO.write(imageCode.getImage(), "JPEG", response.getOutputStream());
     }
-    //从cookie删除token
-    private void clearCookie(String token){
 
-        HttpServletResponse response = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getResponse();
-        //HttpServletResponse response,String domain,String path, String name, String value, int maxAge,boolean httpOnly
-        CookieUtil.addCookie(response,cookieDomain,"/","uid",token,0,false);
 
-    }
 
     //退出
     @Override
     @PostMapping("/userlogout")
-    public ResponseResult logout() {
+    public ResponseResult logout(HttpServletRequest httpRequest) {
         //取出cookie中的用户身份令牌
-        String uid = getTokenFormCookie();
+        String uid =  XcCookieUtil.getTokenFormCookie(httpRequest);
         //删除redis中的token
-        boolean result = authService.delToken(uid);
+        boolean result = XcTokenUtil.delToken(uid,stringRedisTemplate);
         //清除cookie
-        this.clearCookie(uid);
+        XcCookieUtil.clearCookie(uid,cookieDomain);
+        //清楚登录标志
+        HttpSession session = httpRequest.getSession();
+        Object usernameObj = session.getAttribute("username");
+        if (null != usernameObj){
+            String username = String.valueOf(usernameObj);
+
+            Boolean delete = stringRedisTemplate.delete(VarParam.Login.LOGIN_FLAG + username);
+            session.removeAttribute("username");
+        }
         return new ResponseResult(CommonCode.SUCCESS);
     }
 
     @Override
     @GetMapping("/userjwt")
-    public JwtResult userjwt() {
+    public JwtResult userjwt(HttpServletRequest httpRequest) {
         //取出cookie中的用户身份令牌
-        String uid = getTokenFormCookie();
+        String uid = XcCookieUtil.getTokenFormCookie(httpRequest);
         if(uid == null){
             return new JwtResult(CommonCode.FAIL,null);
         }
-
         //拿身份令牌从redis中查询jwt令牌
-        AuthToken userToken = authService.getUserToken(uid);
+        AuthToken userToken = XcTokenUtil.getUserToken(uid,stringRedisTemplate);
         if(userToken!=null){
             //将jwt令牌返回给用户
             String jwt_token = userToken.getJwt_token();
@@ -131,14 +128,4 @@ public class AuthController implements AuthControllerApi {
         return null;
     }
 
-    //取出cookie中的身份令牌
-    private String getTokenFormCookie(){
-        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-        Map<String, String> map = CookieUtil.readCookie(request, "uid");
-        if(map!=null && map.get("uid")!=null){
-            String uid = map.get("uid");
-            return uid;
-        }
-        return null;
-    }
 }

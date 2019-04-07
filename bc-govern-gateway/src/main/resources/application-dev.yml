@@ -9,18 +9,29 @@ eureka:
 spring:
   application:
     name: bc-govern-gateway
-
+  redis:
+    host: 103.44.30.46
+    port: 6379
+    password: W_y1:478!
+    timeout: 5000 #连接超时 毫秒
+    #    database: 1
+    jedis:
+      pool:
+        maxActive: 3
+        maxIdle: 3
+        minIdle: 1
+        maxWait: -1 #连接池最大等行时间 -1没有限制
 zuul:
   routes:
-    adjsut-server:
-      path: /adjust/**  #注意字母使用大写无效
-      serviceId: bc-service-adjust #微服务名称，网关会从eureka中获取该服务名称下的服务实例的地址
+    redPacket-server:
+      path: /redPacket/**  #注意字母使用大写无效
+      serviceId: bc-redPacket-server #微服务名称，网关会从eureka中获取该服务名称下的服务实例的地址
       strip-prefix: false #true：代理转发时去掉前缀，false:代理转发时不去掉前缀
       sensitiveHeaders:  #默认zuul会屏蔽cookie，cookie不会传到下游服务，这里设置为空则取消默认的黑名单，如果设置了具体的头信息则不会传到下游服务
       ignoredHeaders:  #默认为空表示不过虑任何头
     login-server:
-      path: /adjust/**
-      serviceId: bc-service-login
+      path: /auth/**
+      serviceId: bc-login-server
       strip-prefix: false
       sensitiveHeaders:  #
       ignoredHeaders:  #

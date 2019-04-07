@@ -14,6 +14,7 @@
     <modules>
         <module>bc-login-server</module>
         <module>bc-redPacket-server</module>
+        <module>bc-ucenter-server</module>
     </modules>
 
     <dependencies>
@@ -90,12 +91,12 @@
         </dependency>
 
         <!-- 热编译-->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-devtools</artifactId>
-            <version>${spring-boot.version}</version>
-            <optional>true</optional>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>org.springframework.boot</groupId>-->
+            <!--<artifactId>spring-boot-devtools</artifactId>-->
+            <!--<version>${spring-boot.version}</version>-->
+            <!--<optional>true</optional>-->
+        <!--</dependency>-->
 
         <dependency>
             <groupId>com.alibaba</groupId>

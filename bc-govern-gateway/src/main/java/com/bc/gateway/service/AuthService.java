@@ -54,4 +54,10 @@ public class AuthService {
          Long expire = stringRedisTemplate.getExpire(key, TimeUnit.SECONDS);
          return expire;
      }
+
+     //通过短令牌获取jwt长令牌
+    public String getJwtToken(String access_token){
+        return stringRedisTemplate.opsForValue().get("user_token:"+access_token);
+    }
+
 }

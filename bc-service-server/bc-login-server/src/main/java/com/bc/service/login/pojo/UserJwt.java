@@ -9,7 +9,7 @@ import java.util.Collection;
 
 /**
  *  该类是user（security已经定义）的扩展类
- *  用于携带更多的用户数据
+ *  CustomUserAuthenticationConverter 配置类里面使用了，用于携带更多的用户数据到jwt令牌
  */
 @Data
 @ToString

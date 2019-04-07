@@ -12,7 +12,7 @@ import java.security.cert.X509Certificate;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class CertManager extends TestCase{
+public class CertPublicKey extends TestCase{
 	
 	
 	/***

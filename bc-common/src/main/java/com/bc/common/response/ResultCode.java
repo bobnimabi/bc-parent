@@ -18,4 +18,6 @@ public interface ResultCode {
     //提示信息
     String message();
 
+    void setMes(String mes);
+
 }
