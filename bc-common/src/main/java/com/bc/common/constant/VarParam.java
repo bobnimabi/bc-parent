@@ -20,4 +20,17 @@ public class VarParam {
         public static final String SESSION_KEY_VALIDATE_IMAGE = "SESSION_KEY_VALIDATE_IMAGE";
     }
 
+    /**
+     * 红包管理后台
+     */
+    public static class RedPacketM {
+        //红包模式1：每天重新计算
+        public static final int ACTIVEMODEL_ONE = 1;
+        //红包模式2：活动时间累计
+        public static final int ACTIVEMODEL_TWO = 2;
+
+
+
+    }
+
 }

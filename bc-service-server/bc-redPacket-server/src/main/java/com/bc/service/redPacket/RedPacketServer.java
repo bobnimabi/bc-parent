@@ -17,11 +17,11 @@ import org.springframework.web.client.RestTemplate;
 @EnableAutoConfiguration
 @EnableDiscoveryClient
 @EnableFeignClients
-//@ComponentScan(basePackages={"com.bc.service.common.login"})//扫描bc-login-common下的所有类
+@ComponentScan(basePackages={"com.bc.service.common.redPacket"})//扫描bc-login-common下的所有类
 @ComponentScan(basePackages={"com.bc.service.redPacket"})//扫描本服务下的所有类
 @ComponentScan(basePackages ={"com.bc.common"}) //扫描common
-//@EntityScan("com.bc.service.common.login.entity")//扫描实体类
-//@MapperScan("com.bc.service.common.login.mapper")//扫描mapper
+@EntityScan("com.bc.service.common.redPacket.entity")//扫描实体类
+@MapperScan("com.bc.service.common.redPacket.mapper")//扫描mapper
 public class RedPacketServer {
     public static void main(String[] args) {
         SpringApplication.run(RedPacketServer.class,args);

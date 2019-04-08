@@ -3,14 +3,15 @@ package com.bc.common.Exception;
 import com.bc.common.response.CommonCode;
 import com.bc.common.response.ResponseResult;
 import com.bc.common.response.ResultCode;
-import com.fasterxml.jackson.databind.util.JSONPObject;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.security.access.AccessDeniedException;
 
 /**
  * 统一异常捕获类
@@ -28,7 +29,10 @@ public class ExceptionCatch {
     //定义map的builder对象，去构建ImmutableMap
     protected static ImmutableMap.Builder<Class<? extends Throwable>,ResultCode> builder = ImmutableMap.builder();
 
-    //捕获CustomException此类异常
+    /**
+     * 自定义异常：捕获CustomException此类异常
+     */
+
     @ExceptionHandler(CustomException.class)
     @ResponseBody
     public ResponseResult customException(CustomException customException){
@@ -37,6 +41,35 @@ public class ExceptionCatch {
         LOGGER.error(resultCode.code()+":"+resultCode.message());
         return new ResponseResult(resultCode);
     }
+
+    /**
+     * springsecurity : 方法权限异常
+     */
+
+    @ExceptionHandler(AccessDeniedException.class)
+    @ResponseBody
+    public ResponseResult accessDeniedException(AccessDeniedException exception){
+        //记录日志
+        CommonCode failCode = CommonCode.FAIL;
+        failCode.setMes("权限不足");
+        LOGGER.error(failCode.code()+":"+failCode.message());
+        return new ResponseResult(failCode);
+    }
+
+    /**
+     * hibernate Validate：处理所有接口数据参数验证异常
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseBody
+    public ResponseResult handleMethodArgumentNotValidException(
+            MethodArgumentNotValidException e) {
+        //记录日志
+        CommonCode invalidParamCode = CommonCode.INVALID_PARAM;
+        invalidParamCode.setMes(e.getMessage());
+        LOGGER.error(invalidParamCode.code()+":"+invalidParamCode.message());
+        return new ResponseResult(invalidParamCode);
+    }
+
     //捕获Exception此类异常
     @ExceptionHandler(Exception.class)
     @ResponseBody

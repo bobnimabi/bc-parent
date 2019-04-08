@@ -1,5 +1,6 @@
 package com.bc.gateway.service;
 
+import com.bc.common.constant.VarParam;
 import com.bc.utils.CookieUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +37,7 @@ public class AuthService {
 
 
     }
-    //从cookie取出token
+    //从cookie取出uid
     //查询身份令牌
     public String getTokenFromCookie(HttpServletRequest request){
         Map<String, String> cookieMap = CookieUtil.readCookie(request, "uid");
@@ -50,14 +51,11 @@ public class AuthService {
     //查询令牌的有效期
      public long getExpire(String access_token){
         //key
-         String key = "user_token:"+access_token;
+         String key = VarParam.Login.LOGIN+ "user_token:"+access_token;
          Long expire = stringRedisTemplate.getExpire(key, TimeUnit.SECONDS);
          return expire;
      }
 
-     //通过短令牌获取jwt长令牌
-    public String getJwtToken(String access_token){
-        return stringRedisTemplate.opsForValue().get("user_token:"+access_token);
-    }
+
 
 }

@@ -35,6 +35,12 @@ zuul:
       strip-prefix: false
       sensitiveHeaders:  #
       ignoredHeaders:  #
+    ucenter-server:
+      path: /ucenter/**
+      serviceId: bc-ucenter-server
+      strip-prefix: false
+      sensitiveHeaders:  #
+      ignoredHeaders:  #
 
 ribbon:
   MaxAutoRetries: 2 #最大重试次数，当Eureka中可以找到服务，但是服务连不上时将会重试，如果eureka中找不到服务则直接走断路器

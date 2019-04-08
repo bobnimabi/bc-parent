@@ -21,4 +21,10 @@ public class ExceptionCast {
         throw new CustomException(fail);
     }
 
+    public static void castInvalid(String mes){
+        CommonCode fail = CommonCode.INVALID_PARAM;
+        fail.setMes(mes);
+        throw new CustomException(fail);
+    }
+
 }

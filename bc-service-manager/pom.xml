@@ -11,6 +11,9 @@
 
     <artifactId>bc-service-manager</artifactId>
     <packaging>pom</packaging>
+    <modules>
+        <module>bc-redPacket-manager</module>
+    </modules>
 
     <dependencies>
         <!--common-->
@@ -140,7 +143,14 @@
             <artifactId>spring-orm</artifactId>
             <version>${springframework.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger2</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger-ui</artifactId>
+        </dependency>
 
     </dependencies>
 

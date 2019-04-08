@@ -24,26 +24,26 @@ public class CustomUserAuthenticationConverter extends DefaultUserAuthentication
     @Override
     public Map<String, ?> convertUserAuthentication(Authentication authentication) {
         LinkedHashMap response = new LinkedHashMap();
-//        String name = authentication.getName();
-//        response.put("username", name);
-//
-//        Object principal = authentication.getPrincipal();
-//        UserJwt userJwt = null;
-//        if(principal instanceof  UserJwt){
-//            userJwt = (UserJwt) principal;
-//        }else{
-//            //refresh_token时候默认不去调用userdetailService获取用户信息，这里我们手动去调用，得到 UserJwt
-//            UserDetails userDetails = myUserDetailsService.loadUserByUsername(name);
-//            userJwt = (UserJwt) userDetails;
-//        }
-//        response.put("name", userJwt.getName());
-//        response.put("id", userJwt.getId());
-//        response.put("utype",userJwt.getUtype());
-//        response.put("headUrl",userJwt.getHeadUrl());
-//        response.put("companyId",userJwt.getCompanyId());
-//        if (authentication.getAuthorities() != null && !authentication.getAuthorities().isEmpty()) {
-//            response.put("authorities", AuthorityUtils.authorityListToSet(authentication.getAuthorities()));
-//        }
+        String name = authentication.getName();
+        response.put("username", name);
+
+        Object principal = authentication.getPrincipal();
+        UserJwt userJwt = null;
+        if(principal instanceof  UserJwt){
+            userJwt = (UserJwt) principal;
+        }else{
+            //refresh_token时候默认不去调用userdetailService获取用户信息，这里我们手动去调用，得到 UserJwt
+            UserDetails userDetails = myUserDetailsService.loadUserByUsername(name);
+            userJwt = (UserJwt) userDetails;
+        }
+        response.put("name", userJwt.getName());
+        response.put("id", userJwt.getId());
+        response.put("utype",userJwt.getUtype());
+        response.put("headUrl",userJwt.getHeadUrl());
+        response.put("companyId",userJwt.getCompanyId());
+        if (authentication.getAuthorities() != null && !authentication.getAuthorities().isEmpty()) {
+            response.put("authorities", AuthorityUtils.authorityListToSet(authentication.getAuthorities()));
+        }
         return response;
     }
 }

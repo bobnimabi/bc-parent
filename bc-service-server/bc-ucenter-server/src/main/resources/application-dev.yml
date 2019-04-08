@@ -4,6 +4,8 @@ spring:
   cloud:
     refresh:
       refreshable: none #防止循环依赖
+  jackson:
+    default-property-inclusion: non_null #不返回空值和null
   redis:
     host: 103.44.30.46
     port: 6379
@@ -32,7 +34,7 @@ spring:
       connection-test-query: SELECT 1
 
 server:
-  port: 8080
+  port: 8082
   servlet:
     context-path: /ucenter
 
@@ -44,3 +46,6 @@ eureka:
       # register-with-eureka: false
       #表示是否从Eureka Server获取注册信息，默认为true。
       # fetch-registry: false
+#放行uri(测试需要)
+permit:
+  url: /**

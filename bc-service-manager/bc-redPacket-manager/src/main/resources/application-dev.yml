@@ -1,0 +1,52 @@
+spring:
+  application:
+    name: bc-redPacket-manager
+  cloud:
+    refresh:
+      refreshable: none #防止循环依赖
+  jackson:
+    default-property-inclusion: non_null #不返回空值和null
+  redis:
+    host: 103.44.30.46
+    port: 6379
+    password: W_y1:478!
+    timeout: 5000 #连接超时 毫秒
+    database: 1
+    jedis:
+      pool:
+        maxActive: 3
+        maxIdle: 3
+        minIdle: 1
+        maxWait: -1 #连接池最大等行时间 -1没有限制
+  datasource:
+    username: root
+    password: W_y1:478!
+    driver-class-name: com.mysql.jdbc.Driver
+    url: jdbc:mysql://103.44.30.46:3306/red_packet?characterEncoding=utf8
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      auto-commit: true
+      idle-timeout: 30000
+      pool-name: DatebookHikariCP
+      max-lifetime: 1800000
+      connection-timeout: 10000
+      connection-test-query: SELECT 1
+
+server:
+  port: 8080
+  servlet:
+    context-path: /redPacketManager
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka
+      #表示是否将自己注册到Eureka Server，默认为true。测试环境下关闭注册，都在热部署会报错
+      # register-with-eureka: false
+      #表示是否从Eureka Server获取注册信息，默认为true。
+      # fetch-registry: false
+
+#放行uri(测试需要)
+permit:
+  url: /**
