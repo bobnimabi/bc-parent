@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
  * </p>
  *
  * @author admin
- * @since 2019-04-08
+ * @since 2019-04-09
  */
 @Service
 public class VsConfigureServiceImpl extends ServiceImpl<VsConfigureMapper, VsConfigure> implements IVsConfigureService {

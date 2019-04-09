@@ -1,15 +1,16 @@
-package com.bc.service.common.redPacket.entity;
+package com.bc.manager.redPacket.dto;
 
-import java.math.BigDecimal;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
-import java.time.LocalDateTime;
-import java.io.Serializable;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -17,13 +18,13 @@ import lombok.experimental.Accessors;
  * </p>
  *
  * @author admin
- * @since 2019-04-09
+ * @since 2019-04-08
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
 @ApiModel(value="VsAwardPrize对象", description="抽奖奖品")
-public class VsAwardPrize implements Serializable {
+public class VsAwardPrizeDto implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -42,20 +43,20 @@ public class VsAwardPrize implements Serializable {
     @ApiModelProperty(value = "奖品状态[0下架][1上架]")
     private Integer prizeStatus;
 
-    @ApiModelProperty(value = "奖品类型[1红包][2谢谢参与]")
+    @ApiModelProperty(value = "商品类型[1红包][2谢谢参与]")
     private Integer prizeType;
 
     @ApiModelProperty(value = "奖品排序")
     private Integer prizeOrder;
 
-    @ApiModelProperty(value = "金额 单位：分")
+    @ApiModelProperty(value = "金额")
     private BigDecimal totalAmount;
 
     @ApiModelProperty(value = "奖品备注")
     private String prizeRemark;
 
     @ApiModelProperty(value = "添加时间")
-    private LocalDateTime jd;
+    private LocalDateTime createTime;
 
 
 }

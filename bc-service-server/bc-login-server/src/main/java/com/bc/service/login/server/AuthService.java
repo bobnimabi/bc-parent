@@ -2,15 +2,12 @@ package com.bc.service.login.server;
 
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bc.common.Exception.ExceptionCast;
 import com.bc.common.constant.VarParam;
-import com.bc.common.response.ResponseResult;
 import com.bc.service.common.login.entity.XcUser;
 import com.bc.service.common.login.service.IXcUserService;
 import com.bc.service.login.exception.AuthCode;
 import com.bc.common.pojo.AuthToken;
-import com.bc.utils.BCryptUtil;
 import com.bc.utils.project.XcTokenUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -57,7 +54,7 @@ public class AuthService {
     public AuthToken login(String username, String password, String clientId, String clientSecret, String ip) {
 
         //防止用户多次登录
-        Object ObjIp = stringRedisTemplate.opsForValue().get(VarParam.Login.LOGIN_FLAG + username);
+        Object ObjIp = stringRedisTemplate.opsForValue().get(VarParam.Login.LOGIN_FLAG_PRE + username);
         if (null != ObjIp) {
             String loginIp = String.valueOf(ObjIp);
             if (loginIp.equals(ip)) {
@@ -88,7 +85,7 @@ public class AuthService {
             ExceptionCast.cast(AuthCode.AUTH_LOGIN_TOKEN_SAVEFAIL);
         }
         //将登录IP存入redis
-        stringRedisTemplate.opsForValue().set(VarParam.Login.LOGIN_FLAG + username, ip);
+        stringRedisTemplate.opsForValue().set(VarParam.Login.LOGIN_FLAG_PRE + username, ip);
         return authToken;
     }
 

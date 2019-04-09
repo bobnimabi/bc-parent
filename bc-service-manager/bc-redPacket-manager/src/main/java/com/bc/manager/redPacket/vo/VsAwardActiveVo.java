@@ -29,7 +29,7 @@ public class VsAwardActiveVo implements Serializable {
 
     @ApiModelProperty(value = "活动ID")
     @TableId(value = "id", type = IdType.AUTO)
-    private Long id;
+    private Integer id;
 
     @ApiModelProperty(value = "活动名称")
     private String activeName;

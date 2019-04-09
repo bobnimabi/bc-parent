@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
  * </p>
  *
  * @author admin
- * @since 2019-04-08
+ * @since 2019-04-09
  */
 @Service
 public class VsMediaServiceImpl extends ServiceImpl<VsMediaMapper, VsMedia> implements IVsMediaService {

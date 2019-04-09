@@ -16,7 +16,7 @@ import lombok.experimental.Accessors;
  * </p>
  *
  * @author admin
- * @since 2019-04-08
+ * @since 2019-04-09
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -28,7 +28,7 @@ public class VsAwardActive implements Serializable {
 
     @ApiModelProperty(value = "活动ID")
     @TableId(value = "id", type = IdType.AUTO)
-    private Long id;
+    private Integer id;
 
     @ApiModelProperty(value = "活动名称")
     private String activeName;
@@ -42,8 +42,11 @@ public class VsAwardActive implements Serializable {
     @ApiModelProperty(value = "活动过期时间")
     private LocalDateTime timeEnd;
 
-    @ApiModelProperty(value = "模式[1每天重新计算][2活动时间累计]")
-    private Integer activeModel;
+    @ApiModelProperty(value = "活动每天的开始时间")
+    private String dayTimeStart;
+
+    @ApiModelProperty(value = "活动每天的结束时间")
+    private String dayTimeEnd;
 
     @ApiModelProperty(value = "创建时间")
     private LocalDateTime createTime;

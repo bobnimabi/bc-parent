@@ -10,7 +10,6 @@ import javax.servlet.annotation.WebListener;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionEvent;
 import javax.servlet.http.HttpSessionListener;
-import java.util.Map;
 
 /**
  * Created by mrt on 2019/4/6.
@@ -33,7 +32,7 @@ public class SessionListener implements HttpSessionListener {
         HttpSession session = event.getSession();
         String username = session.getAttribute("username").toString();
         if(username!=null){
-            Boolean delete = stringRedisTemplate.delete(VarParam.Login.LOGIN_FLAG + username);
+            Boolean delete = stringRedisTemplate.delete(VarParam.Login.LOGIN_FLAG_PRE + username);
             session.removeAttribute("username");
             if(delete) {
                 log.info(username+":用户注销成功");

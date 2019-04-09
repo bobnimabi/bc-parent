@@ -37,7 +37,7 @@ public class MyBeanUtil {
         return com.baomidou.mybatisplus.core.toolkit.BeanUtils.beansToMaps(beans);
     }
     //List<bean1>转换成List<bean2>
-    public static <V> List<V> copyListToList(List<Object> beans,Class<V> clazz) {
+    public static <V> List<V> copyListToList(List beans,Class<V> clazz) {
         List<V> list = new ArrayList<>();
         try {
             for (Object bean : beans) {

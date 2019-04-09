@@ -15,7 +15,7 @@ import lombok.experimental.Accessors;
  * </p>
  *
  * @author admin
- * @since 2019-04-08
+ * @since 2019-04-09
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -34,7 +34,7 @@ public class VsPayRecharge implements Serializable {
     @ApiModelProperty(value = "支付状态[0未支付][1已经支付]")
     private Integer payStatus;
 
-    @ApiModelProperty(value = "总金额")
+    @ApiModelProperty(value = "总金额 单位：分")
     private BigDecimal totalAmount;
 
     @ApiModelProperty(value = "支付时间")

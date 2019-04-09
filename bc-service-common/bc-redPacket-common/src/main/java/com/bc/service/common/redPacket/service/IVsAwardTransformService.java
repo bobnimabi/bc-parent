@@ -1,6 +1,6 @@
 package com.bc.service.common.redPacket.service;
 
-import com.bc.service.common.redPacket.entity.VsAwardConfigure;
+import com.bc.service.common.redPacket.entity.VsAwardTransform;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 /**
@@ -9,8 +9,8 @@ import com.baomidou.mybatisplus.extension.service.IService;
  * </p>
  *
  * @author admin
- * @since 2019-04-08
+ * @since 2019-04-09
  */
-public interface IVsAwardConfigureService extends IService<VsAwardConfigure> {
+public interface IVsAwardTransformService extends IService<VsAwardTransform> {
 
 }

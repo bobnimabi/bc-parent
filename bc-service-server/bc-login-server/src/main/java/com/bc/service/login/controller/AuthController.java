@@ -106,7 +106,7 @@ public class AuthController implements AuthControllerApi {
         if (null != usernameObj){
             String username = String.valueOf(usernameObj);
 
-            Boolean delete = stringRedisTemplate.delete(VarParam.Login.LOGIN_FLAG + username);
+            Boolean delete = stringRedisTemplate.delete(VarParam.Login.LOGIN_FLAG_PRE + username);
             session.removeAttribute("username");
         }
         return new ResponseResult(CommonCode.SUCCESS);

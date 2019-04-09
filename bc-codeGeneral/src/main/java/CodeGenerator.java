@@ -21,7 +21,7 @@ public class CodeGenerator {
         //生成表的名称
         String[] tables={
                 "vs_award_active",
-                "vs_award_configure",
+                "vs_award_transform",
                 "vs_award_player",
                 "vs_award_prize",
                 "vs_configure",
