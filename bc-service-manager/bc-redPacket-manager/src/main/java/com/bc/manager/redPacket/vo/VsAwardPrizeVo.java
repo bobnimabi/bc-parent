@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
  * </p>
  *
  * @author admin
- * @since 2019-04-08
+ * @since 2019-04-09
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -43,13 +43,16 @@ public class VsAwardPrizeVo implements Serializable {
     @ApiModelProperty(value = "奖品状态[0下架][1上架]")
     private Integer prizeStatus;
 
-    @ApiModelProperty(value = "商品类型[1红包][2谢谢参与]")
+    @ApiModelProperty(value = "奖品类型[1红包][2谢谢参与]")
     private Integer prizeType;
+
+    @ApiModelProperty(value = "中奖概率")
+    private Integer prizePercent;
 
     @ApiModelProperty(value = "奖品排序")
     private Integer prizeOrder;
 
-    @ApiModelProperty(value = "金额")
+    @ApiModelProperty(value = "金额 单位：分")
     private BigDecimal totalAmount;
 
     @ApiModelProperty(value = "奖品备注")

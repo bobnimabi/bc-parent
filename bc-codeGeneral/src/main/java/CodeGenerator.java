@@ -20,15 +20,15 @@ public class CodeGenerator {
         String modelName="redPacket";
         //生成表的名称
         String[] tables={
-                "vs_award_active",
-                "vs_award_transform",
-                "vs_award_player",
+//                "vs_award_active",
+//                "vs_award_transform",
+//                "vs_award_player",
                 "vs_award_prize",
-                "vs_configure",
-                "vs_log",
-                "vs_media",
-                "vs_pay_recharge",
-                "vs_site",
+//                "vs_configure",
+//                "vs_log",
+//                "vs_media",
+//                "vs_pay_recharge",
+//                "vs_site",
         };
 
         //配置数据库信息

@@ -4,6 +4,7 @@ import com.bc.common.Exception.ExceptionCast;
 import com.bc.common.constant.VarParam;
 import com.bc.common.response.CommonCode;
 import com.bc.common.response.ResponseResult;
+import com.bc.servcie.login.googleAuth.GoogleAuthenticator;
 import com.bc.service.login.api.AuthControllerApi;
 import com.bc.service.login.dto.*;
 import com.bc.service.login.exception.AuthCode;
@@ -53,12 +54,6 @@ public class AuthController implements AuthControllerApi {
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
 
-    @GetMapping("test")
-    @PreAuthorize("hasAuthority('query_salary')")
-    public String test(){
-        return "OK";
-    }
-
     @Override
     @PostMapping("/userlogin")
     public LoginResult login(LoginRequest loginRequest, HttpServletRequest httpRequest) {
@@ -68,6 +63,9 @@ public class AuthController implements AuthControllerApi {
         if(loginRequest == null || StringUtils.isEmpty(loginRequest.getPassword())){
             ExceptionCast.cast(AuthCode.AUTH_PASSWORD_NONE);
         }
+
+        if (!authService.googleAuth(loginRequest.getDynamicCode(),loginRequest.getUsername()))
+            ExceptionCast.castFail("口令错误");
         String username = loginRequest.getUsername();
         String password = loginRequest.getPassword();
 
@@ -87,8 +85,6 @@ public class AuthController implements AuthControllerApi {
         request.getSession().setAttribute(VarParam.Login.SESSION_KEY_VALIDATE_IMAGE, imageCode);
         ImageIO.write(imageCode.getImage(), "JPEG", response.getOutputStream());
     }
-
-
 
     //退出
     @Override

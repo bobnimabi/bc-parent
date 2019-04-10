@@ -1,11 +1,10 @@
 package com.bc.manager.redPacket.controller;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.bc.common.Exception.ExceptionCast;
 import com.bc.common.constant.VarParam;
 import com.bc.common.response.ResponseResult;
-import com.bc.manager.redPacket.dto.VsAwardActiveDto;
-import com.bc.manager.redPacket.dto.VsAwardActiveDtoList;
-import com.bc.manager.redPacket.dto.VsAwardPrizeDto;
+import com.bc.manager.redPacket.dto.*;
 import com.bc.manager.redPacket.server.RedPacketManagerServer;
 import com.bc.service.common.redPacket.entity.VsAwardPrize;
 import com.bc.utils.project.MyBeanUtil;
@@ -71,6 +70,7 @@ public class RedPacketManagerController {
                 || null == prizeDto.getPrizeStoreNums()
                 || null == prizeDto.getPrizeDrawNums()
                 || null == prizeDto.getTotalAmount()
+                || null == prizeDto.getPrizePercent()
         ) ExceptionCast.castInvalid("参数不足");
         if (VarParam.RedPacketM.PRIZE_TYPE_ONE != prizeDto.getPrizeType()
                 && VarParam.RedPacketM.PRIZE_TYPE_TWO != prizeDto.getPrizeType()) {
@@ -84,6 +84,9 @@ public class RedPacketManagerController {
         }
         if (prizeDto.getTotalAmount().compareTo(BigDecimal.ZERO) <= 0) {
             ExceptionCast.castInvalid("奖品金额不能低于或等于0分");
+        }
+        if (prizeDto.getPrizePercent() > 100 || prizeDto.getPrizePercent() <= 0){
+            ExceptionCast.castInvalid("中奖概率不能超过100或不能小于0");
         }
         return rpmServer.addPrize(prizeDto);
     }
@@ -111,6 +114,7 @@ public class RedPacketManagerController {
                 || null == prizeDto.getPrizeStoreNums()
                 || null == prizeDto.getPrizeDrawNums()
                 || null == prizeDto.getTotalAmount()
+                || null == prizeDto.getPrizePercent()
         ) ExceptionCast.castInvalid("参数不足");
         if (VarParam.RedPacketM.PRIZE_TYPE_ONE != prizeDto.getPrizeType()
                 && VarParam.RedPacketM.PRIZE_TYPE_TWO != prizeDto.getPrizeType()) {
@@ -124,6 +128,9 @@ public class RedPacketManagerController {
         }
         if (prizeDto.getTotalAmount().compareTo(BigDecimal.ZERO) <= 0) {
             ExceptionCast.castInvalid("奖品金额不能低于0分");
+        }
+        if (prizeDto.getPrizePercent() > 100 || prizeDto.getPrizePercent() <= 0){
+            ExceptionCast.castInvalid("中奖概率不能超过100或不能小于0");
         }
         return rpmServer.updatePrize(prizeDto);
     }
@@ -152,7 +159,7 @@ public class RedPacketManagerController {
         return rpmServer.queryPrizeById(prizeDto);
     }
 
-    @ApiOperation("奖品管理：根据奖品Id查看")
+    @ApiOperation("奖品管理：下架")
     @PostMapping("/prizeSoldOut")
     public ResponseResult prizeSoldOut(@RequestBody VsAwardPrizeDto prizeDto) throws Exception{
         if (null == prizeDto || null == prizeDto.getId()) {
@@ -163,23 +170,104 @@ public class RedPacketManagerController {
 
     @ApiOperation("转换规则：添加")
     @PostMapping("/addTransform")
-    public ResponseResult addTransform(@RequestBody VsAwardPrizeDto prizeDto) throws Exception{
+    public ResponseResult addTransform(@RequestBody VsAwardTransformDto transformDto) throws Exception{
+        if (null == transformDto
+                || null == transformDto.getConfigureValue()
+                || StringUtils.isEmpty(transformDto.getConfigureKey())
+        ) ExceptionCast.castInvalid("参数不全");
 
-        return null;
+        return rpmServer.addTransform(transformDto);
+    }
+
+    @ApiOperation("转换规则：查看")
+    @PostMapping("queryTransform")
+    public ResponseResult queryTransforms() throws Exception{
+        return rpmServer.queryTransforms();
+    }
+
+    @ApiOperation("转换规则：删除")
+    @PostMapping("delTransformById")
+    public ResponseResult delTransformById(@RequestBody VsAwardTransformDto transformDto) throws Exception{
+        if (null == transformDto || null == transformDto.getId()) {
+            ExceptionCast.castInvalid("未传入Id");
+        }
+        return rpmServer.delTransformById(transformDto);
     }
 
 
-//    @ApiOperation("转换规则：查看")
+    @ApiOperation("转换规则：根据id查看")
+    @PostMapping("queryTransformById")
+    public ResponseResult queryTransformById(@RequestBody VsAwardTransformDto transformDto) throws Exception{
+        if (null == transformDto || null == transformDto.getId()) {
+            ExceptionCast.castInvalid("未传入Id");
+        }
+        return rpmServer.queryTransformById(transformDto);
+    }
+
+    @ApiOperation("转换规则：编辑")
+    @PostMapping("updateTransform")
+    public ResponseResult updateTransform(@RequestBody VsAwardTransformDto transformDto) throws Exception{
+        if (null == transformDto
+                || null == transformDto.getId()
+                || null == transformDto.getConfigureValue()
+                || StringUtils.isEmpty(transformDto.getConfigureKey())
+        ) {
+            ExceptionCast.castInvalid("参数不全");
+        }
+        return rpmServer.updateTransform(transformDto);
+    }
+
+    @ApiOperation("会员管理：单笔添加")
+    @PostMapping("/addPlayer")
+    public ResponseResult addPlayer(@RequestBody VsAwardPlayerDto playerDto) throws Exception{
+        if (null == playerDto
+                || StringUtils.isEmpty(playerDto.getUserName())
+                || null == playerDto.getHasAmount()
+                || null == playerDto.getPlayerStatus()
+                || null == playerDto.getJoinTimes()
+        ) ExceptionCast.castInvalid("参数不全");
+
+        if (VarParam.YES != playerDto.getPlayerStatus() && VarParam.NO != playerDto.getPlayerStatus()) {
+            ExceptionCast.castInvalid("上架状态有误");
+        }
+        return rpmServer.addPlayer(playerDto);
+    }
+
+//    @ApiOperation("会员管理：批量导入")
 //    @PostMapping("")
-//
-//    @ApiOperation("转换规则：删除")
-//    @PostMapping("")
-//
-//    @ApiOperation("转换规则：根据id查看")
-//    @PostMapping("")
-//
-//    @ApiOperation("转换规则：编辑")
-//    @PostMapping("")
+
+    @ApiOperation("会员管理：条件分页查询")
+    @PostMapping("/queryPlayersByCriteria")
+    public ResponseResult queryPlayersByCriteria(@RequestBody VsAwardPlayerDto playerDto) throws Exception{
+        if (null == playerDto) {
+            ExceptionCast.castInvalid("未传入任何参数");
+        }
+        //校验排序
+        if (null != playerDto.getPlayerStatus()
+            && VarParam.RedPacketM.PLAYER_CREATTIME_DESC != playerDto.getPlayerStatus()
+            && VarParam.RedPacketM.PLAYER_AMOUNT_DESC != playerDto.getPlayerStatus()
+            && VarParam.RedPacketM.PLAYER_JOINTIME_DESC != playerDto.getPlayerStatus()
+            ) ExceptionCast.castFail("排序条件有误");
+
+        //校验状态
+        if (null != playerDto.getPlayerStatus()
+                &&VarParam.YES != playerDto.getPlayerStatus()
+                && VarParam.NO != playerDto.getPlayerStatus()) {
+            ExceptionCast.castInvalid("状态有误");
+        }
+        return rpmServer.queryPlayersByCriteria(playerDto);
+    }
+
+//    @ApiOperation("会员管理：按照id查询")
+//    @ApiOperation("会员管理：修改")
+//    @ApiOperation("会员管理：下架")
+//    @ApiOperation("会员管理：清除会员")
+
+
+
+
+
+
 
 
 

@@ -1,5 +1,6 @@
 package com.bc.utils.project;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.databind.util.BeanUtil;
 import org.springframework.beans.BeanUtils;
 
@@ -52,5 +53,15 @@ public class MyBeanUtil {
             e.printStackTrace();
         }
         return null;
+    }
+
+    //复制page
+    public static <T> Page<T> copyPageToPage(Page page, Class<T> clazz) {
+        Page<T> cPage = new Page();
+        cPage.setSize(page.getSize());
+        cPage.setTotal(page.getTotal());
+        cPage.setCurrent(page.getCurrent());
+        cPage.setRecords(copyListToList(page.getRecords(), clazz));
+        return cPage;
     }
 }

@@ -38,6 +38,8 @@ public class VarParam {
         public static final String ACTIVE_KEY = REDPACKET_M_PRE + "Active:";
         //奖品
         public static final String PRIZE_KEY = REDPACKET_M_PRE + "Prize";
+        //转换规则
+        public static final String TRANSFORM_KEY = REDPACKET_M_PRE + "Transform";
 
         /**
          * 项目参数
@@ -46,6 +48,16 @@ public class VarParam {
         public static final int AWARD_ACTIVE_ID = 1;
         //库存数量的最小值
         public static final int PRIZE_STORE_NUM_MIN = 0;
+
+        /**
+         * 条件查询参数
+         */
+        //会员分页查询：创建时间降序
+        public static final int PLAYER_CREATTIME_DESC = 1;
+        //会员分页查询：金额降序
+        public static final int PLAYER_AMOUNT_DESC = 2;
+        //会员分页查询：可抽奖次数降序
+        public static final int PLAYER_JOINTIME_DESC = 3;
 
         /**
          * mysql 状态值
@@ -58,10 +70,6 @@ public class VarParam {
         public static final int PRIZE_TYPE_ONE = 1;
         //奖品类型：2谢谢参与
         public static final int PRIZE_TYPE_TWO = 2;
-
-
-
-
 
     }
 

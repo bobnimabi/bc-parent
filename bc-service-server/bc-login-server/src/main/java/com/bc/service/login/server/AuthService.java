@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bc.common.Exception.ExceptionCast;
 import com.bc.common.constant.VarParam;
+import com.bc.servcie.login.googleAuth.GoogleAuthenticator;
 import com.bc.service.common.login.entity.XcUser;
 import com.bc.service.common.login.service.IXcUserService;
 import com.bc.service.login.exception.AuthCode;
@@ -50,6 +51,13 @@ public class AuthService {
     @Autowired
     private IXcUserService userService;
 
+    public boolean googleAuth(String dynamicCode,String username){
+        XcUser user = userService.getOne(new QueryWrapper<XcUser>().eq("username", username));
+        if (null == user) ExceptionCast.cast(AuthCode.AUTH_ACCOUNT_NOTEXISTS);
+        //校验opt
+        return GoogleAuthenticator.check_code_pre(user.getSalt(),dynamicCode, System.currentTimeMillis());
+    }
+
     //用户认证申请令牌，将令牌存储到redis
     public AuthToken login(String username, String password, String clientId, String clientSecret, String ip) {
 
@@ -86,6 +94,7 @@ public class AuthService {
         }
         //将登录IP存入redis
         stringRedisTemplate.opsForValue().set(VarParam.Login.LOGIN_FLAG_PRE + username, ip);
+
         return authToken;
     }
 

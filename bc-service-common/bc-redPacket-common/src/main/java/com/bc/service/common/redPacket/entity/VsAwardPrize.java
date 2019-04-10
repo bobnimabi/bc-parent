@@ -45,6 +45,9 @@ public class VsAwardPrize implements Serializable {
     @ApiModelProperty(value = "奖品类型[1红包][2谢谢参与]")
     private Integer prizeType;
 
+    @ApiModelProperty(value = "中奖概率")
+    private Integer prizePercent;
+
     @ApiModelProperty(value = "奖品排序")
     private Integer prizeOrder;
 
@@ -55,7 +58,7 @@ public class VsAwardPrize implements Serializable {
     private String prizeRemark;
 
     @ApiModelProperty(value = "添加时间")
-    private LocalDateTime jd;
+    private LocalDateTime createTime;
 
 
 }

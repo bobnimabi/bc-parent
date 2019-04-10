@@ -20,7 +20,6 @@ import java.io.IOException;
 
 @Component
 public class ValidateCodeFilter extends OncePerRequestFilter {
-	
 
 	@Autowired
 	private ImageCodeDefaultProperties imageCodeDefaultProperties;

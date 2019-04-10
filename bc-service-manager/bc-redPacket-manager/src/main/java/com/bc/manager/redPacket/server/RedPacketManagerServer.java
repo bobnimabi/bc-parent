@@ -1,15 +1,23 @@
 package com.bc.manager.redPacket.server;
 
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.bc.common.Exception.ExceptionCast;
 import com.bc.common.constant.VarParam;
 import com.bc.common.response.ResponseResult;
 import com.bc.manager.redPacket.dto.VsAwardActiveDto;
+import com.bc.manager.redPacket.dto.VsAwardPlayerDto;
 import com.bc.manager.redPacket.dto.VsAwardPrizeDto;
+import com.bc.manager.redPacket.dto.VsAwardTransformDto;
 import com.bc.manager.redPacket.vo.VsAwardActiveVo;
 import com.bc.manager.redPacket.vo.VsAwardPrizeVo;
+import com.bc.manager.redPacket.vo.VsAwardTransformVo;
 import com.bc.service.common.redPacket.entity.VsAwardActive;
+import com.bc.service.common.redPacket.entity.VsAwardPlayer;
 import com.bc.service.common.redPacket.entity.VsAwardPrize;
+import com.bc.service.common.redPacket.entity.VsAwardTransform;
 import com.bc.service.common.redPacket.service.*;
 import com.bc.utils.project.MyBeanUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +25,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
@@ -51,6 +60,8 @@ public class RedPacketManagerServer {
     private ReentrantLock activeLock;
     //奖品锁
     private ReentrantLock prizeLock;
+    //转换规则锁
+    private ReentrantLock tranLock;
 
 
     /**
@@ -63,10 +74,12 @@ public class RedPacketManagerServer {
         boolean flag = activeService.updateById(active);
         if (flag) {
             //删除过期的活动缓存
-            redis.delete(VarParam.RedPacketM.ACTIVE_KEY);
-            return ResponseResult.SUCCESS();
+            if (redis.delete(VarParam.RedPacketM.ACTIVE_KEY))
+                return ResponseResult.SUCCESS();
+            ExceptionCast.castFail("缓存清理失败");
         }
-        return ResponseResult.FAIL();
+        ExceptionCast.castFail("数据库更新失败");
+        return null;
     }
 
     /**
@@ -112,10 +125,12 @@ public class RedPacketManagerServer {
         MyBeanUtil.copyProperties(prizeDto, prize);
         boolean save = prizeService.save(prize);
         if (save) {
-            redis.delete(VarParam.RedPacketM.PRIZE_KEY);
-            return ResponseResult.SUCCESS();
+            if (redis.delete(VarParam.RedPacketM.PRIZE_KEY))
+                return ResponseResult.SUCCESS();
+            ExceptionCast.castFail("缓存清理失败");
         }
-        return ResponseResult.FAIL();
+        ExceptionCast.castFail("数据库添加失败");
+        return null;
     }
 
     /**
@@ -130,10 +145,12 @@ public class RedPacketManagerServer {
             return ResponseResult.FAIL("奖品不能全部删除！");
         boolean remove = prizeService.removeByIds(ids);
         if (remove) {
-            redis.delete(VarParam.RedPacketM.PRIZE_KEY);
-            return ResponseResult.SUCCESS();
+            if (redis.delete(VarParam.RedPacketM.PRIZE_KEY))
+                return ResponseResult.SUCCESS();
+            ExceptionCast.castFail("缓存清理失败");
         }
-        return ResponseResult.FAIL();
+        ExceptionCast.castFail("数据库更新失败");
+        return null;
     }
 
     /**
@@ -145,10 +162,12 @@ public class RedPacketManagerServer {
         MyBeanUtil.copyProperties(prizeDto, prize);
         boolean update = prizeService.updateById(prize);
         if (update) {
-            redis.delete(VarParam.RedPacketM.PRIZE_KEY);
-            return ResponseResult.SUCCESS();
+            if (redis.delete(VarParam.RedPacketM.PRIZE_KEY))
+                return ResponseResult.SUCCESS();
+            ExceptionCast.castFail("缓存清理失败");
         }
-        return ResponseResult.FAIL();
+        ExceptionCast.castFail("数据库更新失败");
+        return null;
     }
 
     /**
@@ -247,10 +266,153 @@ public class RedPacketManagerServer {
         boolean updateById = prizeService.updateById(prize);
         if (updateById) {
             //删除缓存
-            redis.delete(VarParam.RedPacketM.PRIZE_KEY);
+            if (redis.delete(VarParam.RedPacketM.PRIZE_KEY))
+                return ResponseResult.SUCCESS();
+            ExceptionCast.castFail("缓存清理失败");
+        }
+        ExceptionCast.castFail("数据库更新失败");
+        return null;
+    }
+
+    /**
+     * 转换规则:添加
+     */
+    @Transactional
+    public ResponseResult addTransform(VsAwardTransformDto transformDto) throws Exception{
+        VsAwardTransform transform = new VsAwardTransform();
+        MyBeanUtil.copyProperties(transformDto, transform);
+        boolean save = transformService.save(transform);
+        if (save) {
+            if (redis.delete(VarParam.RedPacketM.TRANSFORM_KEY))
+                return ResponseResult.SUCCESS();
+            ExceptionCast.castFail("缓存清理失败");
+        }
+        ExceptionCast.castFail("数据库存入失败");
+        return null;
+    }
+
+    private List<VsAwardTransform> getTransforms() throws Exception{
+        List<String> tranJsons = redis.opsForList().range(VarParam.RedPacketM.TRANSFORM_KEY, 0, -1);
+        if (CollectionUtils.isEmpty(tranJsons)) {
+            if (tranLock.tryLock()) {
+                tranJsons = redis.opsForList().range(VarParam.RedPacketM.TRANSFORM_KEY, 0, -1);
+                if (CollectionUtils.isEmpty(tranJsons)) {
+                    List<VsAwardTransform> transforms = transformService.list();
+                    if (CollectionUtils.isEmpty(transforms)) {
+                        ExceptionCast.castFail("转换规则数据库没有，请立刻设置");
+                    }
+                    List<String> list = new ArrayList<>();
+                    transforms.forEach(tran -> list.add(JSON.toJSONString(tran)));
+                    redis.opsForList().leftPushAll(VarParam.RedPacketM.TRANSFORM_KEY, list);
+                }
+                tranLock.unlock();
+            } else {
+                Thread.sleep(100);
+                return getTransforms();
+            }
+        }
+        List<VsAwardTransform> transformList = new ArrayList<>();
+        tranJsons.forEach(tranStr->{
+            VsAwardTransform transform = JSON.parseObject(tranStr, VsAwardTransform.class);
+            transformList.add(transform);
+        });
+        return transformList;
+    }
+
+    /**
+     * 转换规则：查看所有转换规则
+     */
+    public ResponseResult queryTransforms() throws Exception{
+        List<VsAwardTransform> transforms = this.getTransforms();
+        List<VsAwardTransformVo> transformVos = MyBeanUtil.copyListToList(transforms, VsAwardTransformVo.class);
+
+        //按抽奖次数排序
+        Collections.sort(transformVos, new Comparator<VsAwardTransformVo>() {
+            @Override
+            public int compare(VsAwardTransformVo o1, VsAwardTransformVo o2) {
+                return o1.getConfigureValue() - o2.getConfigureValue();
+            }
+        });
+        return ResponseResult.SUCCESS(transformVos);
+    }
+
+    /**
+     * 转换规则：删除
+     */
+    @Transactional
+    public ResponseResult delTransformById(VsAwardTransformDto transformDto) throws Exception{
+        boolean removeById = transformService.removeById(transformDto.getId());
+        if (removeById) {
+            if (redis.delete(VarParam.RedPacketM.TRANSFORM_KEY)) {
+                return ResponseResult.SUCCESS();
+            }
+            ExceptionCast.castFail("缓存删除失败");
+        }
+        ExceptionCast.castFail("数据库删除失败");
+        return null;
+    }
+
+    /**
+     * 转换规则：根据id查看
+     */
+    public ResponseResult queryTransformById(VsAwardTransformDto transformDto) throws Exception{
+        List<VsAwardTransform> transforms = this.getTransforms();
+        for (VsAwardTransform tran : transforms) {
+            if (tran.getId() == transformDto.getId()) {
+                return ResponseResult.SUCCESS(tran);
+            }
+        }
+        return ResponseResult.FAIL("未找到");
+    }
+
+    public ResponseResult updateTransform(VsAwardTransformDto transformDto) throws Exception{
+        VsAwardTransform transform = new VsAwardTransform();
+        MyBeanUtil.copyProperties(transformDto,transform);
+        boolean update = transformService.updateById(transform);
+        if (update) {
+            if (redis.delete(VarParam.RedPacketM.TRANSFORM_KEY)) {
+                return ResponseResult.SUCCESS();
+            }
+            ExceptionCast.castFail("缓存删除失败");
+        }
+        ExceptionCast.castFail("数据库删除失败");
+        return null;
+    }
+
+    @Transactional
+    public ResponseResult addPlayer(VsAwardPlayerDto playerDto) throws Exception{
+        VsAwardPlayer player = new VsAwardPlayer();
+        MyBeanUtil.copyProperties(playerDto, player);
+        boolean save = playerService.save(player);
+        if (save) {
             return ResponseResult.SUCCESS();
         }
         return ResponseResult.FAIL();
+    }
+
+    public ResponseResult queryPlayersByCriteria(VsAwardPlayerDto playerDto) throws Exception{
+        //拼装条件
+        QueryWrapper<VsAwardPlayer> queryWrapper = new QueryWrapper<>();
+        if (null != playerDto.getPlayerStatus()) {
+            queryWrapper.eq("player_status", playerDto.getPlayerStatus());
+        }
+        if (null != playerDto.getOrderBy()) {
+            if (VarParam.RedPacketM.PLAYER_CREATTIME_DESC == playerDto.getOrderBy()) {
+                queryWrapper.orderByDesc("create_time");
+            } else if (VarParam.RedPacketM.PLAYER_AMOUNT_DESC == playerDto.getOrderBy()) {
+                queryWrapper.orderByDesc("has_amount");
+            } else if (VarParam.RedPacketM.PLAYER_JOINTIME_DESC == playerDto.getOrderBy()) {
+                queryWrapper.orderByDesc("join_times");
+            }
+        }
+        if (!StringUtils.isEmpty(playerDto.getUserName())) {
+            queryWrapper.likeRight("user_name", playerDto.getUserName());
+        }
+
+        IPage<VsAwardPlayer> page = playerService.page(new Page<VsAwardPlayer>(playerDto.getCurrent(), playerDto.getSize()), queryWrapper);
+
+
+        return ResponseResult.SUCCESS(Collections.emptyList());
     }
 
     /**

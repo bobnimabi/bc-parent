@@ -8,8 +8,9 @@ import lombok.ToString;
 @ToString
 public class LoginRequest {
 
-    String username;
-    String password;
-    String verifycode;
+   private String username;
+   private String password;
+   private String verifycode;
+   private String dynamicCode;
 
 }
