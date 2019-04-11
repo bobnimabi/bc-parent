@@ -3,11 +3,13 @@ package com.bc.manager.redPacket.dto;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -16,7 +18,7 @@ import java.time.LocalDateTime;
  * </p>
  *
  * @author admin
- * @since 2019-04-09
+ * @since 2019-04-11
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -29,9 +31,11 @@ public class VsAwardTransformDto implements Serializable {
     @TableId(value = "id", type = IdType.AUTO)
     private Integer id;
 
-    private String configureKey;
+    @ApiModelProperty(value = "金额")
+    private BigDecimal amount;
 
-    private Integer configureValue;
+    @ApiModelProperty(value = "转换成的次数")
+    private Integer times;
 
     private LocalDateTime createTime;
 

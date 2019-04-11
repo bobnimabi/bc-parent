@@ -8,7 +8,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
-import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
@@ -18,7 +17,7 @@ import java.time.LocalDateTime;
  * </p>
  *
  * @author admin
- * @since 2019-04-08
+ * @since 2019-04-09
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -44,10 +43,14 @@ public class VsAwardActiveDto implements Serializable {
     @ApiModelProperty(value = "活动过期时间")
     private LocalDateTime timeEnd;
 
-    @ApiModelProperty(value = "模式[1每天重新计算][2活动时间累计]")
-    private Integer activeModel;
+    @ApiModelProperty(value = "活动每天的开始时间")
+    private String dayTimeStart;
+
+    @ApiModelProperty(value = "活动每天的结束时间")
+    private String dayTimeEnd;
 
     @ApiModelProperty(value = "创建时间")
     private LocalDateTime createTime;
+
 
 }

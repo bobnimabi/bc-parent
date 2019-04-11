@@ -1,7 +1,7 @@
 package com.bc.utils.project;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.fasterxml.jackson.databind.util.BeanUtil;
 import org.springframework.beans.BeanUtils;
 
 import java.util.ArrayList;
@@ -56,7 +56,7 @@ public class MyBeanUtil {
     }
 
     //复制page
-    public static <T> Page<T> copyPageToPage(Page page, Class<T> clazz) {
+    public static <T> Page<T> copyPageToPage(IPage page, Class<T> clazz) {
         Page<T> cPage = new Page();
         cPage.setSize(page.getSize());
         cPage.setTotal(page.getTotal());

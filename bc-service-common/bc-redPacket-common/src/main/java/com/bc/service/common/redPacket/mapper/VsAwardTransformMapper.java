@@ -9,7 +9,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
  * </p>
  *
  * @author admin
- * @since 2019-04-09
+ * @since 2019-04-11
  */
 public interface VsAwardTransformMapper extends BaseMapper<VsAwardTransform> {
 

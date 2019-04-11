@@ -2,22 +2,16 @@ package com.bc.manager.redPacket.server;
 
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.bc.common.Exception.ExceptionCast;
 import com.bc.common.constant.VarParam;
+import com.bc.common.response.CommonCode;
 import com.bc.common.response.ResponseResult;
-import com.bc.manager.redPacket.dto.VsAwardActiveDto;
-import com.bc.manager.redPacket.dto.VsAwardPlayerDto;
-import com.bc.manager.redPacket.dto.VsAwardPrizeDto;
-import com.bc.manager.redPacket.dto.VsAwardTransformDto;
-import com.bc.manager.redPacket.vo.VsAwardActiveVo;
-import com.bc.manager.redPacket.vo.VsAwardPrizeVo;
-import com.bc.manager.redPacket.vo.VsAwardTransformVo;
-import com.bc.service.common.redPacket.entity.VsAwardActive;
-import com.bc.service.common.redPacket.entity.VsAwardPlayer;
-import com.bc.service.common.redPacket.entity.VsAwardPrize;
-import com.bc.service.common.redPacket.entity.VsAwardTransform;
+import com.bc.manager.redPacket.dto.*;
+import com.bc.manager.redPacket.vo.*;
+import com.bc.service.common.redPacket.entity.*;
 import com.bc.service.common.redPacket.service.*;
 import com.bc.utils.project.MyBeanUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +21,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -50,7 +48,7 @@ public class RedPacketManagerServer {
     @Autowired
     private IVsMediaService mediaService;
     @Autowired
-    private IVsPayRechargeService payRechargeService;
+    private IVsPayRecordService recordService;
     @Autowired
     private IVsSiteService siteService;
     @Autowired
@@ -72,14 +70,11 @@ public class RedPacketManagerServer {
         VsAwardActive active = new VsAwardActive();
         MyBeanUtil.copyProperties(activeDto, active);
         boolean flag = activeService.updateById(active);
-        if (flag) {
-            //删除过期的活动缓存
-            if (redis.delete(VarParam.RedPacketM.ACTIVE_KEY))
-                return ResponseResult.SUCCESS();
+        if (!flag) ExceptionCast.castFail("数据库更新失败");
+        //删除过期的活动缓存
+        if (!redis.delete(VarParam.RedPacketM.ACTIVE_KEY))
             ExceptionCast.castFail("缓存清理失败");
-        }
-        ExceptionCast.castFail("数据库更新失败");
-        return null;
+        return ResponseResult.SUCCESS();
     }
 
     /**
@@ -124,33 +119,25 @@ public class RedPacketManagerServer {
         VsAwardPrize prize = new VsAwardPrize();
         MyBeanUtil.copyProperties(prizeDto, prize);
         boolean save = prizeService.save(prize);
-        if (save) {
-            if (redis.delete(VarParam.RedPacketM.PRIZE_KEY))
-                return ResponseResult.SUCCESS();
+        if (!save) ExceptionCast.castFail("数据库添加失败");
+        if (!redis.delete(VarParam.RedPacketM.PRIZE_KEY))
             ExceptionCast.castFail("缓存清理失败");
-        }
-        ExceptionCast.castFail("数据库添加失败");
-        return null;
+        return ResponseResult.SUCCESS();
     }
 
     /**
      * 奖品管理：删除
      */
     @Transactional
-    public ResponseResult delPrize(List<VsAwardPrizeDto> prizeDtoList) throws Exception {
-        List<Integer> ids = new ArrayList<>();
-        prizeDtoList.forEach(prizeDto -> ids.add(prizeDto.getId()));
+    public ResponseResult delPrize(List<Integer> ids) throws Exception {
         Long prizeSize = redis.opsForList().size(VarParam.RedPacketM.PRIZE_KEY);
         if (ids.size() >= prizeSize.intValue())
             return ResponseResult.FAIL("奖品不能全部删除！");
         boolean remove = prizeService.removeByIds(ids);
-        if (remove) {
-            if (redis.delete(VarParam.RedPacketM.PRIZE_KEY))
-                return ResponseResult.SUCCESS();
+        if (!remove) ExceptionCast.castFail("数据库更新失败");
+        if (!redis.delete(VarParam.RedPacketM.PRIZE_KEY))
             ExceptionCast.castFail("缓存清理失败");
-        }
-        ExceptionCast.castFail("数据库更新失败");
-        return null;
+        return ResponseResult.SUCCESS();
     }
 
     /**
@@ -161,13 +148,10 @@ public class RedPacketManagerServer {
         VsAwardPrize prize = new VsAwardPrize();
         MyBeanUtil.copyProperties(prizeDto, prize);
         boolean update = prizeService.updateById(prize);
-        if (update) {
-            if (redis.delete(VarParam.RedPacketM.PRIZE_KEY))
-                return ResponseResult.SUCCESS();
+        if (!update) ExceptionCast.castFail("数据库更新失败");
+        if (!redis.delete(VarParam.RedPacketM.PRIZE_KEY))
             ExceptionCast.castFail("缓存清理失败");
-        }
-        ExceptionCast.castFail("数据库更新失败");
-        return null;
+        return ResponseResult.SUCCESS();
     }
 
     /**
@@ -264,14 +248,11 @@ public class RedPacketManagerServer {
         VsAwardPrize prize = new VsAwardPrize();
         MyBeanUtil.copyProperties(prizeDto,prize);
         boolean updateById = prizeService.updateById(prize);
-        if (updateById) {
-            //删除缓存
-            if (redis.delete(VarParam.RedPacketM.PRIZE_KEY))
-                return ResponseResult.SUCCESS();
+        if (!updateById) ExceptionCast.castFail("数据库更新失败");
+        //删除缓存
+        if (!redis.delete(VarParam.RedPacketM.PRIZE_KEY))
             ExceptionCast.castFail("缓存清理失败");
-        }
-        ExceptionCast.castFail("数据库更新失败");
-        return null;
+        return ResponseResult.SUCCESS();
     }
 
     /**
@@ -282,13 +263,10 @@ public class RedPacketManagerServer {
         VsAwardTransform transform = new VsAwardTransform();
         MyBeanUtil.copyProperties(transformDto, transform);
         boolean save = transformService.save(transform);
-        if (save) {
-            if (redis.delete(VarParam.RedPacketM.TRANSFORM_KEY))
-                return ResponseResult.SUCCESS();
+        if (!save) ExceptionCast.castFail("数据库存入失败");
+        if (!redis.delete(VarParam.RedPacketM.TRANSFORM_KEY))
             ExceptionCast.castFail("缓存清理失败");
-        }
-        ExceptionCast.castFail("数据库存入失败");
-        return null;
+        return ResponseResult.SUCCESS();
     }
 
     private List<VsAwardTransform> getTransforms() throws Exception{
@@ -316,6 +294,13 @@ public class RedPacketManagerServer {
             VsAwardTransform transform = JSON.parseObject(tranStr, VsAwardTransform.class);
             transformList.add(transform);
         });
+        //从小到大排序
+        transformList.sort(new Comparator<VsAwardTransform>() {
+            @Override
+            public int compare(VsAwardTransform o1, VsAwardTransform o2) {
+                return o1.getAmount().intValue() - o2.getAmount().intValue();
+            }
+        });
         return transformList;
     }
 
@@ -330,7 +315,7 @@ public class RedPacketManagerServer {
         Collections.sort(transformVos, new Comparator<VsAwardTransformVo>() {
             @Override
             public int compare(VsAwardTransformVo o1, VsAwardTransformVo o2) {
-                return o1.getConfigureValue() - o2.getConfigureValue();
+                return o1.getTimes() - o2.getTimes();
             }
         });
         return ResponseResult.SUCCESS(transformVos);
@@ -342,14 +327,11 @@ public class RedPacketManagerServer {
     @Transactional
     public ResponseResult delTransformById(VsAwardTransformDto transformDto) throws Exception{
         boolean removeById = transformService.removeById(transformDto.getId());
-        if (removeById) {
-            if (redis.delete(VarParam.RedPacketM.TRANSFORM_KEY)) {
-                return ResponseResult.SUCCESS();
-            }
+        if (!removeById) ExceptionCast.castFail("数据库删除失败");
+        if (!redis.delete(VarParam.RedPacketM.TRANSFORM_KEY)) {
             ExceptionCast.castFail("缓存删除失败");
         }
-        ExceptionCast.castFail("数据库删除失败");
-        return null;
+        return ResponseResult.SUCCESS();
     }
 
     /**
@@ -364,32 +346,36 @@ public class RedPacketManagerServer {
         }
         return ResponseResult.FAIL("未找到");
     }
-
+    /**
+     * 转换规则：更新
+     */
+    @Transactional
     public ResponseResult updateTransform(VsAwardTransformDto transformDto) throws Exception{
         VsAwardTransform transform = new VsAwardTransform();
         MyBeanUtil.copyProperties(transformDto,transform);
         boolean update = transformService.updateById(transform);
-        if (update) {
-            if (redis.delete(VarParam.RedPacketM.TRANSFORM_KEY)) {
-                return ResponseResult.SUCCESS();
-            }
+        if (!update) ExceptionCast.castFail("数据库更新失败");
+
+        if (!redis.delete(VarParam.RedPacketM.TRANSFORM_KEY))
             ExceptionCast.castFail("缓存删除失败");
-        }
-        ExceptionCast.castFail("数据库删除失败");
-        return null;
+        return ResponseResult.SUCCESS();
     }
 
+    /**
+     * 会员管理：单笔添加
+     */
     @Transactional
     public ResponseResult addPlayer(VsAwardPlayerDto playerDto) throws Exception{
         VsAwardPlayer player = new VsAwardPlayer();
         MyBeanUtil.copyProperties(playerDto, player);
         boolean save = playerService.save(player);
-        if (save) {
-            return ResponseResult.SUCCESS();
-        }
-        return ResponseResult.FAIL();
+        if (!save) ExceptionCast.cast(CommonCode.FAIL);
+        return ResponseResult.SUCCESS();
     }
 
+    /**
+     * 会员管理：条件分页查询
+     */
     public ResponseResult queryPlayersByCriteria(VsAwardPlayerDto playerDto) throws Exception{
         //拼装条件
         QueryWrapper<VsAwardPlayer> queryWrapper = new QueryWrapper<>();
@@ -410,14 +396,267 @@ public class RedPacketManagerServer {
         }
 
         IPage<VsAwardPlayer> page = playerService.page(new Page<VsAwardPlayer>(playerDto.getCurrent(), playerDto.getSize()), queryWrapper);
-
-
-        return ResponseResult.SUCCESS(Collections.emptyList());
+        return ResponseResult.SUCCESS(MyBeanUtil.copyPageToPage(page, VsAwardPlayerVo.class));
     }
 
     /**
-     *
+     * 会员管理：按照id查询
      */
+    public ResponseResult queryPlayersById(VsAwardPlayerDto playerDto) throws Exception{
+        VsAwardPlayer player = playerService.getById(playerDto.getId());
+        if (null == player) {
+            return ResponseResult.FAIL("未查询到任何信息");
+        }
+        return ResponseResult.SUCCESS(player);
+    }
+
+    /**
+     * 会员管理：修改
+     */
+    @Transactional
+    public ResponseResult updatePlayer(VsAwardPlayerDto playerDto) throws Exception{
+        VsAwardPlayer player = new VsAwardPlayer();
+        MyBeanUtil.copyProperties(playerDto, player);
+        boolean updateById = playerService.updateById(player);
+        if (updateById) {
+            return ResponseResult.SUCCESS();
+        }
+        ExceptionCast.cast(CommonCode.FAIL);
+        return null;
+    }
+    /**
+     * 会员管理：下架
+     */
+    @Transactional
+    public ResponseResult playerSoldOut(VsAwardPlayerDto playerDto) throws Exception{
+        boolean update = playerService.update(
+                new UpdateWrapper<VsAwardPlayer>()
+                        .eq("id", playerDto.getId())
+                        .set("active_status", VarParam.NO)
+        );
+        if (!update) ExceptionCast.cast(CommonCode.FAIL);
+        return ResponseResult.SUCCESS();
+    }
+
+    /**
+     * 会员管理：清除会员
+     */
+    @Transactional
+    public ResponseResult delPlayers(VsAwardPlayerDto playerDto) throws Exception{
+        //删除days天前的会员
+        boolean remove = playerService.remove(
+                new QueryWrapper<VsAwardPlayer>()
+                        .lt("create_time", LocalDateTime.now().minusDays(playerDto.getDays()))
+            );
+        if (!remove) ExceptionCast.castFail("批量会员清除失败");
+        return ResponseResult.SUCCESS();
+    }
 
 
+    /**
+     * 会员管理：批量导入
+     */
+    @Transactional
+    public ResponseResult readExcelPlays(List<Object> list) throws Exception{
+        List<VsAwardPlayer> exPlayers = MyBeanUtil.copyListToList(list, VsAwardPlayer.class);
+        //将金额全部转换成次数
+        List<VsAwardTransform> transforms = getTransforms();
+        int size = transforms.size();
+        exPlayers.forEach(exPlay->{
+            int i = 1;
+            while (i <= size) {
+                if (exPlay.getHasAmount().compareTo(transforms.get(size - i).getAmount()) >= 0) {
+                    exPlay.setJoinTimes(exPlay.getJoinTimes() + transforms.get(size - i).getTimes());
+                    exPlay.setHasAmount(BigDecimal.ZERO);
+                }
+            }
+        });
+
+        List<String> userNameList = new ArrayList<>();
+        exPlayers.forEach(player->userNameList.add(player.getUserName()));
+
+        VsConfigure configure = configureService.getOne(
+                new QueryWrapper<VsConfigure>().eq("configure_key", "players_import_type"));
+        if (null == configure) {
+            ExceptionCast.castFail("请设置导入Excel用户类型");
+        }
+        int playersImportType = Integer.parseInt(configure.getConfigureValue());
+
+        if (playersImportType == VarParam.RedPacketM.IMPORT_PLAYERS_TYPE_ONE) {
+            //导入会员类型：覆盖
+            boolean remove = playerService.remove(
+                    new QueryWrapper<VsAwardPlayer>()
+                            .in("user_name", userNameList)
+            );
+            if (!remove)  ExceptionCast.castFail("删除已存在的会员失败");
+            if (!playerService.saveBatch(exPlayers))  ExceptionCast.castFail("批量会员入库失败");
+            return ResponseResult.SUCCESS();
+        }
+
+        //导入会员类型：累加
+        //如果该会员已经存在，则增加次数
+        List<VsAwardPlayer> dataPlays = playerService.list(
+                new QueryWrapper<VsAwardPlayer>()
+                        .select("id","user_name as userName","join_times as joinTimes")
+                        .in("user_name", userNameList)
+        );
+        if (!CollectionUtils.isEmpty(dataPlays)){
+            Iterator<VsAwardPlayer> iterator = exPlayers.iterator();
+            dataPlays.forEach(dataPlay->{
+                while (iterator.hasNext()) {
+                    VsAwardPlayer exPlayer = iterator.next();
+                    if (dataPlay.getUserName().equals(exPlayer.getUserName())) {
+                        dataPlay.setJoinTimes(dataPlay.getJoinTimes() + exPlayer.getJoinTimes());
+                        iterator.remove();
+                    }
+                }
+            });
+            boolean updateBatchById = playerService.updateBatchById(dataPlays);
+            if (!updateBatchById) {
+                ExceptionCast.castFail("更新已有用户的抽红包次数失败");
+            }
+        }
+        if (!CollectionUtils.isEmpty(exPlayers)){
+            boolean saveBatch = playerService.saveBatch(exPlayers);
+            if (!saveBatch) {
+                ExceptionCast.castFail("批量添加新用户失败");
+            }
+        }
+        return ResponseResult.SUCCESS();
+    }
+
+    /**
+     * 会员管理：批量删除
+     */
+    public ResponseResult delPlayersBatch(List<Integer> ids) throws Exception{
+        boolean removeByIds = playerService.removeByIds(ids);
+        if (!removeByIds) {
+            ExceptionCast.castFail("批量删除失败");
+        }
+        return ResponseResult.SUCCESS();
+    }
+    /**
+     * 抽奖记录：删除
+     */
+    public ResponseResult delRecordBatch(List<Integer> ids) {
+        boolean removeByIds = recordService.removeByIds(ids);
+        if (!removeByIds) {
+            ExceptionCast.cast(CommonCode.FAIL);
+        }
+        return ResponseResult.SUCCESS();
+    }
+
+    /**
+     * 抽奖记录：条件查询
+     */
+    public Page<VsPayRecordVo> queryRecordByCriteria(VsPayRecordDto recordDto) throws Exception{
+        QueryWrapper<VsPayRecord> queryWrapper = new QueryWrapper<>();
+        if (null != recordDto.getPayStatus()) {
+            queryWrapper.eq("pay_status", recordDto.getPayStatus());
+        }
+        if (null != recordDto.getStartTime()) {
+            queryWrapper.gt("time_order", recordDto.getStartTime());
+        }
+        if (null != recordDto.getEndTime()) {
+            queryWrapper.lt("time_order", recordDto.getEndTime());
+        }
+        if (!StringUtils.isEmpty(recordDto.getUserName())) {
+            queryWrapper.eq("id", recordDto.getUserName())
+                        .or()
+                        .eq("user_name", recordDto.getUserName());
+        }
+        IPage<VsPayRecord> page = recordService.page(new Page<VsPayRecord>(recordDto.getCurrent(), recordDto.getSize()), queryWrapper);
+        Page<VsPayRecordVo> vsPayRecordVoPage = MyBeanUtil.copyPageToPage(page, VsPayRecordVo.class);
+        return vsPayRecordVoPage;
+
+    }
+    /**
+     * 抽奖记录：导出Excel
+     */
+    public List<VsPayRecordVo> queryRecordByCriteria2(VsPayRecordDto recordDto) throws Exception{
+        QueryWrapper<VsPayRecord> queryWrapper = new QueryWrapper<>();
+        if (null != recordDto.getPayStatus()) {
+            queryWrapper.eq("pay_status", recordDto.getPayStatus());
+        }
+        if (null != recordDto.getStartTime()) {
+            queryWrapper.gt("time_order", recordDto.getStartTime());
+        }
+        if (null != recordDto.getEndTime()) {
+            queryWrapper.lt("time_order", recordDto.getEndTime());
+        }
+        if (!StringUtils.isEmpty(recordDto.getUserName())) {
+            queryWrapper.eq("id", recordDto.getUserName())
+                    .or()
+                    .eq("user_name", recordDto.getUserName());
+        }
+        List<VsPayRecord> list = recordService.list(queryWrapper);
+        return MyBeanUtil.copyListToList(list, VsPayRecordVo.class);
+    }
+
+    /**
+     * 抽奖记录：清除
+     */
+    public ResponseResult delRecords(VsPayRecordDto recordDto) throws Exception{
+        //删除days天前的会员
+        boolean remove = recordService.remove(
+                new QueryWrapper<VsPayRecord>()
+                        .lt("create_time", LocalDateTime.now().minusDays(recordDto.getDays()))
+        );
+        if (!remove) ExceptionCast.castFail("批量订单清除失败");
+        return ResponseResult.SUCCESS();
+    }
+    /**
+     * 抽奖记录：统计
+     */
+    public ResponseResult statisRecords() throws Exception{
+        StaticRecordsVo staticRecordsVo = new StaticRecordsVo();
+
+        //查询今日每小时赠送明细
+        BigDecimal[] dayHour = staticRecordsVo.getDayHourAmount();
+        for (int i = 0; i < dayHour.length; i++) {
+            dayHour[i] = BigDecimal.ZERO;
+        }
+        staticRecordsVo.setBeforeAmount(BigDecimal.ZERO);
+        staticRecordsVo.setTodayAmount(BigDecimal.ZERO);
+        staticRecordsVo.setYestAmount(BigDecimal.ZERO);
+
+        LocalDateTime todayStart = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);//今天零点
+        LocalDateTime todayEnd = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);//今天24点
+
+        List<VsPayRecord> todayRecords = recordService.list(
+                new QueryWrapper<VsPayRecord>()
+                        .select("id","total_amount as totalAmount","create_time as createTime")
+                        .between("create_time", todayStart, todayEnd)
+        );
+        todayRecords.forEach(record->{
+            int hour = record.getCreateTime().getHour();
+            dayHour[hour] = dayHour[hour].add(record.getTotalAmount());
+        });
+
+        LocalDateTime beforeStart = LocalDateTime.of(LocalDate.now().minusDays(2), LocalTime.MIN);//前天零点
+        LocalDateTime todayEnd2 = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);//今天24点
+        int dayOfYear = LocalDateTime.now().getDayOfYear();
+        List<VsPayRecord> threeDayRecords = recordService.list(
+                new QueryWrapper<VsPayRecord>()
+                        .between("create_time", beforeStart, todayEnd2)
+        );
+        threeDayRecords.forEach(record->{
+            if (dayOfYear == record.getCreateTime().getDayOfYear()){
+                staticRecordsVo.setTodayAmount(staticRecordsVo.getTodayAmount().add(record.getTotalAmount()));
+            }else if (record.getCreateTime().getDayOfYear() == dayOfYear-1){
+                staticRecordsVo.setYestAmount(staticRecordsVo.getYestAmount().add(record.getTotalAmount()));
+            } else if (record.getCreateTime().getDayOfYear() == dayOfYear - 2) {
+                staticRecordsVo.setBeforeAmount(staticRecordsVo.getBeforeAmount().add(record.getTotalAmount()));
+            }
+        });
+        return ResponseResult.SUCCESS(staticRecordsVo);
+    }
+
+    public ResponseResult updateBrand(VsSiteDto siteDto) throws Exception{
+        VsSite site = new VsSite();
+        MyBeanUtil.copyProperties(siteDto,site);
+        boolean updateById = siteService.updateById(site);
+        if (!updateById) ExceptionCast.castFail("更新失败");
+        return ResponseResult.SUCCESS();
+    }
 }

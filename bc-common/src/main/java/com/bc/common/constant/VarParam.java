@@ -40,6 +40,8 @@ public class VarParam {
         public static final String PRIZE_KEY = REDPACKET_M_PRE + "Prize";
         //转换规则
         public static final String TRANSFORM_KEY = REDPACKET_M_PRE + "Transform";
+        //默认主题
+        public static final String DEFAULT_THEME = REDPACKET_M_PRE + "DefaultTheme";
 
         /**
          * 项目参数
@@ -62,15 +64,21 @@ public class VarParam {
         /**
          * mysql 状态值
          */
-        //红包模式1：每天重新计算
-        public static final int ACTIVEMODEL_ONE = 1;
-        //红包模式2：活动时间累计
-        public static final int ACTIVEMODEL_TWO = 2;
         //奖品类型：1红包
         public static final int PRIZE_TYPE_ONE = 1;
         //奖品类型：2谢谢参与
         public static final int PRIZE_TYPE_TWO = 2;
-
+        //导入会员类型：1覆盖
+        public static final int IMPORT_PLAYERS_TYPE_ONE = 1;
+        //导入会员类型：2累加
+        public static final int IMPORT_PLAYERS_TYPE_TWO = 2;
+        //支付状态：待派送
+        public static final int PAY_STATUS_ONE = 1;
+        //支付状态：已派送
+        public static final int PAY_STATUS_TWO = 2;
+        //客户端类型：1pc
+        public static final int CLIENT_TYPE_ONE = 1;
+        //客户端类型：2mobile
+        public static final int CLIENT_TYPE_TWO = 2;
     }
-
 }

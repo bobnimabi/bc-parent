@@ -6,7 +6,11 @@ import com.bc.common.constant.VarParam;
 import com.bc.common.response.ResponseResult;
 import com.bc.manager.redPacket.dto.*;
 import com.bc.manager.redPacket.server.RedPacketManagerServer;
+import com.bc.manager.redPacket.vo.ExportRecordVo;
+import com.bc.manager.redPacket.vo.VsPayRecordVo;
 import com.bc.service.common.redPacket.entity.VsAwardPrize;
+import com.bc.service.common.redPacket.entity.VsPayRecord;
+import com.bc.utils.ExcelUtil;
 import com.bc.utils.project.MyBeanUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -14,13 +18,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,10 +53,11 @@ public class RedPacketManagerController {
                 && activeDto.getTimeEnd().isBefore(LocalDateTime.now())) {
             ExceptionCast.castInvalid("活动过期过期时间不能早于当前时间");
         }
-        if (null != activeDto.getActiveModel()
-                && (VarParam.RedPacketM.ACTIVEMODEL_ONE != activeDto.getActiveModel()
-                && VarParam.RedPacketM.ACTIVEMODEL_TWO != activeDto.getActiveModel())) {
-            ExceptionCast.castInvalid("活动模式不符合规范");
+        if (activeDto.getTimeStart().isAfter(activeDto.getTimeEnd())) {
+            ExceptionCast.castInvalid("活动开始时间不能晚于截止时间");
+        }
+        if (activeDto.getDayTimeStart().compareTo(activeDto.getDayTimeEnd()) > 0) {
+            ExceptionCast.castInvalid("活动每天开始的时间不能晚于每天截止时间");
         }
         return rpmServer.updateActive(activeDto);
     }
@@ -93,15 +100,10 @@ public class RedPacketManagerController {
 
     @ApiOperation("奖品管理：删除")
     @PostMapping("/delPrize")
-    public ResponseResult delPrize(@RequestBody VsAwardActiveDtoList vsAwardActiveDtoList) throws Exception{
-        if (null == vsAwardActiveDtoList || CollectionUtils.isEmpty(vsAwardActiveDtoList.getPrizeDtoList()))
+    public ResponseResult delPrize(@RequestBody IdList idList) throws Exception{
+        if (null == idList || CollectionUtils.isEmpty(idList.getIds()))
             ExceptionCast.castInvalid("未传入奖品的id");
-        List<VsAwardPrizeDto> prizeDtoList = vsAwardActiveDtoList.getPrizeDtoList();
-
-        for (VsAwardPrizeDto prizeDto : prizeDtoList ) {
-            if (null == prizeDto.getId()) ExceptionCast.castInvalid("未传入奖品的id");
-        }
-        return rpmServer.delPrize(prizeDtoList);
+        return rpmServer.delPrize(idList.getIds());
     }
 
     @ApiOperation("奖品管理：修改")
@@ -172,9 +174,15 @@ public class RedPacketManagerController {
     @PostMapping("/addTransform")
     public ResponseResult addTransform(@RequestBody VsAwardTransformDto transformDto) throws Exception{
         if (null == transformDto
-                || null == transformDto.getConfigureValue()
-                || StringUtils.isEmpty(transformDto.getConfigureKey())
+                || null == transformDto.getTimes()
+                || null ==transformDto.getAmount()
         ) ExceptionCast.castInvalid("参数不全");
+        if (transformDto.getTimes() < 0) {
+            ExceptionCast.castInvalid("抽奖次数不能小于0");
+        }
+        if (transformDto.getAmount().compareTo(BigDecimal.ZERO) < 0) {
+            ExceptionCast.castInvalid("金额不能小于0");
+        }
 
         return rpmServer.addTransform(transformDto);
     }
@@ -209,11 +217,18 @@ public class RedPacketManagerController {
     public ResponseResult updateTransform(@RequestBody VsAwardTransformDto transformDto) throws Exception{
         if (null == transformDto
                 || null == transformDto.getId()
-                || null == transformDto.getConfigureValue()
-                || StringUtils.isEmpty(transformDto.getConfigureKey())
+                || null == transformDto.getTimes()
+                || null ==transformDto.getAmount()
         ) {
             ExceptionCast.castInvalid("参数不全");
         }
+        if (transformDto.getTimes() < 0) {
+            ExceptionCast.castInvalid("抽奖次数不能小于0");
+        }
+        if (transformDto.getAmount().compareTo(BigDecimal.ZERO) < 0) {
+            ExceptionCast.castInvalid("金额不能小于0");
+        }
+
         return rpmServer.updateTransform(transformDto);
     }
 
@@ -230,11 +245,28 @@ public class RedPacketManagerController {
         if (VarParam.YES != playerDto.getPlayerStatus() && VarParam.NO != playerDto.getPlayerStatus()) {
             ExceptionCast.castInvalid("上架状态有误");
         }
+        if (playerDto.getHasAmount().compareTo(BigDecimal.ZERO) < 0) {
+            ExceptionCast.castInvalid("金额不能小于0");
+        }
+        if (playerDto.getJoinTimes() < 0) {
+            ExceptionCast.castInvalid("可抽奖次数不能小于0");
+        }
         return rpmServer.addPlayer(playerDto);
     }
 
-//    @ApiOperation("会员管理：批量导入")
-//    @PostMapping("")
+    //sheet 的序号 从1开始
+    //headLineNum 行号最小值为0，去掉表头所以从第1行开始读
+    @ApiOperation("会员管理：批量导入")
+    @PostMapping("readExcelPlays")
+    public ResponseResult readExcelPlays(MultipartFile excel,@RequestParam(defaultValue = "1") int sheetNo,
+                            @RequestParam(defaultValue = "1") int headLineNum) throws Exception{
+        List<Object> list = ExcelUtil.readExcel(excel, new ImportPlaysDto(), sheetNo, headLineNum);
+        if (CollectionUtils.isEmpty(list)) {
+            ExceptionCast.castFail("空Excel文件");
+        }
+        return rpmServer.readExcelPlays(list);
+    }
+
 
     @ApiOperation("会员管理：条件分页查询")
     @PostMapping("/queryPlayersByCriteria")
@@ -258,16 +290,170 @@ public class RedPacketManagerController {
         return rpmServer.queryPlayersByCriteria(playerDto);
     }
 
-//    @ApiOperation("会员管理：按照id查询")
-//    @ApiOperation("会员管理：修改")
-//    @ApiOperation("会员管理：下架")
-//    @ApiOperation("会员管理：清除会员")
+    @ApiOperation("会员管理：按照id查询")
+    @PostMapping("/queryPlayersById")
+    public ResponseResult queryPlayersById(@RequestBody VsAwardPlayerDto playerDto) throws Exception{
+        if (null == playerDto || null == playerDto.getId()) {
+            ExceptionCast.castInvalid("未传入Id");
+        }
+        return rpmServer.queryPlayersById(playerDto);
+    }
+    @ApiOperation("会员管理：修改")
+    @PostMapping("/updatePlayer")
+    public ResponseResult updatePlayer(@RequestBody VsAwardPlayerDto playerDto) throws Exception{
+        if (null == playerDto
+                || null == playerDto.getId()
+                || StringUtils.isEmpty(playerDto.getUserName())
+                || null == playerDto.getHasAmount()
+                || null == playerDto.getPlayerStatus()
+                || null == playerDto.getJoinTimes()
+        ) ExceptionCast.castInvalid("参数不全");
+        if (VarParam.YES != playerDto.getPlayerStatus() && VarParam.NO != playerDto.getPlayerStatus()) {
+            ExceptionCast.castInvalid("上架状态有误");
+        }
+
+        if (playerDto.getHasAmount().compareTo(BigDecimal.ZERO) < 0) {
+            ExceptionCast.castInvalid("金额不能小于0");
+        }
+        if (playerDto.getJoinTimes() < 0) {
+            ExceptionCast.castInvalid("可抽奖次数不能小于0");
+        }
+        return rpmServer.updatePlayer(playerDto);
+
+    }
+    @ApiOperation("会员管理：下架")
+    @PostMapping("/playerSoldOut")
+    public ResponseResult playerSoldOut(@RequestBody VsAwardPlayerDto playerDto) throws Exception{
+        if (null == playerDto || null == playerDto.getId())
+            ExceptionCast.castInvalid("未传入id");
+        return rpmServer.playerSoldOut(playerDto);
+    }
+
+    @ApiOperation("会员管理：清除会员")
+    @PostMapping("/delPlayers")
+    public ResponseResult delPlayers(@RequestBody VsAwardPlayerDto playerDto) throws Exception{
+        if (null == playerDto || null == playerDto.getDays()) {
+            ExceptionCast.castInvalid("参数不全");
+        }
+        if (playerDto.getDays() < 0) {
+            ExceptionCast.castInvalid("保留天数不能小于0");
+        }
+        return rpmServer.delPlayers(playerDto);
+    }
+
+    @ApiOperation("会员管理：清除会员")
+    @PostMapping("/delPlayersBatch")
+    public ResponseResult delPlayersBatch(@RequestBody IdList idList) throws Exception {
+        if (null == idList || CollectionUtils.isEmpty(idList.getIds())) {
+            ExceptionCast.castInvalid("参数不全");
+        }
+        return rpmServer.delPlayersBatch(idList.getIds());
+    }
+
+    @ApiOperation("抽奖记录：删除")
+    @PostMapping("/delRecordBatch")
+    public ResponseResult delRecordBatch(@RequestBody IdList idList) throws Exception{
+        if (null == idList || null == idList.getIds()) {
+            ExceptionCast.castInvalid("参数不全");
+        }
+        return rpmServer.delRecordBatch(idList.getIds());
+    }
+
+//    @ApiOperation("抽奖记录：重派")
+
+    @ApiOperation("抽奖记录：条件查询")
+    @PostMapping("/queryRecordByCriteria")
+    public ResponseResult queryRecordByCriteria(@RequestBody VsPayRecordDto recordDto) throws Exception{
+        if (null == recordDto) {
+            ExceptionCast.castInvalid("未传入参数");
+        }
+        if (null != recordDto.getPayStatus()
+                &&VarParam.RedPacketM.PAY_STATUS_ONE != recordDto.getPayStatus()
+                &&VarParam.RedPacketM.PAY_STATUS_TWO != recordDto.getPayStatus()
+        ) ExceptionCast.castInvalid("派送状态有误");
+        if (null != recordDto.getStartTime()
+                && null != recordDto.getEndTime()
+                && recordDto.getStartTime().isAfter(recordDto.getEndTime())) {
+            ExceptionCast.castInvalid("起始时间不能早于结束时间");
+        }
+        Page<VsPayRecordVo> vsPayRecordVoPage = rpmServer.queryRecordByCriteria(recordDto);
+        return ResponseResult.SUCCESS(vsPayRecordVoPage);
+    }
+    @ApiOperation("抽奖记录：导出Excel")
+    @PostMapping("/exportRecordExcel")
+    public void exportRecordExcel(@RequestBody VsPayRecordDto recordDto,HttpServletResponse response) throws Exception {
+        if (null == recordDto) {
+            ExceptionCast.castInvalid("未传入参数");
+        }
+        if (null != recordDto.getPayStatus()
+                &&VarParam.RedPacketM.PAY_STATUS_ONE != recordDto.getPayStatus()
+                &&VarParam.RedPacketM.PAY_STATUS_TWO != recordDto.getPayStatus()
+        ) ExceptionCast.castInvalid("派送状态有误");
+        if (null != recordDto.getStartTime()
+                && null != recordDto.getEndTime()
+                && recordDto.getStartTime().isAfter(recordDto.getEndTime())) {
+            ExceptionCast.castInvalid("起始时间不能早于结束时间");
+        }
+        List<VsPayRecordVo> vsPayRecordVos = rpmServer.queryRecordByCriteria2(recordDto);
+        List<ExportRecordVo> exportRecordVos = new ArrayList<>();
+        DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        vsPayRecordVos.forEach(recordVo->{
+            ExportRecordVo exRecord = new ExportRecordVo();
+            exRecord.setClientType(recordVo.getClientType() == VarParam.RedPacketM.CLIENT_TYPE_ONE ? "PC" : "MOBILE");
+            exRecord.setId(recordVo.getId() + "");
+            exRecord.setPayStatus(recordVo.getPayStatus() == VarParam.RedPacketM.PAY_STATUS_ONE ? "待派送" : "已派送");
+            exRecord.setTimeOrder(df.format(recordVo.getTimeOrder()));
+            exRecord.setTotalAmount(recordVo.getTotalAmount().longValue()+"");
+            exRecord.setUserName(recordDto.getUserName());
+            exRecord.setTimePay(df.format(recordVo.getTimePay()));
+            exportRecordVos.add(exRecord);
+        });
+
+        Long time = LocalDateTime.now().toEpochSecond(ZoneOffset.of("+8"));;
+        ExcelUtil.writeExcel(response,exportRecordVos , time+"", time+"", new ExportRecordVo());
+    }
+
+    @ApiOperation("抽奖记录：清除记录")
+    @PostMapping("/delRecords")
+    public ResponseResult delRecords(@RequestBody VsPayRecordDto recordDto) throws Exception{
+        if (null == recordDto || null == recordDto.getDays()) {
+            ExceptionCast.castInvalid("参数不全");
+        }
+        if (recordDto.getDays() < 0) {
+            ExceptionCast.castInvalid("保留天数不能小于0");
+        }
+        return rpmServer.delRecords(recordDto);
+    }
+
+    @ApiOperation("抽奖记录：统计")
+    @PostMapping("/statisRecords")
+    public ResponseResult statisRecords() throws Exception{
+        return rpmServer.statisRecords();
+    }
+
+    @ApiOperation("品牌设置：修改")
+    @PostMapping("/updateBrand")
+    public ResponseResult updateBrand(@RequestBody VsSiteDto siteDto) throws Exception {
+        if (null == siteDto
+            || StringUtils.isEmpty(siteDto.getSiteName())
+            || StringUtils.isEmpty(siteDto.getCustomerUrl())
+            || StringUtils.isEmpty(siteDto.getSiteUrl())
+        ) ExceptionCast.castInvalid("参数不全");
+        return rpmServer.updateBrand(siteDto);
+    }
 
 
-
-
-
-
+//    @ApiOperation("导航设置：添加")
+//    @ApiOperation("导航设置：查询")
+//    @ApiOperation("导航设置：删除")
+//    @ApiOperation("导航设置：修改")
+//    @ApiOperation("导航设置：按id查询")
+//
+//    @ApiOperation("配置项：添加")
+//    @ApiOperation("配置项：查询")
+//    @ApiOperation("配置项：删除")
+//    @ApiOperation("配置项：修改")
+//    @ApiOperation("配置项：按id查询")
 
 
 

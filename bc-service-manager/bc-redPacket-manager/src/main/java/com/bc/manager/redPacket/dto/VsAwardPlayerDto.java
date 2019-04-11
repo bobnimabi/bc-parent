@@ -58,5 +58,9 @@ public class VsAwardPlayerDto extends Page implements Serializable{
     @ApiModelProperty(value = "排序规则 1：导入时间降序 2：流水金额降序 3：抽奖次数降序")
     private Integer orderBy;
 
+    //清除会员条件
+    @ApiModelProperty(value = "保留days天的会员，剩下的全部删除")
+    private Integer days;
+
 
 }
