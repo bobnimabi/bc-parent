@@ -11,8 +11,9 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/")
 public class RedPacketController {
     @ApiOperation("抽红包")
-    @PostMapping("/updateActive")
-    public ResponseResult updateActive() throws Exception{
+    @PostMapping("/playRedPacket")
+    public ResponseResult playRedPacket() throws Exception{
+
         return null;
     }
 

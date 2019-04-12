@@ -5,9 +5,11 @@ import com.alibaba.excel.metadata.BaseRowModel;
 import lombok.Data;
 import lombok.ToString;
 
+import java.io.Serializable;
+
 @Data
 @ToString
-public class ImportPlaysDto extends BaseRowModel {
+public class ImportPlaysDto extends BaseRowModel  implements Serializable {
     @ExcelProperty(index = 0)
     private String userName;
 

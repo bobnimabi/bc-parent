@@ -443,17 +443,108 @@ public class RedPacketManagerController {
     }
 
 
-//    @ApiOperation("导航设置：添加")
-//    @ApiOperation("导航设置：查询")
-//    @ApiOperation("导航设置：删除")
-//    @ApiOperation("导航设置：修改")
-//    @ApiOperation("导航设置：按id查询")
-//
-//    @ApiOperation("配置项：添加")
-//    @ApiOperation("配置项：查询")
-//    @ApiOperation("配置项：删除")
-//    @ApiOperation("配置项：修改")
-//    @ApiOperation("配置项：按id查询")
+    @ApiOperation("导航设置：添加")
+    @PostMapping("/navAdd")
+    public ResponseResult navAdd(@RequestBody VsNavDto navDto) throws Exception {
+        if (null == navDto
+                || StringUtils.isEmpty(navDto.getNavName())
+                || StringUtils.isEmpty(navDto.getNavCode())
+                || StringUtils.isEmpty(navDto.getNavUrl())
+                || null == navDto.getNavTarget()
+        ) ExceptionCast.castInvalid("参数不全");
+        return rpmServer.navAdd(navDto);
+    }
+
+    @ApiOperation("导航设置：查询")
+    @PostMapping("/navQuery")
+    public ResponseResult navQuery(@RequestBody Page page) throws Exception {
+        if (null == page
+            ||  page.getCurrent() <= 0
+            ||  page.getSize() <= 0
+        ) ExceptionCast.castInvalid("参数无效或有误");
+
+        return rpmServer.navQuery(page);
+    }
+    @ApiOperation("导航设置：删除")
+    @PostMapping("/navDel")
+    public ResponseResult navDel(@RequestBody VsNavDto navDto) throws Exception {
+        if (null == navDto
+                ||  null == navDto.getId()
+        ) ExceptionCast.castInvalid("参数无效或有误");
+
+        return rpmServer.navDel(navDto);
+    }
+
+    @ApiOperation("导航设置：按id查询")
+    @PostMapping("/navQueryById")
+    public ResponseResult navQueryById(@RequestBody VsNavDto navDto) throws Exception {
+        if (null == navDto
+                ||  null == navDto.getId()
+        ) ExceptionCast.castInvalid("参数无效或有误");
+
+        return rpmServer.navQueryById(navDto);
+    }
+
+    @ApiOperation("导航设置：修改")
+    @PostMapping("/navUpdateById")
+    public ResponseResult navUpdateById(@RequestBody VsNavDto navDto) throws Exception {
+        if (null == navDto
+                || StringUtils.isEmpty(navDto.getNavName())
+                || StringUtils.isEmpty(navDto.getNavCode())
+                || StringUtils.isEmpty(navDto.getNavUrl())
+                || null == navDto.getNavTarget()
+        ) ExceptionCast.castInvalid("参数不全");
+        return rpmServer.navQueryById(navDto);
+    }
+
+    @ApiOperation("配置项：添加")
+    @PostMapping("/configAdd")
+    public ResponseResult configAdd(@RequestBody VsConfigureDto configureDto) throws Exception {
+        if (null == configureDto
+                || StringUtils.isEmpty(configureDto.getConfigureKey())
+                || StringUtils.isEmpty(configureDto.getConfigureValue())
+        ) ExceptionCast.castInvalid("参数不全");
+        return rpmServer.configAdd(configureDto);
+    }
+
+    @ApiOperation("配置项：查询")
+    @PostMapping("/configQuery")
+    public ResponseResult configQuery(@RequestBody Page page) throws Exception {
+        if (null == page
+                ||  page.getCurrent() <= 0
+                ||  page.getSize() <= 0
+        ) ExceptionCast.castInvalid("参数无效或有误");
+        return rpmServer.configQuery(page);
+    }
+
+    @ApiOperation("配置项：删除")
+    @PostMapping("/configDel")
+    public ResponseResult configDel(@RequestBody VsConfigureDto configureDto) throws Exception {
+        if (null == configureDto
+                || null == configureDto.getId()
+        ) ExceptionCast.castInvalid("参数不全");
+        return rpmServer.configDel(configureDto);
+    }
+    @ApiOperation("配置项：按id查询")
+    @PostMapping("/configQueryById")
+    public ResponseResult configQueryById(@RequestBody VsConfigureDto configureDto) throws Exception {
+        if (null == configureDto
+                || null == configureDto.getId()
+        ) ExceptionCast.castInvalid("参数不全");
+        return rpmServer.configQueryById(configureDto);
+    }
+    @ApiOperation("配置项：修改")
+    @PostMapping("/configUpdate")
+    public ResponseResult configUpdate(@RequestBody VsConfigureDto configureDto) throws Exception {
+        if (null == configureDto
+                || null == configureDto.getId()
+                || StringUtils.isEmpty(configureDto.getConfigureKey())
+                || StringUtils.isEmpty(configureDto.getConfigureValue())
+        ) ExceptionCast.castInvalid("参数不全");
+
+        return rpmServer.configUpdate(configureDto);
+    }
+
 
 
 

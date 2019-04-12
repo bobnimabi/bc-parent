@@ -14,6 +14,7 @@ import com.bc.manager.redPacket.vo.*;
 import com.bc.service.common.redPacket.entity.*;
 import com.bc.service.common.redPacket.service.*;
 import com.bc.utils.project.MyBeanUtil;
+import com.netflix.discovery.converters.Auto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -53,6 +54,8 @@ public class RedPacketManagerServer {
     private IVsSiteService siteService;
     @Autowired
     private StringRedisTemplate redis;
+    @Autowired
+    private IVsNavService navService;
 
     //活动锁
     private ReentrantLock activeLock;
@@ -652,11 +655,112 @@ public class RedPacketManagerServer {
         return ResponseResult.SUCCESS(staticRecordsVo);
     }
 
+    /**
+     * 品牌设置：修改
+     */
     public ResponseResult updateBrand(VsSiteDto siteDto) throws Exception{
         VsSite site = new VsSite();
         MyBeanUtil.copyProperties(siteDto,site);
         boolean updateById = siteService.updateById(site);
         if (!updateById) ExceptionCast.castFail("更新失败");
+        return ResponseResult.SUCCESS();
+    }
+
+    /**
+     * 导航设置：添加
+     */
+    public ResponseResult navAdd(VsNavDto navDto) throws Exception{
+        VsNav nav = new VsNav();
+        MyBeanUtil.copyProperties(navDto,nav);
+        boolean save = navService.save(nav);
+        if (!save) {
+            ExceptionCast.castFail("添加失败");
+        }
+        return ResponseResult.SUCCESS("添加成功");
+    }
+
+    /**
+     * 导航查询
+     */
+    public ResponseResult navQuery(Page page) throws Exception{
+        IPage page1 = navService.page(page);
+        return ResponseResult.SUCCESS(page1);
+    }
+    /**
+     * 导航删除
+     */
+    public ResponseResult navDel(VsNavDto navDto) throws Exception{
+        boolean removeById = navService.removeById(navDto.getId());
+        if (!removeById) {
+            ExceptionCast.castFail("删除失败");
+        }
+        return null;
+    }
+
+    /**
+     * 导航根据id查询
+     */
+    public ResponseResult navQueryById(VsNavDto navDto) throws Exception{
+        VsNav byId = navService.getById(navDto.getId());
+        if (null == byId) {
+            ExceptionCast.castFail("查询失败");
+        }
+        return ResponseResult.SUCCESS(byId);
+    }
+
+    /**
+     * 配置项：添加
+     */
+    public ResponseResult configAdd(VsConfigureDto configureDto) throws Exception{
+        VsConfigure configure = new VsConfigure();
+        MyBeanUtil.copyProperties(configureDto, configure);
+        boolean save = configureService.save(configure);
+        if (!save) {
+            ExceptionCast.castFail("存入失败");
+        }
+        return ResponseResult.SUCCESS();
+    }
+
+    /**
+     *配置项：查询
+     */
+    public ResponseResult configQuery(Page page) throws Exception{
+        IPage page1 = configureService.page(page);
+        return ResponseResult.SUCCESS(page1);
+    }
+
+    /**
+     *配置项：删除
+     */
+    public ResponseResult configDel(VsConfigureDto configureDto) throws Exception{
+        boolean removeById = configureService.removeById(configureDto.getId());
+        if (!removeById) {
+            ExceptionCast.castFail("删除失败");
+        }
+        return ResponseResult.SUCCESS();
+    }
+
+    /**
+     * 配置项：根据id查询
+     */
+    public ResponseResult configQueryById(VsConfigureDto configureDto) throws Exception{
+        VsConfigure byId = configureService.getById(configureDto.getId());
+        if (null == byId) {
+            ExceptionCast.castFail("查询失败");
+        }
+        return ResponseResult.SUCCESS(byId);
+    }
+
+    /**
+     * 配置项：修改
+     */
+    public ResponseResult configUpdate(VsConfigureDto configureDto) throws Exception{
+        VsConfigure configure = new VsConfigure();
+        MyBeanUtil.copyProperties(configureDto, configure);
+        boolean updateById = configureService.updateById(configure);
+        if (!updateById) {
+            ExceptionCast.castFail("修改失败");
+        }
         return ResponseResult.SUCCESS();
     }
 }

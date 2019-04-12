@@ -27,8 +27,9 @@ public class CodeGenerator {
 //                "vs_configure",
 //                "vs_log",
 //                "vs_media",
-                "vs_pay_record",
+//                "vs_pay_record",
 //                "vs_site",
+                "vs_nav",
         };
 
         //配置数据库信息

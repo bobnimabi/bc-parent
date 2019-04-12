@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 /**
@@ -14,7 +15,7 @@ import java.math.BigDecimal;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
-public class StaticRecordsVo extends BaseRowModel {
+public class StaticRecordsVo extends BaseRowModel  implements Serializable {
     //0-23小时，金额统计
     private BigDecimal[] dayHourAmount = new BigDecimal[24];
     //今天总金额

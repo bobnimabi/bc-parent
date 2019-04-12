@@ -14,7 +14,6 @@ import lombok.experimental.Accessors;
  * <p>
  * 抽奖活动
  * </p>
- *
  * @author admin
  * @since 2019-04-09
  */
@@ -50,6 +49,4 @@ public class VsAwardActive implements Serializable {
 
     @ApiModelProperty(value = "创建时间")
     private LocalDateTime createTime;
-
-
 }
