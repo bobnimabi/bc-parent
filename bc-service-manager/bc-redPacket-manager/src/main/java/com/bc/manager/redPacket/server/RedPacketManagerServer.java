@@ -81,13 +81,10 @@ public class RedPacketManagerServer {
     }
 
     /**
-     * 获取红包(防止并发下缓存雪崩)
+     * 获取红包活动(防止并发下缓存雪崩)
      * 双重检查锁+互斥锁+递归调用
-     *
-     * @return
-     * @throws Exception
      */
-    private VsAwardActiveVo getActive() throws Exception {
+    private VsAwardActive getActive() throws Exception {
         String activeJson = redis.opsForValue().get(VarParam.RedPacketM.ACTIVE_KEY);
         if (null == activeJson) {
             if (activeLock.tryLock()) {
@@ -103,15 +100,18 @@ public class RedPacketManagerServer {
                 return getActive();
             }
         }
-        VsAwardActiveVo activeVo = JSON.parseObject(activeJson, VsAwardActiveVo.class);
-        return activeVo;
+        VsAwardActive active = JSON.parseObject(activeJson, VsAwardActive.class);
+        return active;
     }
 
     /**
      * 红包活动的查看
      */
     public ResponseResult queryActive() throws Exception {
-        return ResponseResult.SUCCESS(getActive());
+        VsAwardActive active = this.getActive();
+        VsAwardActiveVo activeVo = new VsAwardActiveVo();
+        MyBeanUtil.copyProperties(active,activeVo);
+        return ResponseResult.SUCCESS(activeVo);
     }
 
     /**
@@ -164,10 +164,19 @@ public class RedPacketManagerServer {
         List<String> prizesJsons = redis.opsForList().range(VarParam.RedPacketM.PRIZE_KEY, 0, -1);
         if (CollectionUtils.isEmpty(prizesJsons)){
             if (prizeLock.tryLock()) {
+                prizesJsons = redis.opsForList().range(VarParam.RedPacketM.PRIZE_KEY, 0, -1);
                 if (CollectionUtils.isEmpty(prizesJsons)) {
                     //从数据库获取，放入缓存
                     List<VsAwardPrize> prizeList = prizeService.list();
                     if (CollectionUtils.isEmpty(prizeList)) ExceptionCast.castFail("数据库没有任何奖品");
+                    //按照金额从小到大排序
+                    //奖品排序
+                    prizeList.sort(new Comparator<VsAwardPrize>() {
+                        @Override
+                        public int compare(VsAwardPrize o1, VsAwardPrize o2) {
+                            return o1.getTotalAmount().compareTo(o2.getTotalAmount());
+                        }
+                    });
                     List<String> prizeStrList = null;
                     for (VsAwardPrize prize : prizeList) {
                         prizeStrList.add(JSON.toJSONString(prize));
@@ -198,7 +207,7 @@ public class RedPacketManagerServer {
         Collections.sort(prizeVos, new Comparator<VsAwardPrizeVo>() {
             @Override
             public int compare(VsAwardPrizeVo o1, VsAwardPrizeVo o2) {
-                return o1.getTotalAmount().intValue() - o2.getTotalAmount().intValue();
+                return o1.getTotalAmount().compareTo(o2.getTotalAmount());
             }
         });
         return ResponseResult.SUCCESS(prizeVos);
@@ -220,7 +229,7 @@ public class RedPacketManagerServer {
             Collections.sort(prizeVos, new Comparator<VsAwardPrizeVo>() {
                 @Override
                 public int compare(VsAwardPrizeVo o1, VsAwardPrizeVo o2) {
-                    return o1.getTotalAmount().intValue() - o2.getTotalAmount().intValue();
+                    return o1.getTotalAmount().compareTo(o2.getTotalAmount());
                 }
             });
             return ResponseResult.SUCCESS(prizeVos);
@@ -301,7 +310,7 @@ public class RedPacketManagerServer {
         transformList.sort(new Comparator<VsAwardTransform>() {
             @Override
             public int compare(VsAwardTransform o1, VsAwardTransform o2) {
-                return o1.getAmount().intValue() - o2.getAmount().intValue();
+                return o1.getAmount().compareTo(o2.getAmount());
             }
         });
         return transformList;

@@ -28,7 +28,7 @@ public class UcenterCotroller {
 
     //查询用户信息
     @GetMapping("/queryUser")
-    public ResponseResult queryUser(HttpServletRequest httpRequest){
+    public ResponseResult queryUser(HttpServletRequest httpRequest) throws Exception{
         String uid = XcCookieUtil.getTokenFormCookie(httpRequest);
         AuthToken authToken = XcTokenUtil.getUserToken(uid, stringRedisTemplate);
         authToken.setAccess_token(null);
@@ -41,7 +41,7 @@ public class UcenterCotroller {
 
     //修改密码
     @PostMapping("/changePassword")
-    public ResponseResult changePassword(@RequestParam String oldPass, @RequestParam String newPass, HttpServletRequest httpRequest){
+    public ResponseResult changePassword(@RequestParam String oldPass, @RequestParam String newPass, HttpServletRequest httpRequest) throws Exception{
         if (StringUtils.isEmpty(oldPass))
             return ResponseResult.INVALID_PARAM("旧密码不能为空");
         if (StringUtils.isEmpty(newPass))
@@ -55,7 +55,7 @@ public class UcenterCotroller {
     }
 
     @GetMapping("test")
-    public String test(){
+    public String test() throws Exception{
         return "OK";
     }
 }

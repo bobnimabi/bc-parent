@@ -15,7 +15,7 @@
         <dependency>
             <groupId>siemReap</groupId>
             <artifactId>bc-login-common</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 

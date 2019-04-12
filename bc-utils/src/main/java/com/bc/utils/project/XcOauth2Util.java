@@ -24,14 +24,14 @@ public class XcOauth2Util {
         private Integer utype;
         private Long companyId;
     }
-    public static UserJwt getUserJwtFromHeader(HttpServletRequest request){
+    public static UserJwt getUserJwtFromHeader(HttpServletRequest request) throws Exception{
         UserJwt jwtClaims = getJwtClaimsFromHeader(request);
         if (jwtClaims == null) {
             ExceptionCast.castFail("获取jwt令牌头信息失败");
         }
         return jwtClaims;
     }
-    public static UserJwt getJwtClaimsFromHeader(HttpServletRequest request) {
+    public static UserJwt getJwtClaimsFromHeader(HttpServletRequest request) throws Exception{
         //取出头信息
         String authorization = request.getHeader("Authorization");
         if (StringUtils.isEmpty(authorization) || authorization.indexOf("Bearer") < 0) {

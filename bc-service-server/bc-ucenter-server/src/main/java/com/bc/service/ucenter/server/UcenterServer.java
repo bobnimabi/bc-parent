@@ -30,7 +30,7 @@ public class UcenterServer {
     @Autowired
     private IXcUserService userService;
     //修改密码
-    public ResponseResult changePassword(String oldPass, String newPass, String uid) {
+    public ResponseResult changePassword(String oldPass, String newPass, String uid) throws Exception{
         AuthToken authToken = XcTokenUtil.getUserToken(uid,stringRedisTemplate);
         XcUser user = userService.getById(authToken.getUserId());
         if (null == user) ResponseResult.FAIL("用户不存在");

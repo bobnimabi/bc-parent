@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
  * </p>
  *
  * @author admin
- * @since 2019-04-09
+ * @since 2019-04-12
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -37,7 +37,7 @@ public class VsAwardPlayerVo implements Serializable {
     @ApiModelProperty(value = "玩家剩余金额，单位：分")
     private BigDecimal hasAmount;
 
-    @ApiModelProperty(value = "参与次数")
+    @ApiModelProperty(value = "可抽奖次数")
     private Integer joinTimes;
 
     @ApiModelProperty(value = "备注")
@@ -51,6 +51,9 @@ public class VsAwardPlayerVo implements Serializable {
 
     @ApiModelProperty(value = "创建时间")
     private LocalDateTime createTime;
+
+    @ApiModelProperty(value = "版本号")
+    private Integer version;
 
 
 }

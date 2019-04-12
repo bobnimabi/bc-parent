@@ -51,7 +51,7 @@ public class AuthService {
     @Autowired
     private IXcUserService userService;
 
-    public boolean googleAuth(String dynamicCode,String username){
+    public boolean googleAuth(String dynamicCode,String username) throws Exception{
         XcUser user = userService.getOne(new QueryWrapper<XcUser>().eq("username", username));
         if (null == user) ExceptionCast.cast(AuthCode.AUTH_ACCOUNT_NOTEXISTS);
         //校验opt
@@ -59,7 +59,7 @@ public class AuthService {
     }
 
     //用户认证申请令牌，将令牌存储到redis
-    public AuthToken login(String username, String password, String clientId, String clientSecret, String ip) {
+    public AuthToken login(String username, String password, String clientId, String clientSecret, String ip) throws Exception {
 
         //防止用户多次登录
         Object ObjIp = stringRedisTemplate.opsForValue().get(VarParam.Login.LOGIN_FLAG_PRE + username);

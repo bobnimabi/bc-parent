@@ -97,6 +97,12 @@
             <artifactId>easyexcel</artifactId>
             <optional>true</optional>
         </dependency>
+        <!--布隆过滤器-->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <optional>true</optional>
+        </dependency>
 
     </dependencies>
 

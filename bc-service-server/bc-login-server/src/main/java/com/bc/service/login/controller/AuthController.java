@@ -4,8 +4,6 @@ import com.bc.common.Exception.ExceptionCast;
 import com.bc.common.constant.VarParam;
 import com.bc.common.response.CommonCode;
 import com.bc.common.response.ResponseResult;
-import com.bc.servcie.login.googleAuth.GoogleAuthenticator;
-import com.bc.service.login.api.AuthControllerApi;
 import com.bc.service.login.dto.*;
 import com.bc.service.login.exception.AuthCode;
 import com.bc.common.pojo.AuthToken;
@@ -20,7 +18,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,7 +35,7 @@ import java.io.IOException;
  **/
 @RestController
 @RequestMapping("/")
-public class AuthController implements AuthControllerApi {
+public class AuthController {
     @Value("${auth.clientId}")
     private String clientId;
     @Value("${auth.clientSecret}")
@@ -54,9 +51,8 @@ public class AuthController implements AuthControllerApi {
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
 
-    @Override
     @PostMapping("/userlogin")
-    public LoginResult login(LoginRequest loginRequest, HttpServletRequest httpRequest) {
+    public LoginResult login(LoginRequest loginRequest, HttpServletRequest httpRequest) throws Exception{
         if(loginRequest == null || StringUtils.isEmpty(loginRequest.getUsername())){
             ExceptionCast.cast(AuthCode.AUTH_USERNAME_NONE);
         }
@@ -80,16 +76,15 @@ public class AuthController implements AuthControllerApi {
 
     //图片验证码
     @GetMapping("/validateImage")
-    public void createCode(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public void createCode(HttpServletRequest request, HttpServletResponse response) throws Exception{
         ImageCode imageCode = validateCodeGenerator.createImageCode(request);
         request.getSession().setAttribute(VarParam.Login.SESSION_KEY_VALIDATE_IMAGE, imageCode);
         ImageIO.write(imageCode.getImage(), "JPEG", response.getOutputStream());
     }
 
     //退出
-    @Override
     @PostMapping("/userlogout")
-    public ResponseResult logout(HttpServletRequest httpRequest) {
+    public ResponseResult logout(HttpServletRequest httpRequest) throws Exception{
         //取出cookie中的用户身份令牌
         String uid =  XcCookieUtil.getTokenFormCookie(httpRequest);
         //删除redis中的token
@@ -108,9 +103,8 @@ public class AuthController implements AuthControllerApi {
         return new ResponseResult(CommonCode.SUCCESS);
     }
 
-    @Override
     @GetMapping("/userjwt")
-    public JwtResult userjwt(HttpServletRequest httpRequest) {
+    public JwtResult userjwt(HttpServletRequest httpRequest) throws Exception{
         //取出cookie中的用户身份令牌
         String uid = XcCookieUtil.getTokenFormCookie(httpRequest);
         if(uid == null){

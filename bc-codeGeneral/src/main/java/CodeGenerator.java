@@ -22,14 +22,14 @@ public class CodeGenerator {
         String[] tables={
 //                "vs_award_active",
 //                "vs_award_transform",
-//                "vs_award_player",
+                "vs_award_player",
 //                "vs_award_prize",
 //                "vs_configure",
 //                "vs_log",
 //                "vs_media",
 //                "vs_pay_record",
 //                "vs_site",
-                "vs_nav",
+//                "vs_nav",
         };
 
         //配置数据库信息
