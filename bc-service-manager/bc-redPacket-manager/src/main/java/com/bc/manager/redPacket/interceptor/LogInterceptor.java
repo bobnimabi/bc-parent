@@ -23,5 +23,6 @@ public class LogInterceptor extends HandlerInterceptorAdapter {
 		AuthToken userToken = XcTokenUtil.getUserToken(uid, redis);
 		log.info("IP:"+ IpUtil.getIpAddress(request)+" userName:"+userToken.getUsername()+" 动作："+request.getRequestURI());
 		return true;
+
 	}
 }
