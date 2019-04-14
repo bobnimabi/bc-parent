@@ -2,14 +2,25 @@ package com.bc.service.redPacket.controller;
 
 
 import com.bc.common.Exception.ExceptionCast;
+import com.bc.common.constant.VarParam;
 import com.bc.common.response.ResponseResult;
+import com.bc.service.common.redPacket.entity.VsPayRecord;
 import com.bc.service.redPacket.Dto.RedPacketDto;
+import com.bc.service.redPacket.Dto.RobotLoginDto;
+import com.bc.service.redPacket.Dto.VsPayRecordDto;
 import com.bc.service.redPacket.server.RedPacketServer;
+import com.bc.service.redPacket.server.RobotServer;
+import com.bc.utils.CheckMobile;
+import com.bc.utils.IpUtil;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 @CrossOrigin("*")
 @RestController
@@ -17,15 +28,53 @@ import org.springframework.web.bind.annotation.*;
 public class RedPacketController {
     @Autowired
     private RedPacketServer packetServer;
+    @Autowired
+    private RobotServer robotServer;
 
     @ApiOperation("抽红包")
     @PostMapping("/playRedPacket")
-    public ResponseResult playRedPacket(@RequestBody RedPacketDto redPacketDto) throws Exception{
+    public ResponseResult playRedPacket(@RequestBody RedPacketDto redPacketDto, HttpServletRequest request) throws Exception{
         if (null == redPacketDto || StringUtils.isEmpty(redPacketDto.getUsername())) {
             ExceptionCast.castFail("无效账号");
-
         }
+        redPacketDto.setClientIp(IpUtil.getIpAddress(request));
+        redPacketDto.setClientType(CheckMobile.isMobile(request) == true ? VarParam.RedPacketM.CLIENT_TYPE_TWO : VarParam.RedPacketM.CLIENT_TYPE_ONE);
         return packetServer.playRedPacket(redPacketDto);
+    }
+
+    @ApiOperation("获取图片验证码")
+    @PostMapping("/getVarCode")
+    public void getVarCode(@RequestBody RobotLoginDto robotLoginDto,HttpServletResponse response) throws Exception{
+        if (null == robotLoginDto ||  null == robotLoginDto.getNum()) {
+            ExceptionCast.castFail("未传入机器人编号");
+        }
+        ServletOutputStream outputStream = response.getOutputStream();
+        if (robotLoginDto.getNum() == 1){
+            robotServer.getCode(outputStream,RobotServer.client1);
+        }
+        outputStream.flush();
+        outputStream.close();
+    }
+
+    @ApiOperation("机器人登录")
+    @PostMapping("/robotOneLogin")
+    public ResponseResult robotOneLogin(@RequestBody RobotLoginDto robotLoginDto) throws Exception{
+        if (null == robotLoginDto || StringUtils.isEmpty(robotLoginDto.getVarCode()) || null == robotLoginDto.getNum()) {
+            ExceptionCast.castFail("未传入验证码或机器人编号");
+        }
+        if (robotLoginDto.getNum() == 1){
+            return  robotServer.login(robotLoginDto.getVarCode(), VarParam.RedPacketM.ROBOT_ONE_ACCOUNT, VarParam.RedPacketM.ROBOT_ONE_PASSWORD,RobotServer.client1);
+        }
+        return ResponseResult.FAIL("登录失败");
+    }
+
+    @ApiOperation("补单")
+    @PostMapping("/repay")
+    public ResponseResult repay(@RequestParam Long id) throws Exception{
+        if ( null == id) {
+            ExceptionCast.castFail("未传入recordId");
+        }
+        return packetServer.repay(id);
     }
 
 

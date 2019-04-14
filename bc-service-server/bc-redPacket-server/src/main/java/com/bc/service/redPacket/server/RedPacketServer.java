@@ -4,12 +4,12 @@ import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.extension.service.additional.update.impl.UpdateChainWrapper;
 import com.bc.common.Exception.CustomException;
 import com.bc.common.Exception.ExceptionCast;
 import com.bc.common.constant.VarParam;
 import com.bc.common.response.CommonCode;
 import com.bc.common.response.ResponseResult;
-import com.bc.service.common.login.service.IXcUserService;
 import com.bc.service.common.redPacket.entity.VsAwardActive;
 import com.bc.service.common.redPacket.entity.VsAwardPlayer;
 import com.bc.service.common.redPacket.entity.VsAwardPrize;
@@ -31,13 +31,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.locks.ReentrantLock;
-
 /**
  * Created by mrt on 2019/4/8 0008 下午 12:25
  */
@@ -66,8 +66,6 @@ public class RedPacketServer {
     private StringRedisTemplate redis;
     @Autowired
     private IVsNavService navService;
-    @Autowired
-    private IXcUserService userService;
 
     @Autowired
     private RobotServer robotServer;
@@ -76,6 +74,9 @@ public class RedPacketServer {
     private ReentrantLock activeLock;
     //奖品锁
     private ReentrantLock prizeLock;
+
+    //轮询数
+    public int robinNum = 10;
 
     /**
      * 抽红包总调度
@@ -298,7 +299,10 @@ public class RedPacketServer {
                 return null;
             }
         });
+        //金额 分->元
         RedResultVo redResultVo = (RedResultVo) objects.get(0);
+        redResultVo.setAmount(redResultVo.getAmount().divide(VarParam.ONE_HUNDRED).setScale(2, BigDecimal.ROUND_DOWN));
+
 
         //减少用户的库存（mysql乐观锁）
         boolean update = playerService.update(
@@ -320,32 +324,52 @@ public class RedPacketServer {
         record.setId(IdWorker.getId());
         record.setUserName(player.getUserName());
         record.setClientIp(redPacketDto.getClientIp());
-        record.setClientIp(redPacketDto.getClientType());
+        record.setClientType(redPacketDto.getClientType());
         record.setTotalAmount(redResultVo.getAmount());
         record.setRechargeType(VarParam.RedPacketM.RECHARGE_TYPE);
         record.setPrizeType(VarParam.RedPacketM.PRIZE_TYPE_ONE);
         record.setPayStatus(VarParam.RedPacketM.PAY_STATUS_ONE);
         record.setOperatorPaid(VarParam.RedPacketM.CONFIRM_PAY);
-        record.setOperatorDispatch(VarParam.RedPacketM.CONFIRM_DISPATCH);
+        record.setOperatorDispatch(VarParam.RedPacketM.CONFIRM_DISPATCH_ONE);
         record.setTimeOrder(LocalDateTime.now());
         boolean save = recordService.save(record);
         if (!save) {
             log.error("订单生成失败："+JSON.toJSONString(record));
             ExceptionCast.castFail("订单生成失败");
         }
+        log.info("订单生成成功："+JSON.toJSONString(record));
+
+        //入队+执行
+        joinQueue(record,player);
+        return ResponseResult.SUCCESS(redResultVo);
+    }
+
+    /**
+     * 任务入队+执行
+     */
+    public void joinQueue(VsPayRecord record,VsAwardPlayer player) throws Exception{
         Long expireTime = redis.getExpire(VarParam.RedPacketM.PLAYER_WAIT + player.getId());
         //放入机器人派送队列(跳表)
         Boolean add = redis.opsForZSet().add(
                 VarParam.RedPacketM.TASK_QUEUE,
-                JSON.toJSONString(new TaskAtom(player.getId(), record.getId())),
+                JSON.toJSONString(new TaskAtom(player.getId(),player.getUserName(), record.getId())),
                 expireTime == -2L ? 0d : Double.valueOf(expireTime + "")
         );
         if (!add) {
             log.error("订单进入队列失败：userId:"+player.getId()+" recordId:"+record.getId());
         }
         log.info("订单进入队列成功：userId:"+player.getId()+" recordId:"+record.getId());
-        robotServer.exe1();
-        return ResponseResult.SUCCESS(redResultVo);
+
+        //轮询
+        int num = robinNum++ % VarParam.RedPacketM.ROBOT_NUM;
+        switch (num){
+            case 0:
+                robotServer.exe1();
+                break;
+            default:
+                log.info("轮询机器人失败");
+                ExceptionCast.castFail("轮询机器人失败");
+        }
     }
 
     /**
@@ -380,5 +404,23 @@ public class RedPacketServer {
             }
         }
         throw new CustomException(RedCode.LOTTERY_EXCEPTION);
+    }
+
+    /**
+     * 补单
+     */
+    public ResponseResult repay(Long recordId) throws Exception{
+        VsPayRecord record = recordService.getById(recordId);
+        if (record.getPayStatus() != VarParam.RedPacketM.PAY_STATUS_FAIL)
+            return ResponseResult.FAIL("正常订单，无需补单");
+        VsAwardPlayer player = playerService.getOne(new QueryWrapper<VsAwardPlayer>().eq("user_name", record.getUserName()));
+        this.joinQueue(record,player);
+        boolean update = recordService.update(
+                new UpdateWrapper<VsPayRecord>()
+                        .eq("id", record.getId())
+                        .set("operator_dispatch", "人工")
+        );
+        if (!update) ExceptionCast.castFail("人工补单：更新record失败");
+        return ResponseResult.SUCCESS("已补单");
     }
 }

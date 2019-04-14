@@ -4,7 +4,6 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
-import org.springframework.boot.web.servlet.ServletComponentScan;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Bean;
@@ -22,9 +21,9 @@ import org.springframework.web.client.RestTemplate;
 @MapperScan("com.bc.service.common.login.mapper")//扫描mapper
 //@ServletComponentScan(basePackages = {""})//扫描监听器
 @SpringBootApplication
-public class UcenterServer {
+public class UcServer {
     public static void main(String[] args) {
-        SpringApplication.run(UcenterServer.class, args);
+        SpringApplication.run(UcServer.class, args);
     }
 
     @Bean

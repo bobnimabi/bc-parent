@@ -15,7 +15,7 @@ import lombok.experimental.Accessors;
  * </p>
  *
  * @author admin
- * @since 2019-04-11
+ * @since 2019-04-13
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -37,8 +37,14 @@ public class VsPayRecord implements Serializable {
     @ApiModelProperty(value = "客户端[1pc][2mobile]")
     private Integer clientType;
 
+    @ApiModelProperty(value = "打钱前余额，单位：分")
+    private BigDecimal preBalance;
+
     @ApiModelProperty(value = "总金额 单位：分")
     private BigDecimal totalAmount;
+
+    @ApiModelProperty(value = "打钱后余额，单位：分")
+    private BigDecimal aftBalance;
 
     @ApiModelProperty(value = "充值类型[1人工存入][2存款优惠][3负数额度归零][4取消出款][5其他]")
     private Integer rechargeType;
@@ -46,7 +52,7 @@ public class VsPayRecord implements Serializable {
     @ApiModelProperty(value = "奖品类型[1红包][2其他]")
     private Integer prizeType;
 
-    @ApiModelProperty(value = "支付状态[0作废][1有效][2已派送]")
+    @ApiModelProperty(value = "支付状态[0作废][1待派送][2派送中][3已派送]")
     private Integer payStatus;
 
     @ApiModelProperty(value = "确认支付者")
@@ -87,6 +93,9 @@ public class VsPayRecord implements Serializable {
 
     @ApiModelProperty(value = "创建时间")
     private LocalDateTime createTime;
+
+    @ApiModelProperty(value = "版本号")
+    private Integer version;
 
 
 }

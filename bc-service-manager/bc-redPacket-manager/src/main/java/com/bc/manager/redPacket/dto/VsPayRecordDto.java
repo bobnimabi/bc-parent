@@ -40,8 +40,14 @@ public class VsPayRecordDto extends Page implements Serializable {
     @ApiModelProperty(value = "客户端[1pc][2mobile]")
     private Integer clientType;
 
+    @ApiModelProperty(value = "打钱前余额，单位：分")
+    private BigDecimal preBalance;
+
     @ApiModelProperty(value = "总金额 单位：分")
     private BigDecimal totalAmount;
+
+    @ApiModelProperty(value = "打钱后余额，单位：分")
+    private BigDecimal aftBalance;
 
     @ApiModelProperty(value = "充值类型[1人工存入][2存款优惠][3负数额度归零][4取消出款][5其他]")
     private Integer rechargeType;

@@ -34,7 +34,7 @@ spring:
       connection-test-query: SELECT 1
 
 server:
-  port: 8080
+  port: 8084
   servlet:
     context-path: /redPacketManager
 
@@ -43,9 +43,9 @@ eureka:
     serviceUrl:
       defaultZone: http://localhost:8761/eureka
       #表示是否将自己注册到Eureka Server，默认为true。测试环境下关闭注册，都在热部署会报错
-      # register-with-eureka: false
+      register-with-eureka: false
       #表示是否从Eureka Server获取注册信息，默认为true。
-      # fetch-registry: false
+      fetch-registry: false
 
 #放行uri(测试需要)
 permit:

@@ -1,6 +1,7 @@
 package com.bc.utils;
 
 import lombok.ToString;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.util.EntityUtils;
@@ -22,7 +23,7 @@ import java.util.zip.GZIPInputStream;
  *           Time：2015年8月1日 上午9:45:33
  */
 @ToString
-public class Result {
+public class MyHttpResult {
     /**
      * Logger for this class
      */
@@ -90,6 +91,12 @@ public class Result {
     public void setHttpEntity(HttpEntity httpEntity) {
         this.httpEntity = httpEntity;
     }
+    /**
+     * 获取响应json
+     */
+    public String getResultInfo() throws Exception{
+        return IOUtils.toString(this.getHttpEntity().getContent(), "utf-8");
+    }
 
     /**
      * 将服务器返回的结果HttpEntity流转换成String格式的内容
@@ -138,7 +145,7 @@ public class Result {
     /**
      * 获取请求中的内容
      */
-    public String getHtml(Result result, String chart) {
+    public String getHtml(MyHttpResult result, String chart) {
 
         HttpEntity entity = result.getHttpEntity();
         String resultStr = "";
@@ -162,7 +169,7 @@ public class Result {
     /**
      * 关闭HttpEntity流
      */
-    public void consume(Result result) {
+    public void consume(MyHttpResult result) {
         try {
             HttpEntity entity = result.getHttpEntity();
             // EntityUtils.consume(entity);

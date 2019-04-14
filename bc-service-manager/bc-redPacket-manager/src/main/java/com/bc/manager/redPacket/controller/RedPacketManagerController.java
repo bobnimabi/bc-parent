@@ -53,10 +53,14 @@ public class RedPacketManagerController {
                 && activeDto.getTimeEnd().isBefore(LocalDateTime.now())) {
             ExceptionCast.castInvalid("活动过期过期时间不能早于当前时间");
         }
-        if (activeDto.getTimeStart().isAfter(activeDto.getTimeEnd())) {
+        if ((null != activeDto.getTimeEnd()
+                && null != activeDto.getTimeStart()
+                && activeDto.getTimeStart().isAfter(activeDto.getTimeEnd()))) {
             ExceptionCast.castInvalid("活动开始时间不能晚于截止时间");
         }
-        if (activeDto.getDayTimeStart().compareTo(activeDto.getDayTimeEnd()) > 0) {
+        if (StringUtils.isNotEmpty(activeDto.getDayTimeStart())
+                && StringUtils.isNotEmpty(activeDto.getDayTimeEnd())
+                &&  activeDto.getDayTimeStart().compareTo(activeDto.getDayTimeEnd()) > 0) {
             ExceptionCast.castInvalid("活动每天开始的时间不能晚于每天截止时间");
         }
         return rpmServer.updateActive(activeDto);
@@ -138,7 +142,7 @@ public class RedPacketManagerController {
     }
 
     @ApiOperation("奖品管理：查看")
-    @PostMapping("/updatePrize")
+    @PostMapping("/queryAllPrize")
     public ResponseResult queryAllPrize() throws Exception{
         return rpmServer.queryPrizes();
     }
@@ -494,7 +498,7 @@ public class RedPacketManagerController {
                 || StringUtils.isEmpty(navDto.getNavUrl())
                 || null == navDto.getNavTarget()
         ) ExceptionCast.castInvalid("参数不全");
-        return rpmServer.navQueryById(navDto);
+        return rpmServer.navUpdateById(navDto);
     }
 
     @ApiOperation("配置项：添加")
@@ -545,7 +549,11 @@ public class RedPacketManagerController {
         return rpmServer.configUpdate(configureDto);
     }
 
-
+    @ApiOperation("测试")
+    @GetMapping("/testok/{name}")
+    public ResponseResult testok(@PathVariable String name) throws Exception {
+        return ResponseResult.SUCCESS();
+    }
 
 
 

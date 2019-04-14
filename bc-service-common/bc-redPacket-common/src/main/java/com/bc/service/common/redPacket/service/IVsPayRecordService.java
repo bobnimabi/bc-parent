@@ -1,10 +1,7 @@
 package com.bc.service.common.redPacket.service;
 
-import com.bc.service.common.redPacket.entity.StaticRecord;
 import com.bc.service.common.redPacket.entity.VsPayRecord;
 import com.baomidou.mybatisplus.extension.service.IService;
-
-import java.util.List;
 
 /**
  * <p>
@@ -12,7 +9,7 @@ import java.util.List;
  * </p>
  *
  * @author admin
- * @since 2019-04-11
+ * @since 2019-04-13
  */
 public interface IVsPayRecordService extends IService<VsPayRecord> {
 

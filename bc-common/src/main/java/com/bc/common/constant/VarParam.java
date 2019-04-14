@@ -12,7 +12,10 @@ public class VarParam {
 
     //金额转换需要分->元
     public static final BigDecimal ONE_HUNDRED = new BigDecimal(100);
-
+    //字符编码
+    public static final String ENCODING = "utf-8";
+    //响应成功状态码
+    public static final int SUCCESS_CODE = 200;
     /**
      * 登录
      */
@@ -61,6 +64,27 @@ public class VarParam {
         //布隆过滤器：错误率
         public static final double FPP_RED = 0.03;
 
+        //打款机器人：图片验证码url
+        public static final String CODE_URL = "https://ovwyfq040.prealmd.com/agent/validCode";
+        //打款机器人：登录url
+        public static String LOGIN_URL = "https://ovwyfq040.prealmd.com/agent/agent";
+        //打款机器人：查询url
+        public static String QUERY_URL = "https://ovwyfq040.prealmd.com/agent/ComRecordServlet";
+        //打款机器人：打款url
+        public static String PAY_URL = "https://ovwyfq040.prealmd.com/agent/ComRecordServlet";
+
+        //机器人1：登录账号
+        public static String ROBOT_ONE_ACCOUNT = "amlzaHUwMDE=";
+        //机器人1：登录密码
+        public static String ROBOT_ONE_PASSWORD = "MWU0NDAzODQwNjAyYmZhZmM1M2E3ZDVmOTY1M2JmYzA==";
+
+        //限制玩家11秒内不能重复打款
+        public static final int WAIT_SECOND = 11;
+        //机器人：个数
+        public static final int ROBOT_NUM = 1;
+
+
+
         /**
          * 条件查询参数
          */
@@ -84,8 +108,12 @@ public class VarParam {
         public static final int IMPORT_PLAYERS_TYPE_TWO = 2;
         //支付状态：待派送
         public static final int PAY_STATUS_ONE = 1;
-        //支付状态：已派送
+        //支付状态：派送中
         public static final int PAY_STATUS_TWO = 2;
+        //支付状态：已派送
+        public static final int PAY_STATUS_THREE = 3;
+        //支付状态：派送失败
+        public static final int PAY_STATUS_FAIL = 4;
         //客户端类型：1pc
         public static final int CLIENT_TYPE_ONE = 1;
         //客户端类型：2mobile
@@ -94,7 +122,7 @@ public class VarParam {
         public static final int RECHARGE_TYPE = 2;
         //确认支付者
         public static final String CONFIRM_PAY = "system";
-        //确认派送这
-        public static final String CONFIRM_DISPATCH = "robot";
+        //确认派送者
+        public static final String CONFIRM_DISPATCH_ONE = "robot1";
     }
 }

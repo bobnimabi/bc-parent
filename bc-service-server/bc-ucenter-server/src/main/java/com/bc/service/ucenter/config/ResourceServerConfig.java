@@ -61,10 +61,11 @@ public class ResourceServerConfig extends ResourceServerConfigurerAdapter {
     //Http安全配置，对每个到达系统的http请求链接进行校验
     @Override
     public void configure(HttpSecurity http) throws Exception {
+        String[] urlArr = permitUrl.split(",");
         //所有请求必须认证通过
         http.authorizeRequests()
                 //下边的路径放行
-                .antMatchers(permitUrl).permitAll()
+                .antMatchers(urlArr).permitAll()
                 .anyRequest().authenticated();
     }
 }

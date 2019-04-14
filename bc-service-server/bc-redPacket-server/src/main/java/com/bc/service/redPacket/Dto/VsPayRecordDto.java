@@ -1,4 +1,4 @@
-package com.bc.manager.redPacket.vo;
+package com.bc.service.redPacket.Dto;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -16,13 +16,13 @@ import java.time.LocalDateTime;
  * </p>
  *
  * @author admin
- * @since 2019-04-11
+ * @since 2019-04-13
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
 @ApiModel(value="VsPayRecord对象", description="充值记录")
-public class VsPayRecordVo implements Serializable {
+public class VsPayRecordDto implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -53,7 +53,7 @@ public class VsPayRecordVo implements Serializable {
     @ApiModelProperty(value = "奖品类型[1红包][2其他]")
     private Integer prizeType;
 
-    @ApiModelProperty(value = "支付状态[0作废][1有效][2已派送]")
+    @ApiModelProperty(value = "支付状态[0作废][1待派送][2派送中][3已派送]")
     private Integer payStatus;
 
     @ApiModelProperty(value = "确认支付者")
@@ -94,6 +94,9 @@ public class VsPayRecordVo implements Serializable {
 
     @ApiModelProperty(value = "创建时间")
     private LocalDateTime createTime;
+
+    @ApiModelProperty(value = "版本号")
+    private Integer version;
 
 
 }

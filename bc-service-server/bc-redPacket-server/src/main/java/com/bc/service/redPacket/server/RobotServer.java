@@ -1,12 +1,19 @@
 package com.bc.service.redPacket.server;
 
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.bc.common.Exception.ExceptionCast;
 import com.bc.common.constant.VarParam;
-import com.bc.service.common.login.service.IXcUserService;
+import com.bc.common.response.ResponseResult;
+import com.bc.service.common.redPacket.entity.VsPayRecord;
 import com.bc.service.common.redPacket.service.*;
 import com.bc.service.redPacket.Dto.TaskAtom;
-import com.bc.utils.Result;
+import com.bc.service.redPacket.Vo.LoginResultVo;
+import com.bc.service.redPacket.Vo.PayResultVo;
+import com.bc.service.redPacket.Vo.QueryResultVo;
+import com.bc.utils.MyHttpResult;
 import com.bc.utils.SendRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -19,89 +26,126 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import java.io.FileOutputStream;
+import org.springframework.util.CollectionUtils;
+
+import java.io.BufferedInputStream;
+import java.io.OutputStream;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Created by mrt on 2019/4/12 0012 下午 9:26
  */
 @Service
+@Slf4j
 public class RobotServer {
-    @Autowired
-    private IVsAwardActiveService activeService;
-    @Autowired
-    private IVsAwardTransformService transformService;
-    @Autowired
-    private IVsAwardPlayerService playerService;
-    @Autowired
-    private IVsAwardPrizeService prizeService;
-    @Autowired
-    private IVsConfigureService configureService;
-    @Autowired
-    private IVsLogService logService;
-    @Autowired
-    private IVsMediaService mediaService;
     @Autowired
     private IVsPayRecordService recordService;
     @Autowired
-    private IVsSiteService siteService;
-    @Autowired
     private StringRedisTemplate redis;
-    @Autowired
-    private IVsNavService navService;
-    @Autowired
-    private IXcUserService userService;
 
-    private static BasicCookieStore cookieStore1 = new BasicCookieStore();
-    private static CloseableHttpClient client1 = HttpClients.custom().setDefaultCookieStore(cookieStore1).build();
+    //1号机器人
+    public static BasicCookieStore cookieStore1 = new BasicCookieStore();
+    public static CloseableHttpClient client1 = HttpClients.custom().setDefaultCookieStore(cookieStore1).build();
+    private static ReentrantLock robotLock1;
 
+
+    //1号队列==1号机器人
     @Async
     public void exe1() throws Exception{
-        while (true){
-            Set<String> range = redis.opsForZSet().range(VarParam.RedPacketM.TASK_QUEUE, 0, 0);
-            String json = range.iterator().next();
-            TaskAtom taskAtom = JSON.parseObject(json, TaskAtom.class);
-            Long expire = redis.getExpire(VarParam.RedPacketM.PLAYER_WAIT + taskAtom.getUserId(), TimeUnit.MILLISECONDS);
-            if (expire == -2) {
-                dispatcher("");
-                Long size = redis.opsForZSet().size(VarParam.RedPacketM.TASK_QUEUE);
-                if (0 == size)
-                    break;
-                continue;
+        //只允许一个线程执行队列
+        if (robotLock1.tryLock()){
+            Long size = 1L;
+            while (true){
+                Set<String> range = redis.opsForZSet().range(VarParam.RedPacketM.TASK_QUEUE, 0, 0);
+                if (CollectionUtils.isEmpty(range)) break; //只有队列为空退出
+                String json = range.iterator().next();
+                TaskAtom taskAtom = JSON.parseObject(json, TaskAtom.class);
+                Long expire = redis.getExpire(VarParam.RedPacketM.PLAYER_WAIT + taskAtom.getUserId(), TimeUnit.MILLISECONDS);
+                if (expire == -2) {
+                    redis.opsForZSet().removeRange(VarParam.RedPacketM.TASK_QUEUE, 0, 0);
+                    dispatcher(taskAtom,client1);
+                }
+                Thread.sleep(expire);
             }
-            Thread.sleep(expire);
+            robotLock1.unlock();
         }
     }
-    public void dispatcher(String account){
-        //打钱前：更新record记录
-        //打钱
-        //打钱后：更新record记录
 
+    /**
+     * 执行打款
+     */
+    public void dispatcher(TaskAtom taskAtom,CloseableHttpClient client) throws Exception{
+        log.info("机器人：分配：开始："+ JSON.toJSONString(taskAtom));
+
+        //打钱前：查询
+        QueryResultVo queryResultVo = this.queryInfo(taskAtom.getUsername(),client);
+
+        //打钱前：更新record记录
+        VsPayRecord record = recordService.getById(taskAtom.getRecordId());
+        log.info("机器人：分配：获取用户记录："+ JSON.toJSONString(record));
+        if (null == record) ExceptionCast.castFail("打款前：该条记录不存在：recordId:"+record.getId());
+        record.setPayStatus(VarParam.RedPacketM.PAY_STATUS_TWO);
+        record.setOperatorDispatch(VarParam.RedPacketM.CONFIRM_DISPATCH_ONE);
+        record.setTimePay(LocalDateTime.now());
+        record.setAutoTry(record.getAutoTry() + 1);
+        record.setPayInfo(JSON.toJSONString(taskAtom));
+        record.setPreBalance(new BigDecimal(queryResultVo.getBalance()).multiply(VarParam.ONE_HUNDRED));//元->分
+        boolean update = recordService.update(
+                record,
+                new UpdateWrapper<VsPayRecord>()
+                        .eq("id", record.getId())
+                        .eq("version", record.getVersion())
+        );
+        if (!update) ExceptionCast.castFail("打款前：更新record失败："+JSON.toJSONString(record)+" userId:"+taskAtom.getUserId());
+        log.info("机器人：分配：更新record成功：recordId:" + record.getId());
+
+        //打钱：单位：元 ->分转元
+        BigDecimal payAmount = record.getTotalAmount().divide(VarParam.ONE_HUNDRED).setScale(2, BigDecimal.ROUND_DOWN);
+        PayResultVo payResultVo = this.pay(record.getUserName(), queryResultVo.getMemberId(), payAmount.toString(),client);
+        if (payResultVo.getSuccess() == false) {
+            log.info("机器人：分配：打款失败");
+            record.setPayStatus(VarParam.RedPacketM.PAY_STATUS_FAIL);
+            record.setPayRemark(payResultVo.getMessage());
+        } else {
+            record.setPayStatus(VarParam.RedPacketM.PAY_STATUS_FAIL);
+            //成功后，再次查询余额
+            QueryResultVo queryResultVo2 = this.queryInfo(taskAtom.getUsername(),client);
+            record.setAftBalance(new BigDecimal(queryResultVo2.getBalance()).multiply(VarParam.ONE_HUNDRED).setScale(2, BigDecimal.ROUND_DOWN));
+        }
+        record.setPayInfo(JSON.toJSONString(payResultVo));
+        record.setTimeNotice(LocalDateTime.now());
+
+        //打钱后：查询余额，更新record记录
+        boolean updateById = recordService.updateById(record);
+        if (!updateById) ExceptionCast.castFail("机器人：分配：打钱后更新record失败");
+        log.info("机器人：分配：打钱后更新record成功:"+JSON.toJSONString(record));
+
+        //限制11秒内不能再次打款
+        redis.opsForValue().set(VarParam.RedPacketM.PLAYER_WAIT + taskAtom.getUserId(), "1", VarParam.RedPacketM.WAIT_SECOND, TimeUnit.SECONDS);
+        log.info("机器人：分配：结束");
     }
 
-    public static final String ENCODING = "utf-8";
-
-    static String codeUrl = "https://ovwyfq040.prealmd.com/agent/validCode?type=agent";
     /**
      * 获取验证码
      */
-    public static void  getCode() throws Exception {
-        String imageCodeUrl = codeUrl+"&t="+Math.random();
-
+    public void  getCode(OutputStream outputStream,CloseableHttpClient client) throws Exception {
         //头
         Map<String, String> headMap = new HashMap<>();
         //体
         Map<String, String> bodyMap = new HashMap<>();
         bodyMap.put("type","agent");
         bodyMap.put("t", ""+Math.random());
-        System.out.println("获取验证码请求前cookie："+JSON.toJSONString(cookieStore1.getCookies()));
-        Result result = SendRequest.sendGet(client1,imageCodeUrl, headMap, bodyMap, ENCODING,true);
-        result.getHttpEntity().writeTo(new FileOutputStream("E:\\pic\\a.jpg"));
-        login();
+        log.info("机器人：获取验证码:发送参数："+JSON.toJSONString(bodyMap));
+        log.info("机器人：获取验证码:cookie："+JSON.toJSONString(cookieStore1.getCookies()));
+        MyHttpResult result = SendRequest.sendGet(client,VarParam.RedPacketM.CODE_URL, headMap, bodyMap, VarParam.ENCODING,true);
+        new BufferedInputStream(result.getHttpEntity().getContent());
+        result.getHttpEntity().writeTo(outputStream);
     }
 
     /**
@@ -109,47 +153,47 @@ public class RobotServer {
      * 1.ip限制（红包后台->代码限制ip，抽红包）
      * 2.opt（红包后台登录，谷歌验证器）
      */
-    public static void login()throws Exception{
-        String url = "https://ovwyfq040.prealmd.com/agent/agent";
+    public ResponseResult login(String varCode,String account,String password,CloseableHttpClient client) throws Exception{
+        log.info("机器人：登录开始：入参：验证码："+varCode+",账号："+account+" 密码："+password);
         //头
         Map<String, String> headMap = new HashMap<>();
         //体
         Map<String, String> bodyMap = new HashMap<>();
-        bodyMap.put("account","amlzaHUwMDE=");
-        bodyMap.put("password","MWU0NDAzODQwNjAyYmZhZmM1M2E3ZDVmOTY1M2JmYzA=");
+        bodyMap.put("account",account);
+        bodyMap.put("password",password);
         bodyMap.put("type","agentLogin");
-        Scanner scan = new Scanner(System.in);
-        System.out.print("请输入验证码：");
-        String code = scan.next();
-        System.out.println("录入的验证码：" + code);
-        bodyMap.put("rmNum",code);
-        System.out.println("获取验证码请求前cookie："+JSON.toJSONString(cookieStore1.getCookies()));
-        Result result = SendRequest.sendPost(client1,url, headMap, bodyMap, ENCODING,true);
-        System.out.println(result.toString());
+        bodyMap.put("rmNum",varCode);
+        log.info("机器人：登录发送参数："+JSON.toJSONString(bodyMap));
+        log.info("机器人：登录cookie："+JSON.toJSONString(cookieStore1.getCookies()));
+        MyHttpResult result = SendRequest.sendPost(client,VarParam.RedPacketM.LOGIN_URL, headMap, bodyMap, VarParam.ENCODING,true);
 
-        String toString = IOUtils.toString(result.getHttpEntity().getContent(), ENCODING);
-        System.out.println(toString);
+        String jsonStr = IOUtils.toString(result.getHttpEntity().getContent(), VarParam.ENCODING);
+        log.info("机器人：响应结果："+jsonStr);
+        LoginResultVo loginResultVo = JSON.parseObject(jsonStr, LoginResultVo.class);
+        if (VarParam.SUCCESS_CODE != result.getStatusCode() || loginResultVo.getSuccess()== false) {
+            log.info("登录失败：响应json："+jsonStr);
+            log.info("登录失败：响应结果："+JSON.toJSONString(result));
+            ExceptionCast.castFail("登录失败");
+        }
+        log.info("登录成功：响应json："+jsonStr);
+        log.info("机器人：登录结束");
+        return ResponseResult.SUCCESS();
     }
 
     /**
      * 查询 memeberId和现金余额
      */
-    public static int k = 0;
-    public static String account = "aaa7158";
-    public static String payAmount = "1.1";
-    public static void query(String payAmount)throws Exception{
-        System.out.println("查询账户余额开始。。。");
-        k+=1;
-        String url = "https://ovwyfq040.prealmd.com/agent/ComRecordServlet";
+    public static QueryResultVo queryInfo(String username,CloseableHttpClient client) throws Exception{
+        log.info("机器人：查询账户信息开始：userName:"+username);
         //头
         Map<String, String> headMap = new HashMap<>();
         //体
         Map<String, String> bodyMap = new HashMap<>();
         bodyMap.put("type","queryManDeposit");
-        bodyMap.put("account",account);
-        Result result = SendRequest.sendGet(client1,url, headMap, bodyMap, ENCODING,true);
-
-        String htmlCode = IOUtils.toString(result.getHttpEntity().getContent(), ENCODING);
+        bodyMap.put("account",username);
+        log.info("机器人：查询账户信息：发送参数："+JSON.toJSONString(bodyMap));
+        MyHttpResult result = SendRequest.sendGet(client,VarParam.RedPacketM.QUERY_URL, headMap, bodyMap, VarParam.ENCODING,true);
+        String htmlCode = result.getResultInfo();
         Document doc = Jsoup.parse(htmlCode);
         String memberId = doc.getElementById("memberId").attr("value");
 
@@ -160,26 +204,23 @@ public class RobotServer {
         Element tr3 = trs.get(2);
         Elements tds = tr3.getElementsByTag("td");
         Element td = tds.get(1);
-        String amount = td.text();
-        System.out.println("账号:"+account+",memberId："+memberId);
-        System.out.println("账号:" + account + ",现金余额：" + amount);
-        System.out.println("查询账户余额结束");
-        pay(account,memberId,payAmount);
+        String balance = td.text();
+        log.info("机器人：查询账户信息：响应结果：账号:"+username+",memberId："+memberId+",现金余额：" + balance+"元");
+        return new QueryResultVo(memberId,balance);
     }
 
     /**
      * 打钱
      */
-    public static void pay(String account,String memberId,String payAmount)throws Exception{
-        System.out.println("账号："+account+" memberId:"+memberId+" 打入金额："+payAmount+"  开始。。。");
-        String url = "https://ovwyfq040.prealmd.com/agent/ComRecordServlet";
+    public static PayResultVo pay(String account,String memberId,String payAmount,CloseableHttpClient client)throws Exception{
+        log.info("机器人：打款:开始：账号："+account+" memberId:"+memberId+" 打入金额："+payAmount+"  ");
         //头
         Map<String, String> headMap = new HashMap<>();
         //体
         Map<String, String> bodyMap = new HashMap<>();
         bodyMap.put("type","saveSet"); //存款类型
         bodyMap.put("memberId",memberId);// 身份信息
-        bodyMap.put("depositMoney",payAmount); //存入金额
+        bodyMap.put("depositMoney",payAmount); //存入金额，单位：元
         bodyMap.put("depositMoneyRemark","红包入款");//存入金额备注
         bodyMap.put("depositPreStatus","0");//是否开启存款优惠 0不开启 1开启
         bodyMap.put("depositPre","0");//存款优惠
@@ -190,11 +231,14 @@ public class RobotServer {
         bodyMap.put("compBetCheckStatus","1");//是否开启综合打码量稽核  0不开启 1开启
         bodyMap.put("compBet",payAmount);//综合打码量稽核
         bodyMap.put("normalStatus","1");//常态性稽核
-        bodyMap.put("depositPro","2存款优惠");//存入项目类型
-        Result result = SendRequest.sendPost(client1,url, headMap, bodyMap, ENCODING,true);
-
-        String result2 = IOUtils.toString(result.getHttpEntity().getContent(), ENCODING);
-        System.out.println("打款结果：" + result2);
-        System.out.println("账号："+account+" memberId:"+memberId+" 打入金额："+payAmount+"  结束");
+        bodyMap.put("depositPro","2存款优惠");//存入
+        // 项目类型
+        log.info("机器人：打款：发送参数："+JSON.toJSONString(bodyMap));
+        MyHttpResult result = SendRequest.sendPost(client,VarParam.RedPacketM.PAY_URL, headMap, bodyMap, VarParam.ENCODING,true);
+        String jsonStr = result.getResultInfo();
+        log.info("机器人：打款：响应结果："+jsonStr);
+        PayResultVo payResultVo = JSON.parseObject(jsonStr, PayResultVo.class);
+        log.info("机器人：打款：结束：账号："+account+" memberId:"+memberId+" 打入金额："+payAmount+"元");
+        return payResultVo;
     }
 }

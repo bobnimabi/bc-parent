@@ -47,8 +47,8 @@ public class SendRequest {
      * @throws ClientProtocolException
      * @throws IOException
      */
-    public static Result sendGet(CloseableHttpClient client, String url, Map<String, String> headers, Map<String, String> params, String encoding,
-                                 boolean duan) throws ClientProtocolException, IOException {
+    public static MyHttpResult sendGet(CloseableHttpClient client, String url, Map<String, String> headers, Map<String, String> params, String encoding,
+                                       boolean duan) throws ClientProtocolException, IOException {
         url = url + (null == params ? "" : assemblyParameter(params));
         HttpGet hp = new HttpGet(url);
         if (null != headers)
@@ -57,7 +57,7 @@ public class SendRequest {
         if (duan)
             hp.abort();
         HttpEntity entity = response.getEntity();
-        Result result = new Result();
+        MyHttpResult result = new MyHttpResult();
         result.setStatusCode(response.getStatusLine().getStatusCode());
         result.setHeaders(response.getAllHeaders());
         result.setHttpEntity(entity);
@@ -78,7 +78,7 @@ public class SendRequest {
      * @throws ClientProtocolException
      * @throws IOException
      */
-    public static Result sendPost(CloseableHttpClient client,String url, Map<String, String> headers, Map<String, String> params, String encoding ,boolean flag)
+    public static MyHttpResult sendPost(CloseableHttpClient client, String url, Map<String, String> headers, Map<String, String> params, String encoding , boolean flag)
             throws ClientProtocolException, IOException {
         HttpPost post = new HttpPost(url);
 
@@ -96,7 +96,7 @@ public class SendRequest {
         }
         HttpEntity entity = response.getEntity();
 
-        Result result = new Result();
+        MyHttpResult result = new MyHttpResult();
         result.setStatusCode(response.getStatusLine().getStatusCode());
         result.setHeaders(response.getAllHeaders());
         result.setHttpEntity(entity);

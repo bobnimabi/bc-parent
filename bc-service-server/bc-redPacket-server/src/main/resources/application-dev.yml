@@ -34,7 +34,7 @@ spring:
       connection-test-query: SELECT 1
 
 server:
-  port: 8080
+  port: 8083
   servlet:
     context-path: /redPacket
 

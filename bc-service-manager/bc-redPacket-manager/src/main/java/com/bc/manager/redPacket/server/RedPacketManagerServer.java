@@ -772,4 +772,14 @@ public class RedPacketManagerServer {
         }
         return ResponseResult.SUCCESS();
     }
+
+    public ResponseResult navUpdateById(VsNavDto navDto) throws Exception {
+        VsNav nav = new VsNav();
+        MyBeanUtil.copyProperties(navDto, nav);
+        boolean updateById = navService.updateById(nav);
+        if (!updateById) {
+            ExceptionCast.castFail("修改失败");
+        }
+        return ResponseResult.SUCCESS();
+    }
 }

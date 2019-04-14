@@ -5,5 +5,6 @@ package com.bc.common.client;
  */
 public class BcServiceList {
     public static final String BC_LOGIN_SERVER = "bc-login-server";
-    public static final String BC_ADJUST_SERVER = "bc-adjust-server";
+    public static final String BC_UCENTER_SERVER = "bc-ucenter-server";
+    public static final String BC_REDPACKET_SERVER = "bc-redPacket-server";
 }

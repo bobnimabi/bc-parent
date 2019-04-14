@@ -8,10 +8,8 @@ import com.bc.service.common.login.service.IXcUserService;
 import com.bc.utils.BCryptUtil;
 import com.bc.utils.project.XcTokenUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 /**
  * Created by mrt on 2019/4/7 0007 下午 4:01
@@ -19,13 +17,7 @@ import org.springframework.web.client.RestTemplate;
 @Service
 public class UcenterServer {
     @Autowired
-    private LoadBalancerClient loadBalancerClient;
-
-    @Autowired
     private StringRedisTemplate stringRedisTemplate;
-
-    @Autowired
-    private RestTemplate restTemplate;
 
     @Autowired
     private IXcUserService userService;

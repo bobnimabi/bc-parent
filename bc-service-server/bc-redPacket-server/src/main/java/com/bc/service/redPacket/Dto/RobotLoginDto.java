@@ -5,7 +5,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
 
 /**
  * Created by mrt on 2019/4/12 0012 下午 9:05
@@ -13,8 +12,7 @@ import java.math.BigDecimal;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TaskAtom implements Serializable {
-    private Integer userId;
-    private String username;
-    private Long recordId;
+public class RobotLoginDto implements Serializable {
+    private String varCode;
+    private Integer num;
 }

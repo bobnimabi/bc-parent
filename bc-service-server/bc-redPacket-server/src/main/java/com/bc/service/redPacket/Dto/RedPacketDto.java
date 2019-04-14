@@ -10,6 +10,6 @@ import java.io.Serializable;
 @Data
 public class RedPacketDto implements Serializable {
     private String username;
-    private String clientType;
+    private int clientType;
     private String clientIp;
 }
