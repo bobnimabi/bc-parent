@@ -350,7 +350,7 @@ public class RedPacketServer {
         if (-1 == expireTime) ExceptionCast.castFail("userId："+player.getId()+" 红包打款限制时间无限长");
         //放入机器人派送队列(跳表)
         Boolean add = redis.opsForZSet().add(
-                VarParam.RedPacketM.TASK_QUEUE,
+                VarParam.RedPacketM.JUST_TASK_QUEUE,
                 JSON.toJSONString(new TaskAtom(player.getId(),player.getUserName(), record.getId())),
                 expireTime == -2L ? 0d : Double.valueOf(expireTime + "")
         );
@@ -358,7 +358,7 @@ public class RedPacketServer {
             log.error("订单进入队列失败：userId:"+player.getId()+" recordId:"+record.getId());
         }
         log.info("订单进入队列成功：userId:"+player.getId()+" recordId:"+record.getId());
-        robotServer.exe1();
+        robotServer.exeQueue();
     }
 
     /**

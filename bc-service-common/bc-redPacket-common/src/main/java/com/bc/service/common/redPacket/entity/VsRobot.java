@@ -41,6 +41,9 @@ public class VsRobot implements Serializable {
     @ApiModelProperty(value = "平台账号")
     private String platAccount;
 
+    @ApiModelProperty(value = "平台密码")
+    private String platPassword;
+
     @ApiModelProperty(value = "状态：0停止 1运行")
     private Integer robotStatus;
 

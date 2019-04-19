@@ -45,14 +45,15 @@ public class VarParam {
         public static final String TRANSFORM_KEY = REDPACKET_M_PRE + "transform";
         //默认主题
         public static final String DEFAULT_THEME = REDPACKET_M_PRE + "defaultTheme";
-        //机器人任务队列
-        public static final String TASK_QUEUE = REDPACKET_M_PRE + "queue";
+        //机器人调整任务队列
+        public static final String JUST_TASK_QUEUE = REDPACKET_M_PRE + "justQueue";
+        //机器人执行任务队列
+        public static final String TASK_QUEUE = REDPACKET_M_PRE + "taskQueue";
         //玩家需等待时间
         public static final String PLAYER_WAIT = REDPACKET_M_PRE + "wait:";
-        //玩家自己的队列
-        public static final String PLAYER_QUEUE = REDPACKET_M_PRE + "playerQ:";
         //机器人状态
-        public static final String ROBOT_STATUS = REDPACKET_M_PRE + "robot:";
+        public static final String ROBOT_MAP = REDPACKET_M_PRE + "robotList";
+
 
         /**
          * 项目参数
@@ -67,7 +68,6 @@ public class VarParam {
         public static final int SIZE_RED = 10000;
         //布隆过滤器：错误率
         public static final double FPP_RED = 0.03;
-
         //打款机器人：图片验证码url
         public static final String CODE_URL = "https://ovwyfq040.prealmd.com/agent/validCode";
         //打款机器人：登录url
@@ -76,16 +76,12 @@ public class VarParam {
         public static String QUERY_URL = "https://ovwyfq040.prealmd.com/agent/ComRecordServlet";
         //打款机器人：打款url
         public static String PAY_URL = "https://ovwyfq040.prealmd.com/agent/ComRecordServlet";
-
-        //机器人1：登录账号
-        public static String ROBOT_ONE_ACCOUNT = "amlzaHUwMDE=";
-        //机器人1：登录密码
-        public static String ROBOT_ONE_PASSWORD = "MWU0NDAzODQwNjAyYmZhZmM1M2E3ZDVmOTY1M2JmYzA==";
-
         //限制玩家11秒内不能重复打款
         public static final int WAIT_SECOND = 11;
-        //机器人：个数
-        public static final int ROBOT_NUM = 1;
+        //机器人：平台密码加密
+        public static final String PASS_KEY = "jfxmk!wl.c4yg6gg?#&*%~+=&jv4399";
+
+
 
 
 

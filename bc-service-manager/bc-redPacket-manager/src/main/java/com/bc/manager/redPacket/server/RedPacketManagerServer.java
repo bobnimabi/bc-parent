@@ -181,7 +181,7 @@ public class RedPacketManagerServer {
                     for (VsAwardPrize prize : prizeList) {
                         prizeStrList.add(JSON.toJSONString(prize));
                     }
-                    redis.opsForList().leftPushAll(VarParam.RedPacketM.PRIZE_KEY,prizeStrList);
+                    redis.opsForList().rightPushAll(VarParam.RedPacketM.PRIZE_KEY,prizeStrList);
                 }
                 prizeLock.unlock();
             } else {
@@ -772,7 +772,9 @@ public class RedPacketManagerServer {
         }
         return ResponseResult.SUCCESS();
     }
-
+    /**
+     * 配置项：更新
+     */
     public ResponseResult navUpdateById(VsNavDto navDto) throws Exception {
         VsNav nav = new VsNav();
         MyBeanUtil.copyProperties(navDto, nav);
@@ -782,4 +784,31 @@ public class RedPacketManagerServer {
         }
         return ResponseResult.SUCCESS();
     }
+
+    /**
+     * 补单
+     */
+
+    /**
+     * 机器人：登录
+     */
+    /**
+     * 机器人：获取图片验证码
+     */
+    /**
+     * 机器人：增加
+     */
+    /**
+     * 机器人：删除
+     */
+    /**
+     * 机器人：修改
+     */
+    /**
+     * 机器人：查询全部
+     */
+    /**
+     * 机器人：根据id查询
+     */
+
 }

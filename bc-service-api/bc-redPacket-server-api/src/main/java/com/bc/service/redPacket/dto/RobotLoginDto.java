@@ -14,5 +14,5 @@ import java.io.Serializable;
 @AllArgsConstructor
 public class RobotLoginDto implements Serializable {
     private String varCode;
-    private Integer num;
+    private Integer robotNum;
 }

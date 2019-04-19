@@ -42,13 +42,11 @@ public class RedPacketController {
     @ApiOperation("获取图片验证码")
     @PostMapping("/getVarCode")
     public void getVarCode(@RequestBody RobotLoginDto robotLoginDto, HttpServletResponse response) throws Exception{
-        if (null == robotLoginDto ||  null == robotLoginDto.getNum()) {
+        if (null == robotLoginDto ||  null == robotLoginDto.getRobotNum()) {
             ExceptionCast.castFail("未传入机器人编号");
         }
         ServletOutputStream outputStream = response.getOutputStream();
-        if (robotLoginDto.getNum() == 1){
-            robotServer.getCode(outputStream,RobotServer.client1);
-        }
+        robotServer.getCode(outputStream,RobotServer.robotList.get(robotLoginDto.getRobotNum()));
         outputStream.flush();
         outputStream.close();
     }
@@ -56,13 +54,13 @@ public class RedPacketController {
     @ApiOperation("机器人登录")
     @PostMapping("/robotLogin")
     public ResponseResult robotLogin(@RequestBody RobotLoginDto robotLoginDto) throws Exception{
-        if (null == robotLoginDto || StringUtils.isEmpty(robotLoginDto.getVarCode()) || null == robotLoginDto.getNum()) {
+        if (null == robotLoginDto || StringUtils.isEmpty(robotLoginDto.getVarCode()) || null == robotLoginDto.getRobotNum()) {
             ExceptionCast.castFail("未传入验证码或机器人编号");
         }
-        if (robotLoginDto.getNum() == 1){
-            return  robotServer.login(robotLoginDto.getVarCode(), VarParam.RedPacketM.ROBOT_ONE_ACCOUNT, VarParam.RedPacketM.ROBOT_ONE_PASSWORD,RobotServer.client1);
-        }
-        return ResponseResult.FAIL("登录失败");
+        Integer robotNum = robotLoginDto.getRobotNum();
+        return  robotServer.login(
+                robotLoginDto.getVarCode(),
+                robotLoginDto.getRobotNum());
     }
 
     @ApiOperation("补单")
