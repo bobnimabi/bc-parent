@@ -17,6 +17,7 @@
         <module>bc-service-common</module>
         <module>bc-codeGeneral</module>
         <module>bc-service-manager</module>
+        <module>bc-service-api</module>
     </modules>
 
     <parent>

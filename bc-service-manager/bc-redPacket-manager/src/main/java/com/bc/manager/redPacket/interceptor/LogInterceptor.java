@@ -11,7 +11,6 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-//哈哈
 @Slf4j
 public class LogInterceptor extends HandlerInterceptorAdapter {
 	@Autowired

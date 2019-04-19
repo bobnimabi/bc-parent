@@ -11,6 +11,7 @@ import java.util.List;
 
 public class CodeGenerator {
     public static void main(String[] args) {
+
         /*********************************************红包系统***********************************************/
         //项目路径
         String projectPath="F:\\javaCode\\bc-parent\\bc-service-common\\bc-redPacket-common"+"\\";
@@ -20,22 +21,39 @@ public class CodeGenerator {
         String modelName="redPacket";
         //生成表的名称
         String[] tables={
-//                "vs_award_active",
-//                "vs_award_transform",
-//                "vs_award_player",
-//                "vs_award_prize",
-//                "vs_configure",
-//                "vs_log",
-//                "vs_media",
-                "vs_pay_record",
-//                "vs_site",
-//                "vs_nav",
+                "vs_robot",
+                "vs_robot_record",
         };
 
         //配置数据库信息
         String url="jdbc:mysql://103.44.30.46:3306/red_packet?useUnicode=true&useSSL=false&characterEncoding=utf8";
         String username = "root";
         String password = "W_y1:478!";
+        /*********************************************红包系统***********************************************/
+        //项目路径
+//        String projectPath="F:\\javaCode\\bc-parent\\bc-service-common\\bc-redPacket-common"+"\\";
+//        //父package
+//        String parentName="com.bc.service.common";
+//        //模块名
+//        String modelName="redPacket";
+//        //生成表的名称
+//        String[] tables={
+////                "vs_award_active",
+////                "vs_award_transform",
+////                "vs_award_player",
+////                "vs_award_prize",
+////                "vs_configure",
+////                "vs_log",
+////                "vs_media",
+//                "vs_pay_record",
+////                "vs_site",
+////                "vs_nav",
+//        };
+//
+//        //配置数据库信息
+//        String url="jdbc:mysql://103.44.30.46:3306/red_packet?useUnicode=true&useSSL=false&characterEncoding=utf8";
+//        String username = "root";
+//        String password = "W_y1:478!";
       /***********************************************认证和用户中心****************************************************
         //项目路径
         String projectPath="F:\\javaCode\\bc-parent\\bc-service-common\\bc-login-common"+"\\";

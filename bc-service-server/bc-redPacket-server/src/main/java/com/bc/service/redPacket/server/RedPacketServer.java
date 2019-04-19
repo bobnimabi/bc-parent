@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-import com.baomidou.mybatisplus.extension.service.additional.update.impl.UpdateChainWrapper;
 import com.bc.common.Exception.CustomException;
 import com.bc.common.Exception.ExceptionCast;
 import com.bc.common.constant.VarParam;
@@ -15,9 +14,9 @@ import com.bc.service.common.redPacket.entity.VsAwardPlayer;
 import com.bc.service.common.redPacket.entity.VsAwardPrize;
 import com.bc.service.common.redPacket.entity.VsPayRecord;
 import com.bc.service.common.redPacket.service.*;
-import com.bc.service.redPacket.Dto.RedPacketDto;
-import com.bc.service.redPacket.Dto.TaskAtom;
-import com.bc.service.redPacket.Vo.RedResultVo;
+import com.bc.service.redPacket.dto.RedPacketDto;
+import com.bc.service.redPacket.dto.TaskAtom;
+import com.bc.service.redPacket.vo.RedResultVo;
 import com.bc.service.redPacket.exception.RedCode;
 import com.bc.utils.DateUtil;
 import com.bc.utils.MyBloomFilter;
@@ -37,6 +36,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 /**
  * Created by mrt on 2019/4/8 0008 下午 12:25
@@ -74,9 +74,6 @@ public class RedPacketServer {
     private ReentrantLock activeLock;
     //奖品锁
     private ReentrantLock prizeLock;
-
-    //轮询数
-    public int robinNum = 10;
 
     /**
      * 抽红包总调度
@@ -340,15 +337,17 @@ public class RedPacketServer {
         log.info("订单生成成功："+JSON.toJSONString(record));
 
         //入队+执行
-        joinQueue(record,player);
+        joinMyQueue(record,player);
         return ResponseResult.SUCCESS(redResultVo);
     }
 
     /**
      * 任务入队+执行
      */
-    public void joinQueue(VsPayRecord record,VsAwardPlayer player) throws Exception{
-        Long expireTime = redis.getExpire(VarParam.RedPacketM.PLAYER_WAIT + player.getId());
+    public void joinMyQueue(VsPayRecord record, VsAwardPlayer player) throws Exception{
+        //查询用户的限制时间（毫秒值）
+        Long expireTime = redis.getExpire(VarParam.RedPacketM.PLAYER_WAIT + player.getId(), TimeUnit.MILLISECONDS);
+        if (-1 == expireTime) ExceptionCast.castFail("userId："+player.getId()+" 红包打款限制时间无限长");
         //放入机器人派送队列(跳表)
         Boolean add = redis.opsForZSet().add(
                 VarParam.RedPacketM.TASK_QUEUE,
@@ -359,17 +358,7 @@ public class RedPacketServer {
             log.error("订单进入队列失败：userId:"+player.getId()+" recordId:"+record.getId());
         }
         log.info("订单进入队列成功：userId:"+player.getId()+" recordId:"+record.getId());
-
-        //轮询
-        int num = robinNum++ % VarParam.RedPacketM.ROBOT_NUM;
-        switch (num){
-            case 0:
-                robotServer.exe1();
-                break;
-            default:
-                log.info("轮询机器人失败");
-                ExceptionCast.castFail("轮询机器人失败");
-        }
+        robotServer.exe1();
     }
 
     /**
@@ -414,7 +403,7 @@ public class RedPacketServer {
         if (record.getPayStatus() != VarParam.RedPacketM.PAY_STATUS_FAIL)
             return ResponseResult.FAIL("正常订单，无需补单");
         VsAwardPlayer player = playerService.getOne(new QueryWrapper<VsAwardPlayer>().eq("user_name", record.getUserName()));
-        this.joinQueue(record,player);
+        this.joinMyQueue(record,player);
         boolean update = recordService.update(
                 new UpdateWrapper<VsPayRecord>()
                         .eq("id", record.getId())

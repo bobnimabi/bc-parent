@@ -49,6 +49,10 @@ public class VarParam {
         public static final String TASK_QUEUE = REDPACKET_M_PRE + "queue";
         //玩家需等待时间
         public static final String PLAYER_WAIT = REDPACKET_M_PRE + "wait:";
+        //玩家自己的队列
+        public static final String PLAYER_QUEUE = REDPACKET_M_PRE + "playerQ:";
+        //机器人状态
+        public static final String ROBOT_STATUS = REDPACKET_M_PRE + "robot:";
 
         /**
          * 项目参数

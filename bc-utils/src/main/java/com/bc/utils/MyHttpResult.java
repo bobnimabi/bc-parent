@@ -46,7 +46,6 @@ public class MyHttpResult {
 
     /**
      * 设置结果状态码
-     * 
      * @param statusCode
      */
     public void setStatusCode(int statusCode) {
@@ -55,7 +54,6 @@ public class MyHttpResult {
 
     /**
      * 获取结果头部信息
-     * 
      * @return
      */
     public HashMap<String, Header> getHeaders() {

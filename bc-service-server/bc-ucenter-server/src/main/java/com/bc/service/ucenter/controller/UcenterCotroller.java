@@ -1,8 +1,10 @@
 package com.bc.service.ucenter.controller;
 
+import com.bc.common.Exception.ExceptionCast;
 import com.bc.common.pojo.AuthToken;
 import com.bc.common.response.ResponseResult;
 import com.bc.service.common.login.service.IXcUserService;
+import com.bc.service.ucenter.dto.ChangePassDto;
 import com.bc.service.ucenter.server.UcenterServer;
 import com.bc.utils.project.XcCookieUtil;
 import com.bc.utils.project.XcTokenUtil;
@@ -41,17 +43,18 @@ public class UcenterCotroller {
 
     //修改密码
     @PostMapping("/changePassword")
-    public ResponseResult changePassword(@RequestParam String oldPass, @RequestParam String newPass, HttpServletRequest httpRequest) throws Exception{
-        if (StringUtils.isEmpty(oldPass))
-            return ResponseResult.INVALID_PARAM("旧密码不能为空");
-        if (StringUtils.isEmpty(newPass))
-            return ResponseResult.INVALID_PARAM("新密码不能为空");
-        if (newPass.length() < 8)
-            return ResponseResult.FAIL("新密码的长度不能低于8位");
+    public ResponseResult changePassword(@RequestBody ChangePassDto passDto, HttpServletRequest httpRequest) throws Exception{
+        if (null == passDto)  ExceptionCast.castFail("未收取到任何参数");
+        if (StringUtils.isEmpty(passDto.getOldPass()))
+            ExceptionCast.castFail("旧密码不能为空");
+        if (StringUtils.isEmpty(passDto.getNewPass()))
+            ExceptionCast.castFail("新密码不能为空");
+        if (passDto.getNewPass().length() < 8)
+            ExceptionCast.castFail("新密码的长度不能低于8位");
 
         String uid = XcCookieUtil.getTokenFormCookie(httpRequest);
         if (StringUtils.isEmpty(uid)) return ResponseResult.FAIL("未携带身份信息，请登录");
-        return ucenterServer.changePassword(oldPass,newPass,uid);
+        return ucenterServer.changePassword(passDto.getOldPass(),passDto.getNewPass(),uid);
     }
 
     @GetMapping("test")

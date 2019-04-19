@@ -17,6 +17,11 @@
             <artifactId>bc-login-common</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>siemReap</groupId>
+            <artifactId>bc-login-sever-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

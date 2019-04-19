@@ -17,6 +17,17 @@
             <artifactId>bc-redPacket-common</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>siemReap</groupId>
+            <artifactId>bc-redPacket-manager-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>siemReap</groupId>
+            <artifactId>bc-redPacket-server-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
     </dependencies>
 
     <build>

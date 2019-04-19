@@ -4,10 +4,8 @@ package com.bc.service.redPacket.controller;
 import com.bc.common.Exception.ExceptionCast;
 import com.bc.common.constant.VarParam;
 import com.bc.common.response.ResponseResult;
-import com.bc.service.common.redPacket.entity.VsPayRecord;
-import com.bc.service.redPacket.Dto.RedPacketDto;
-import com.bc.service.redPacket.Dto.RobotLoginDto;
-import com.bc.service.redPacket.Dto.VsPayRecordDto;
+import com.bc.service.redPacket.dto.RedPacketDto;
+import com.bc.service.redPacket.dto.RobotLoginDto;
 import com.bc.service.redPacket.server.RedPacketServer;
 import com.bc.service.redPacket.server.RobotServer;
 import com.bc.utils.CheckMobile;
@@ -17,7 +15,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -44,7 +41,7 @@ public class RedPacketController {
 
     @ApiOperation("获取图片验证码")
     @PostMapping("/getVarCode")
-    public void getVarCode(@RequestBody RobotLoginDto robotLoginDto,HttpServletResponse response) throws Exception{
+    public void getVarCode(@RequestBody RobotLoginDto robotLoginDto, HttpServletResponse response) throws Exception{
         if (null == robotLoginDto ||  null == robotLoginDto.getNum()) {
             ExceptionCast.castFail("未传入机器人编号");
         }
@@ -57,8 +54,8 @@ public class RedPacketController {
     }
 
     @ApiOperation("机器人登录")
-    @PostMapping("/robotOneLogin")
-    public ResponseResult robotOneLogin(@RequestBody RobotLoginDto robotLoginDto) throws Exception{
+    @PostMapping("/robotLogin")
+    public ResponseResult robotLogin(@RequestBody RobotLoginDto robotLoginDto) throws Exception{
         if (null == robotLoginDto || StringUtils.isEmpty(robotLoginDto.getVarCode()) || null == robotLoginDto.getNum()) {
             ExceptionCast.castFail("未传入验证码或机器人编号");
         }
@@ -69,34 +66,13 @@ public class RedPacketController {
     }
 
     @ApiOperation("补单")
-    @PostMapping("/repay")
-    public ResponseResult repay(@RequestParam Long id) throws Exception{
+    @GetMapping("/repayOrder")
+    public ResponseResult repayOrder(@RequestParam Long id) throws Exception{
         if ( null == id) {
             ExceptionCast.castFail("未传入recordId");
         }
         return packetServer.repay(id);
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     @GetMapping("/test")
     @PreAuthorize("hasAuthority('query_salar')")
