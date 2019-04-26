@@ -36,7 +36,7 @@ public class VarParam {
          * redis-key
          */
         //项目前缀
-        public static final String REDPACKET_M_PRE = "redPackM:";
+        public static final String REDPACKET_M_PRE = "redP:";
         //红包活动redis-key
         public static final String ACTIVE_KEY = REDPACKET_M_PRE + "active:";
         //奖品
@@ -53,7 +53,8 @@ public class VarParam {
         public static final String PLAYER_WAIT = REDPACKET_M_PRE + "wait:";
         //机器人状态
         public static final String ROBOT_MAP = REDPACKET_M_PRE + "robotList";
-
+        //布隆过滤器：key
+        public static final String BLOOM_RED = VarParam.RedPacketM.REDPACKET_M_PRE+"bf";
 
         /**
          * 项目参数
@@ -62,8 +63,6 @@ public class VarParam {
         public static final int AWARD_ACTIVE_ID = 1;
         //库存数量的最小值
         public static final int PRIZE_STORE_NUM_MIN = 0;
-        //布隆过滤器：key
-        public static final String BLOOM_RED = VarParam.RedPacketM.REDPACKET_M_PRE+"bf:";
         //布隆过滤器：插入数据大小
         public static final int SIZE_RED = 10000;
         //布隆过滤器：错误率
@@ -122,7 +121,6 @@ public class VarParam {
         public static final int RECHARGE_TYPE = 2;
         //确认支付者
         public static final String CONFIRM_PAY = "system";
-        //确认派送者
-        public static final String CONFIRM_DISPATCH_ONE = "robot1";
+
     }
 }

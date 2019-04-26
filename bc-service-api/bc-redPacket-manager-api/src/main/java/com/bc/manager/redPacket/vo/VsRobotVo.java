@@ -1,14 +1,16 @@
-package com.bc.service.common.redPacket.entity;
+package com.bc.manager.redPacket.vo;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
-import java.time.LocalDateTime;
-import java.io.Serializable;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * @author admin
@@ -18,7 +20,7 @@ import lombok.experimental.Accessors;
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
 @ApiModel(value="VsRobot对象", description="")
-public class VsRobot implements Serializable {
+public class VsRobotVo extends Page implements Serializable {
 
     private static final long serialVersionUID = 1L;
 

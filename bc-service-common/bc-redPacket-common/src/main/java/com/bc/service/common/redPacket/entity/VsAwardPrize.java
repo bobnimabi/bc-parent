@@ -59,6 +59,4 @@ public class VsAwardPrize implements Serializable {
 
     @ApiModelProperty(value = "添加时间")
     private LocalDateTime createTime;
-
-
 }

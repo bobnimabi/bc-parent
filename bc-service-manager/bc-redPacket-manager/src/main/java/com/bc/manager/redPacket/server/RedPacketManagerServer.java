@@ -9,12 +9,15 @@ import com.bc.common.Exception.ExceptionCast;
 import com.bc.common.constant.VarParam;
 import com.bc.common.response.CommonCode;
 import com.bc.common.response.ResponseResult;
+import com.bc.manager.redPacket.client.RedPacketClient;
 import com.bc.manager.redPacket.dto.*;
 import com.bc.manager.redPacket.vo.*;
 import com.bc.service.common.redPacket.entity.*;
 import com.bc.service.common.redPacket.service.*;
+import com.bc.service.redPacket.dto.RobotLoginDto;
+import com.bc.utils.MyBloomFilter;
 import com.bc.utils.project.MyBeanUtil;
-import com.netflix.discovery.converters.Auto;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -22,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -32,6 +36,7 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * Created by mrt on 2019/4/8 0008 下午 2:00
  */
+@Slf4j
 @Service
 public class RedPacketManagerServer {
     @Autowired
@@ -56,14 +61,15 @@ public class RedPacketManagerServer {
     private StringRedisTemplate redis;
     @Autowired
     private IVsNavService navService;
+    @Autowired
+    private IVsRobotService robotService;
+    @Autowired
+    private RedPacketClient packetClient;
 
     //活动锁
-    private ReentrantLock activeLock;
+    private ReentrantLock activeLock = new ReentrantLock();
     //奖品锁
-    private ReentrantLock prizeLock;
-    //转换规则锁
-    private ReentrantLock tranLock;
-
+    private ReentrantLock prizeLock = new ReentrantLock();
 
     /**
      * 红包活动修改
@@ -89,12 +95,14 @@ public class RedPacketManagerServer {
         if (null == activeJson) {
             if (activeLock.tryLock()) {
                 activeJson = redis.opsForValue().get(VarParam.RedPacketM.ACTIVE_KEY);
+                VsAwardActive active = null;
                 if (null == activeJson) {
-                    VsAwardActive active = activeService.getById(VarParam.RedPacketM.AWARD_ACTIVE_ID);
+                    active = activeService.getById(VarParam.RedPacketM.AWARD_ACTIVE_ID);
                     if (active == null) ExceptionCast.castFail("数据库没有任何红包活动");
                     redis.opsForValue().set(VarParam.RedPacketM.ACTIVE_KEY, JSON.toJSONString(active));
                 }
                 activeLock.unlock();
+                return active;
             } else {
                 Thread.sleep(100);
                 return getActive();
@@ -163,11 +171,12 @@ public class RedPacketManagerServer {
     public List<VsAwardPrize> getPrizes() throws Exception{
         List<String> prizesJsons = redis.opsForList().range(VarParam.RedPacketM.PRIZE_KEY, 0, -1);
         if (CollectionUtils.isEmpty(prizesJsons)){
+            List<VsAwardPrize> prizeList = null;
             if (prizeLock.tryLock()) {
                 prizesJsons = redis.opsForList().range(VarParam.RedPacketM.PRIZE_KEY, 0, -1);
                 if (CollectionUtils.isEmpty(prizesJsons)) {
                     //从数据库获取，放入缓存
-                    List<VsAwardPrize> prizeList = prizeService.list();
+                    prizeList = prizeService.list();
                     if (CollectionUtils.isEmpty(prizeList)) ExceptionCast.castFail("数据库没有任何奖品");
                     //按照金额从小到大排序
                     //奖品排序
@@ -177,19 +186,20 @@ public class RedPacketManagerServer {
                             return o1.getTotalAmount().compareTo(o2.getTotalAmount());
                         }
                     });
-                    List<String> prizeStrList = null;
+                    List<String> prizeStrList = new ArrayList<>();
                     for (VsAwardPrize prize : prizeList) {
                         prizeStrList.add(JSON.toJSONString(prize));
                     }
                     redis.opsForList().rightPushAll(VarParam.RedPacketM.PRIZE_KEY,prizeStrList);
                 }
                 prizeLock.unlock();
+                return prizeList;
             } else {
                 Thread.sleep(100);
                 return getPrizes();
             }
         }
-        List<VsAwardPrize> prizeList=  null;
+        List<VsAwardPrize> prizeList=  new ArrayList<>();
         for (String prizeJson: prizesJsons) {
             VsAwardPrize prize = JSON.parseObject(prizeJson, VsAwardPrize.class);
             prizeList.add(prize);
@@ -276,44 +286,22 @@ public class RedPacketManagerServer {
         MyBeanUtil.copyProperties(transformDto, transform);
         boolean save = transformService.save(transform);
         if (!save) ExceptionCast.castFail("数据库存入失败");
-        if (!redis.delete(VarParam.RedPacketM.TRANSFORM_KEY))
-            ExceptionCast.castFail("缓存清理失败");
         return ResponseResult.SUCCESS();
     }
 
     private List<VsAwardTransform> getTransforms() throws Exception{
-        List<String> tranJsons = redis.opsForList().range(VarParam.RedPacketM.TRANSFORM_KEY, 0, -1);
-        if (CollectionUtils.isEmpty(tranJsons)) {
-            if (tranLock.tryLock()) {
-                tranJsons = redis.opsForList().range(VarParam.RedPacketM.TRANSFORM_KEY, 0, -1);
-                if (CollectionUtils.isEmpty(tranJsons)) {
-                    List<VsAwardTransform> transforms = transformService.list();
-                    if (CollectionUtils.isEmpty(transforms)) {
-                        ExceptionCast.castFail("转换规则数据库没有，请立刻设置");
-                    }
-                    List<String> list = new ArrayList<>();
-                    transforms.forEach(tran -> list.add(JSON.toJSONString(tran)));
-                    redis.opsForList().leftPushAll(VarParam.RedPacketM.TRANSFORM_KEY, list);
-                }
-                tranLock.unlock();
-            } else {
-                Thread.sleep(100);
-                return getTransforms();
-            }
+        List<VsAwardTransform> transforms = transforms = transformService.list();
+        if (CollectionUtils.isEmpty(transforms)) {
+            ExceptionCast.castFail("转换规则数据库没有，请立刻设置");
         }
-        List<VsAwardTransform> transformList = new ArrayList<>();
-        tranJsons.forEach(tranStr->{
-            VsAwardTransform transform = JSON.parseObject(tranStr, VsAwardTransform.class);
-            transformList.add(transform);
-        });
         //从小到大排序
-        transformList.sort(new Comparator<VsAwardTransform>() {
+        transforms.sort(new Comparator<VsAwardTransform>() {
             @Override
             public int compare(VsAwardTransform o1, VsAwardTransform o2) {
                 return o1.getAmount().compareTo(o2.getAmount());
             }
         });
-        return transformList;
+        return transforms;
     }
 
     /**
@@ -340,9 +328,6 @@ public class RedPacketManagerServer {
     public ResponseResult delTransformById(VsAwardTransformDto transformDto) throws Exception{
         boolean removeById = transformService.removeById(transformDto.getId());
         if (!removeById) ExceptionCast.castFail("数据库删除失败");
-        if (!redis.delete(VarParam.RedPacketM.TRANSFORM_KEY)) {
-            ExceptionCast.castFail("缓存删除失败");
-        }
         return ResponseResult.SUCCESS();
     }
 
@@ -350,13 +335,11 @@ public class RedPacketManagerServer {
      * 转换规则：根据id查看
      */
     public ResponseResult queryTransformById(VsAwardTransformDto transformDto) throws Exception{
-        List<VsAwardTransform> transforms = this.getTransforms();
-        for (VsAwardTransform tran : transforms) {
-            if (tran.getId() == transformDto.getId()) {
-                return ResponseResult.SUCCESS(tran);
-            }
+        VsAwardTransform transform = transformService.getById(transformDto.getId());
+        if (null == transform) {
+            ExceptionCast.castFail("未找到");
         }
-        return ResponseResult.FAIL("未找到");
+        return ResponseResult.SUCCESS(transform);
     }
     /**
      * 转换规则：更新
@@ -367,9 +350,6 @@ public class RedPacketManagerServer {
         MyBeanUtil.copyProperties(transformDto,transform);
         boolean update = transformService.updateById(transform);
         if (!update) ExceptionCast.castFail("数据库更新失败");
-
-        if (!redis.delete(VarParam.RedPacketM.TRANSFORM_KEY))
-            ExceptionCast.castFail("缓存删除失败");
         return ResponseResult.SUCCESS();
     }
 
@@ -382,6 +362,14 @@ public class RedPacketManagerServer {
         MyBeanUtil.copyProperties(playerDto, player);
         boolean save = playerService.save(player);
         if (!save) ExceptionCast.cast(CommonCode.FAIL);
+        //布隆过滤器添加
+        MyBloomFilter.put(
+                VarParam.RedPacketM.BLOOM_RED,
+                player.getUserName(),
+                VarParam.RedPacketM.SIZE_RED,
+                VarParam.RedPacketM.FPP_RED,
+                redis
+        );
         return ResponseResult.SUCCESS();
     }
 
@@ -436,6 +424,7 @@ public class RedPacketManagerServer {
         ExceptionCast.cast(CommonCode.FAIL);
         return null;
     }
+
     /**
      * 会员管理：下架
      */
@@ -461,9 +450,11 @@ public class RedPacketManagerServer {
                         .lt("create_time", LocalDateTime.now().minusDays(playerDto.getDays()))
             );
         if (!remove) ExceptionCast.castFail("批量会员清除失败");
+        log.info("会员管理：清除会员:成功，days ："+playerDto.getDays());
+        //从新初始化布隆过滤器
+        packetClient.initBloomFilter();
         return ResponseResult.SUCCESS();
     }
-
 
     /**
      * 会员管理：批量导入
@@ -480,13 +471,16 @@ public class RedPacketManagerServer {
                 if (exPlay.getHasAmount().compareTo(transforms.get(size - i).getAmount()) >= 0) {
                     exPlay.setJoinTimes(exPlay.getJoinTimes() + transforms.get(size - i).getTimes());
                     exPlay.setHasAmount(BigDecimal.ZERO);
+                    break;
                 }
+                i++;
             }
         });
 
         List<String> userNameList = new ArrayList<>();
         exPlayers.forEach(player->userNameList.add(player.getUserName()));
 
+        //获取会员导入类型
         VsConfigure configure = configureService.getOne(
                 new QueryWrapper<VsConfigure>().eq("configure_key", "players_import_type"));
         if (null == configure) {
@@ -494,31 +488,24 @@ public class RedPacketManagerServer {
         }
         int playersImportType = Integer.parseInt(configure.getConfigureValue());
 
-        if (playersImportType == VarParam.RedPacketM.IMPORT_PLAYERS_TYPE_ONE) {
-            //导入会员类型：覆盖
-            boolean remove = playerService.remove(
-                    new QueryWrapper<VsAwardPlayer>()
-                            .in("user_name", userNameList)
-            );
-            if (!remove)  ExceptionCast.castFail("删除已存在的会员失败");
-            if (!playerService.saveBatch(exPlayers))  ExceptionCast.castFail("批量会员入库失败");
-            return ResponseResult.SUCCESS();
-        }
-
-        //导入会员类型：累加
-        //如果该会员已经存在，则增加次数
+        //获取已经存在的用户
         List<VsAwardPlayer> dataPlays = playerService.list(
                 new QueryWrapper<VsAwardPlayer>()
                         .select("id","user_name as userName","join_times as joinTimes")
                         .in("user_name", userNameList)
         );
+        //将已有的用户，次数覆盖或累加，并筛选真正的新用户
         if (!CollectionUtils.isEmpty(dataPlays)){
             Iterator<VsAwardPlayer> iterator = exPlayers.iterator();
             dataPlays.forEach(dataPlay->{
                 while (iterator.hasNext()) {
                     VsAwardPlayer exPlayer = iterator.next();
                     if (dataPlay.getUserName().equals(exPlayer.getUserName())) {
-                        dataPlay.setJoinTimes(dataPlay.getJoinTimes() + exPlayer.getJoinTimes());
+                        if (playersImportType == VarParam.RedPacketM.IMPORT_PLAYERS_TYPE_ONE) {//覆盖
+                            dataPlay.setJoinTimes(exPlayer.getJoinTimes());
+                        } else {//非覆盖：累加
+                            dataPlay.setJoinTimes(dataPlay.getJoinTimes() + exPlayer.getJoinTimes());
+                        }
                         iterator.remove();
                     }
                 }
@@ -527,11 +514,24 @@ public class RedPacketManagerServer {
             if (!updateBatchById) {
                 ExceptionCast.castFail("更新已有用户的抽红包次数失败");
             }
+            log.info("会员管理：导入：更新已有用户的抽红包次数成功");
         }
+        //将真正的新用户入库，并加入布隆过滤器
         if (!CollectionUtils.isEmpty(exPlayers)){
             boolean saveBatch = playerService.saveBatch(exPlayers);
             if (!saveBatch) {
                 ExceptionCast.castFail("批量添加新用户失败");
+            }
+            log.info("会员管理：导入：批量添加新用户成功");
+            //添加进入布隆过滤器
+            for (VsAwardPlayer player: exPlayers) {
+                MyBloomFilter.put(
+                        VarParam.RedPacketM.BLOOM_RED,
+                        player.getUserName(),
+                        VarParam.RedPacketM.SIZE_RED,
+                        VarParam.RedPacketM.FPP_RED,
+                        redis
+                );
             }
         }
         return ResponseResult.SUCCESS();
@@ -788,27 +788,50 @@ public class RedPacketManagerServer {
     /**
      * 补单
      */
+    public ResponseResult repayOrder(Long id) throws Exception{
+        return packetClient.repayOrder(id);
+    }
+
+    /**
+     * 机器人：获取图片验证码
+     */
+    public void getVarCode(RobotLoginDto robotLoginDto) throws Exception{
+        packetClient.getVarCode(robotLoginDto);
+    }
 
     /**
      * 机器人：登录
      */
-    /**
-     * 机器人：获取图片验证码
-     */
+    public ResponseResult robotLogin(RobotLoginDto robotLoginDto) throws Exception{
+        return packetClient.robotLogin(robotLoginDto);
+    }
+
     /**
      * 机器人：增加
      */
-    /**
-     * 机器人：删除
-     */
-    /**
-     * 机器人：修改
-     */
-    /**
-     * 机器人：查询全部
-     */
-    /**
-     * 机器人：根据id查询
-     */
+    public ResponseResult addRobot(VsRobotDto robotDto) throws Exception{
+        return packetClient.addRobot(robotDto);
+    }
 
+    /**
+     * 机器人：开启或关闭
+     */
+    public ResponseResult robotStatus(VsRobotDto robotDto) throws Exception{
+        return packetClient.robotStatus(robotDto);
+    }
+
+    /**
+     * 机器人：查询全部，分页
+     */
+    public ResponseResult robotQuery(VsRobotDto robotDto) throws Exception{
+        IPage page = robotService.page(robotDto);
+        Page<VsRobotVo> vsRobotVoPage = MyBeanUtil.copyPageToPage(page, VsRobotVo.class);
+        vsRobotVoPage.getRecords().sort(new Comparator<VsRobotVo>() {
+            @Override
+            public int compare(VsRobotVo o1, VsRobotVo o2) {
+                return o1.getRobotNum() - o2.getRobotNum();
+            }
+        });
+        return ResponseResult.SUCCESS(vsRobotVoPage);
+    }
 }

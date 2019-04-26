@@ -6,11 +6,11 @@ import lombok.ToString;
 
 @Data
 @ToString
-public class LoginRequest {
+public class LoginParams {
 
    private String username;
    private String password;
-   private String verifycode;
+   private String imageCode;
    private String dynamicCode;
 
 }

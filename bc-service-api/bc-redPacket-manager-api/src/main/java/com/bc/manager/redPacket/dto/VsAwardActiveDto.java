@@ -8,6 +8,7 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 /**
  * <p>
@@ -49,5 +50,10 @@ public class VsAwardActiveDto implements Serializable {
     @ApiModelProperty(value = "创建时间")
     private LocalDateTime createTime;
 
-
+    public void setTimeStart(Long lon){
+        this.timeStart = LocalDateTime.ofEpochSecond(lon,0, ZoneOffset.ofHours(8));
+    }
+    public void setTimeEnd(Long lon){
+        this.timeEnd = LocalDateTime.ofEpochSecond(lon,0, ZoneOffset.ofHours(8));
+    }
 }

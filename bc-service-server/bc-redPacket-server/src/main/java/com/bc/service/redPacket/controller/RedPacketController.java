@@ -4,6 +4,8 @@ package com.bc.service.redPacket.controller;
 import com.bc.common.Exception.ExceptionCast;
 import com.bc.common.constant.VarParam;
 import com.bc.common.response.ResponseResult;
+import com.bc.manager.redPacket.dto.VsRobotDto;
+import com.bc.service.common.redPacket.entity.VsRobot;
 import com.bc.service.redPacket.dto.RedPacketDto;
 import com.bc.service.redPacket.dto.RobotLoginDto;
 import com.bc.service.redPacket.server.RedPacketServer;
@@ -46,7 +48,7 @@ public class RedPacketController {
             ExceptionCast.castFail("未传入机器人编号");
         }
         ServletOutputStream outputStream = response.getOutputStream();
-        robotServer.getCode(outputStream,RobotServer.robotList.get(robotLoginDto.getRobotNum()));
+        robotServer.getCode(outputStream,robotLoginDto.getRobotNum());
         outputStream.flush();
         outputStream.close();
     }
@@ -63,6 +65,29 @@ public class RedPacketController {
                 robotLoginDto.getRobotNum());
     }
 
+    @ApiOperation("机器人增加")
+    @PostMapping("/addRobot")
+    public ResponseResult addRobot(@RequestBody VsRobotDto robotDto) throws Exception{
+        if (null == robotDto
+            || StringUtils.isEmpty(robotDto.getRobotName())
+            || null == robotDto.getRobotNum()
+            || StringUtils.isEmpty(robotDto.getRobotDesc())
+            || StringUtils.isEmpty(robotDto.getPlatAccount())
+            || StringUtils.isEmpty(robotDto.getPlatPassword())
+            || null == robotDto.getRobotStatus()
+        ) ExceptionCast.castFail("参数不全");
+        return robotServer.addRobot(robotDto);
+    }
+
+    @ApiOperation("机器人开启或关闭")
+    @PostMapping("/robotStatus")
+    public ResponseResult robotStatus(@RequestBody VsRobotDto robotDto) throws Exception{
+        if (null == robotDto
+                || null == robotDto.getRobotStatus()
+        ) ExceptionCast.castFail("参数不全");
+        return robotServer.robotStatus(robotDto);
+    }
+
     @ApiOperation("补单")
     @GetMapping("/repayOrder")
     public ResponseResult repayOrder(@RequestParam Long id) throws Exception{
@@ -70,6 +95,12 @@ public class RedPacketController {
             ExceptionCast.castFail("未传入recordId");
         }
         return packetServer.repay(id);
+    }
+
+    @ApiOperation("从新初始化布隆过滤器")
+    @GetMapping("/initBloomFilter")
+    public void initBloomFilter() throws Exception{
+        packetServer.initBloomFilter();
     }
 
     @GetMapping("/test")

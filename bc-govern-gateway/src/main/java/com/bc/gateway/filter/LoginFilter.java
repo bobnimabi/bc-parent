@@ -72,6 +72,8 @@ public class LoginFilter extends ZuulFilter {
 
         ) return null;
 
+
+
         //1.取cookie中的短令牌
         String tokenFromCookie = authService.getTokenFromCookie(request);
         if(StringUtils.isEmpty(tokenFromCookie)){
@@ -99,10 +101,7 @@ public class LoginFilter extends ZuulFilter {
             access_denied();
             return null;
         }
-        /**
-         * 记录所有用户的行为
-         */
-
+        //更新短令牌过期时间
 
         return null;
     }

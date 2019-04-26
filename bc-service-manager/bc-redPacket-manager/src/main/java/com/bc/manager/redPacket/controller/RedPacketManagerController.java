@@ -8,21 +8,17 @@ import com.bc.manager.redPacket.dto.*;
 import com.bc.manager.redPacket.server.RedPacketManagerServer;
 import com.bc.manager.redPacket.vo.ExportRecordVo;
 import com.bc.manager.redPacket.vo.VsPayRecordVo;
-import com.bc.service.common.redPacket.entity.VsAwardPrize;
-import com.bc.service.common.redPacket.entity.VsPayRecord;
+import com.bc.service.redPacket.dto.RobotLoginDto;
 import com.bc.utils.ExcelUtil;
-import com.bc.utils.project.MyBeanUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -35,11 +31,14 @@ import java.util.List;
  */
 @Api("红包后台管理")
 @RestController
+@RequestMapping("/")
+@CrossOrigin("*")
 public class RedPacketManagerController {
+
     @Autowired
     RedPacketManagerServer rpmServer;
 
-    @ApiOperation("红包活动修改")
+    @ApiOperation("红包活动：修改")
     @PostMapping("/updateActive")
     public ResponseResult updateActive(@RequestBody VsAwardActiveDto activeDto) throws Exception{
         if (null == activeDto && null == activeDto.getId()) {
@@ -66,8 +65,8 @@ public class RedPacketManagerController {
         return rpmServer.updateActive(activeDto);
     }
 
-    @ApiOperation("红包活动查看")
-    @PostMapping("/queryActive")
+    @ApiOperation("红包活动:查看")
+    @GetMapping("/queryActive")
     public ResponseResult queryActive() throws Exception{
         return rpmServer.queryActive();
     }
@@ -86,6 +85,10 @@ public class RedPacketManagerController {
         if (VarParam.RedPacketM.PRIZE_TYPE_ONE != prizeDto.getPrizeType()
                 && VarParam.RedPacketM.PRIZE_TYPE_TWO != prizeDto.getPrizeType()) {
             ExceptionCast.castInvalid("奖品类型有误");
+        }
+        if (VarParam.YES != prizeDto.getPrizeStatus()
+                && VarParam.NO != prizeDto.getPrizeStatus()) {
+            ExceptionCast.castInvalid("奖品状态有误");
         }
         if (prizeDto.getPrizeStoreNums() <= VarParam.RedPacketM.PRIZE_STORE_NUM_MIN) {
             ExceptionCast.castInvalid("库存数量不能低于" + VarParam.RedPacketM.PRIZE_STORE_NUM_MIN);
@@ -121,27 +124,33 @@ public class RedPacketManagerController {
                 || null == prizeDto.getPrizeDrawNums()
                 || null == prizeDto.getTotalAmount()
                 || null == prizeDto.getPrizePercent()
+                || StringUtils.isEmpty(prizeDto.getPrizeRemark())
         ) ExceptionCast.castInvalid("参数不足");
         if (VarParam.RedPacketM.PRIZE_TYPE_ONE != prizeDto.getPrizeType()
                 && VarParam.RedPacketM.PRIZE_TYPE_TWO != prizeDto.getPrizeType()) {
             ExceptionCast.castInvalid("奖品类型有误");
         }
+        if (VarParam.YES != prizeDto.getPrizeStatus()
+                && VarParam.NO != prizeDto.getPrizeStatus()) {
+            ExceptionCast.castInvalid("奖品状态有误");
+        }
         if (prizeDto.getPrizeStoreNums() <= VarParam.RedPacketM.PRIZE_STORE_NUM_MIN) {
             ExceptionCast.castInvalid("库存数量不能低于" + VarParam.RedPacketM.PRIZE_STORE_NUM_MIN);
         }
-        if (0 <= prizeDto.getPrizeDrawNums()) {
-            ExceptionCast.castInvalid("派送数量必须大于或等于0");
+        if (0 > prizeDto.getPrizeDrawNums()|| prizeDto.getPrizeDrawNums() > prizeDto.getPrizeStoreNums()) {
+            ExceptionCast.castInvalid("派送数量需>=0 & <=库存");
         }
+        prizeDto.setPrizeDrawNums(null);
         if (prizeDto.getTotalAmount().compareTo(BigDecimal.ZERO) <= 0) {
             ExceptionCast.castInvalid("奖品金额不能低于0分");
         }
-        if (prizeDto.getPrizePercent() > 100 || prizeDto.getPrizePercent() <= 0){
-            ExceptionCast.castInvalid("中奖概率不能超过100或不能小于0");
+        if (prizeDto.getPrizePercent() > 100 || prizeDto.getPrizePercent() < 0){
+            ExceptionCast.castInvalid("中奖概率应该0-100之间");
         }
         return rpmServer.updatePrize(prizeDto);
     }
 
-    @ApiOperation("奖品管理：查看")
+    @ApiOperation("奖品管理：查看全部")
     @PostMapping("/queryAllPrize")
     public ResponseResult queryAllPrize() throws Exception{
         return rpmServer.queryPrizes();
@@ -191,7 +200,7 @@ public class RedPacketManagerController {
         return rpmServer.addTransform(transformDto);
     }
 
-    @ApiOperation("转换规则：查看")
+    @ApiOperation("转换规则：查看全部")
     @PostMapping("queryTransform")
     public ResponseResult queryTransforms() throws Exception{
         return rpmServer.queryTransforms();
@@ -549,16 +558,71 @@ public class RedPacketManagerController {
         return rpmServer.configUpdate(configureDto);
     }
 
-    @ApiOperation("测试")
-    @GetMapping("/testok/{name}")
-    public ResponseResult testok(@PathVariable String name) throws Exception {
-        return ResponseResult.SUCCESS();
+    @ApiOperation("补单")
+    @PostMapping("/repayOrder")
+    public ResponseResult repayOrder(@RequestParam Long id) throws Exception {
+        if (null == id) {
+            ExceptionCast.castFail("未传入补单的id");
+        }
+        return rpmServer.repayOrder(id);
     }
 
+    @ApiOperation("机器人：获取图片验证码")
+    @PostMapping("/getVarCode")
+    public void getVarCode(@RequestBody RobotLoginDto robotLoginDto, HttpServletResponse response) throws Exception {
+        if (null == robotLoginDto ||  null == robotLoginDto.getRobotNum()) {
+            ExceptionCast.castFail("未传入机器人编号");
+        }
+        rpmServer.getVarCode(robotLoginDto);
+    }
 
+    @ApiOperation("机器人：登录")
+    @PostMapping("/robotLogin")
+    public ResponseResult robotLogin(@RequestBody RobotLoginDto robotLoginDto) throws Exception {
+        if (null == robotLoginDto || StringUtils.isEmpty(robotLoginDto.getVarCode()) || null == robotLoginDto.getRobotNum()) {
+            ExceptionCast.castFail("未传入验证码或机器人编号");
+        }
+        return rpmServer.robotLogin(robotLoginDto);
+    }
 
+    @ApiOperation("机器人：增加")
+    @PostMapping("/addRobot")
+    public ResponseResult addRobot(@RequestBody VsRobotDto robotDto) throws Exception {
+        if (null == robotDto
+                || StringUtils.isEmpty(robotDto.getRobotName())
+                || null == robotDto.getRobotNum()
+                || StringUtils.isEmpty(robotDto.getRobotDesc())
+                || StringUtils.isEmpty(robotDto.getPlatAccount())
+                || StringUtils.isEmpty(robotDto.getPlatPassword())
+                || null == robotDto.getRobotStatus()
+        ) ExceptionCast.castFail("参数不全");
+        return rpmServer.addRobot(robotDto);
+    }
 
+    @ApiOperation("机器人：开启或停止工作")
+    @PostMapping("/robotStatus")
+    public ResponseResult robotStatus(@RequestBody VsRobotDto robotDto) throws Exception {
+        if (null == robotDto
+                || null == robotDto.getRobotStatus()
+        ) ExceptionCast.castFail("参数不全");
+        return rpmServer.robotStatus(robotDto);
+    }
 
+    /**
+     * 机器人：查询全部，分页
+     */
+    @ApiOperation("机器人：分页查询")
+    @PostMapping("/robotQuery")
+    public ResponseResult robotQuery(@RequestBody VsRobotDto robotDto) throws Exception {
+        if (null == robotDto || robotDto.getCurrent() <= 0 || robotDto.getSize() <= 0) {
+            ExceptionCast.castFail("参数不全或有误");
+        }
+        return rpmServer.robotQuery(robotDto);
+    }
 
-
+    @ApiOperation("测试")
+    @GetMapping("/test")
+    public String test() throws Exception {
+        return "OK";
+    }
 }

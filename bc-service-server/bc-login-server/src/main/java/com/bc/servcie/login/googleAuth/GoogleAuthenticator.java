@@ -1,7 +1,9 @@
 package com.bc.servcie.login.googleAuth;
 
+import com.bc.common.Exception.ExceptionCast;
 import org.apache.commons.codec.binary.Base32;
 import org.apache.commons.codec.binary.Base64;
+import org.springframework.util.StringUtils;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -69,6 +71,7 @@ public class GoogleAuthenticator {
       
   
     public boolean check_code(String secret, long code, long timeMsec) {
+
         Base32 codec = new Base32();  
         byte[] decodedKey = codec.decode(secret);  
         // convert unix msec time into a 30 second "window"  
@@ -119,6 +122,11 @@ public class GoogleAuthenticator {
         return (int) truncatedHash;
     }
     public static boolean check_code_pre(String secret,String code, long timeMsec) {
+        if (StringUtils.isEmpty(secret)) {
+            ExceptionCast.castFail("未获取到用户salt");
+        }
+        if (StringUtils.isEmpty(code))
+            ExceptionCast.castFail("未传入动态验证码");
         GoogleAuthenticator googleAuthenticator = new GoogleAuthenticator();//891679,956793L,133474,969641,136596
         return  googleAuthenticator.check_code(secret, Long.valueOf(code),timeMsec);
     }

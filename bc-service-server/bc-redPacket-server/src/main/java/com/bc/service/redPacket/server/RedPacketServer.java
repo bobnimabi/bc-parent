@@ -3,7 +3,9 @@ package com.bc.service.redPacket.server;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.bc.common.Exception.CustomException;
 import com.bc.common.Exception.ExceptionCast;
 import com.bc.common.constant.VarParam;
@@ -30,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import javax.annotation.PostConstruct;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -74,6 +77,36 @@ public class RedPacketServer {
     private ReentrantLock activeLock;
     //奖品锁
     private ReentrantLock prizeLock;
+
+    /**
+     * 初始化布隆过滤器
+     */
+    public void initBloomFilter() throws Exception{
+        log.info("布隆过滤器初始化：开始");
+        //删除原始的缓存
+        redis.delete(VarParam.RedPacketM.BLOOM_RED);
+
+        //为用户建立布隆过滤器
+        Page<VsAwardPlayer> page = new Page<>(0,100);
+        while (true) {
+            page.setCurrent(page.getCurrent() + 1);
+            Page<VsAwardPlayer> page1 = (Page<VsAwardPlayer>)playerService.page(page);
+            List<VsAwardPlayer> records = page1.getRecords();
+            for (VsAwardPlayer player : records) {
+                MyBloomFilter.put(
+                        VarParam.RedPacketM.BLOOM_RED,
+                        player.getUserName(),
+                        VarParam.RedPacketM.SIZE_RED,
+                        VarParam.RedPacketM.FPP_RED,
+                        redis
+                );
+            }
+            if (!page1.hasNext()) {
+                break;
+            }
+        }
+        log.info("布隆过滤器初始化：结束");
+    }
 
     /**
      * 抽红包总调度
@@ -296,7 +329,7 @@ public class RedPacketServer {
                 return null;
             }
         });
-        //金额 分->元
+        //展示给用户：金额 分->元
         RedResultVo redResultVo = (RedResultVo) objects.get(0);
         redResultVo.setAmount(redResultVo.getAmount().divide(VarParam.ONE_HUNDRED).setScale(2, BigDecimal.ROUND_DOWN));
 
@@ -327,7 +360,7 @@ public class RedPacketServer {
         record.setPrizeType(VarParam.RedPacketM.PRIZE_TYPE_ONE);
         record.setPayStatus(VarParam.RedPacketM.PAY_STATUS_ONE);
         record.setOperatorPaid(VarParam.RedPacketM.CONFIRM_PAY);
-        record.setOperatorDispatch(VarParam.RedPacketM.CONFIRM_DISPATCH_ONE);
+
         record.setTimeOrder(LocalDateTime.now());
         boolean save = recordService.save(record);
         if (!save) {

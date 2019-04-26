@@ -22,6 +22,9 @@ spring:
         minIdle: 1
         maxWait: -1 #连接池最大等行时间 -1没有限制
 zuul:
+  host:
+    connect-timeout-millis: 100000
+    socket-timeout-millis: 600000
   routes:
     redPacket-server:
       path: /redPacket/**  #注意字母使用大写无效
@@ -54,3 +57,11 @@ ribbon:
   OkToRetryOnAllOperations: false  #对所有操作请求都进行重试，如果是get则可以，如果是post，put等操作没有实现幂等的情况下是很危险的,所以设置为false
   ConnectTimeout: 5000  #请求连接的超时时间
   ReadTimeout: 6000 #请求处理的超时时间
+
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 600000

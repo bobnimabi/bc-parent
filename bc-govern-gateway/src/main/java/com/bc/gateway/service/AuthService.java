@@ -55,7 +55,4 @@ public class AuthService {
          Long expire = stringRedisTemplate.getExpire(key, TimeUnit.SECONDS);
          return expire;
      }
-
-
-
 }
