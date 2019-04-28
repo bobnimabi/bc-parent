@@ -9,7 +9,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
  * </p>
  *
  * @author admin
- * @since 2019-04-19
+ * @since 2019-04-28
  */
 public interface VsRobotRecordMapper extends BaseMapper<VsRobotRecord> {
 

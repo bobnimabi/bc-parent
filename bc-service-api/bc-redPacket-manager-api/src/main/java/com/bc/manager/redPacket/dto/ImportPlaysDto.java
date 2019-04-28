@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.ToString;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 @Data
 @ToString
@@ -14,10 +15,10 @@ public class ImportPlaysDto extends BaseRowModel  implements Serializable {
     private String userName;
 
     @ExcelProperty(index = 1)
-    private String hasAmount;
+    private BigDecimal hasAmount;
 
     @ExcelProperty(index = 2)
-    private String joinTimes;
+    private Integer joinTimes;
 
     @ExcelProperty(index = 3)
     private String userRemark;

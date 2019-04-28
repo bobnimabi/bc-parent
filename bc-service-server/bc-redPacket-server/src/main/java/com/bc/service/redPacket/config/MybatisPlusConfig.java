@@ -1,5 +1,6 @@
 package com.bc.service.redPacket.config;
 
+import com.baomidou.mybatisplus.extension.plugins.PaginationInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.PerformanceInterceptor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,5 +19,13 @@ public class MybatisPlusConfig {
     @Profile({"dev"})// 设置 dev 环境开启
     public PerformanceInterceptor performanceInterceptor() {
         return new PerformanceInterceptor();
+    }
+
+    /**
+     * 分页插件(这个不配，分页不生效)
+     */
+    @Bean
+    public PaginationInterceptor paginationInterceptor() {
+        return new PaginationInterceptor();
     }
 }

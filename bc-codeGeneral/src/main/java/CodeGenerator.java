@@ -21,14 +21,14 @@ public class CodeGenerator {
         String modelName="redPacket";
         //生成表的名称
         String[] tables={
-                "vs_robot",
+//                "vs_robot",
                 "vs_robot_record",
         };
 
         //配置数据库信息
-        String url="jdbc:mysql://103.44.30.46:3306/red_packet?useUnicode=true&useSSL=false&characterEncoding=utf8";
+        String url="jdbc:mysql://localhost:3306/red_packet?useUnicode=true&useSSL=false&characterEncoding=utf8";
         String username = "root";
-        String password = "W_y1:478!";
+        String password = "c01tqdsqfz?G";
         /*********************************************红包系统***********************************************/
         //项目路径
 //        String projectPath="F:\\javaCode\\bc-parent\\bc-service-common\\bc-redPacket-common"+"\\";

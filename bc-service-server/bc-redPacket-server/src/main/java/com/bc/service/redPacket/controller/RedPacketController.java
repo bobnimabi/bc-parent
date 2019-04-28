@@ -5,7 +5,6 @@ import com.bc.common.Exception.ExceptionCast;
 import com.bc.common.constant.VarParam;
 import com.bc.common.response.ResponseResult;
 import com.bc.manager.redPacket.dto.VsRobotDto;
-import com.bc.service.common.redPacket.entity.VsRobot;
 import com.bc.service.redPacket.dto.RedPacketDto;
 import com.bc.service.redPacket.dto.RobotLoginDto;
 import com.bc.service.redPacket.server.RedPacketServer;
@@ -15,7 +14,6 @@ import com.bc.utils.IpUtil;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
@@ -30,7 +28,7 @@ public class RedPacketController {
     @Autowired
     private RobotServer robotServer;
 
-    @ApiOperation("抽红包")
+    @ApiOperation("用户：抽红包")
     @PostMapping("/playRedPacket")
     public ResponseResult playRedPacket(@RequestBody RedPacketDto redPacketDto, HttpServletRequest request) throws Exception{
         if (null == redPacketDto || StringUtils.isEmpty(redPacketDto.getUsername())) {
@@ -41,7 +39,7 @@ public class RedPacketController {
         return packetServer.playRedPacket(redPacketDto);
     }
 
-    @ApiOperation("获取图片验证码")
+    @ApiOperation("机器人：获取图片验证码")
     @PostMapping("/getVarCode")
     public void getVarCode(@RequestBody RobotLoginDto robotLoginDto, HttpServletResponse response) throws Exception{
         if (null == robotLoginDto ||  null == robotLoginDto.getRobotNum()) {
@@ -53,19 +51,19 @@ public class RedPacketController {
         outputStream.close();
     }
 
-    @ApiOperation("机器人登录")
+    @ApiOperation("机器人：登录")
     @PostMapping("/robotLogin")
     public ResponseResult robotLogin(@RequestBody RobotLoginDto robotLoginDto) throws Exception{
-        if (null == robotLoginDto || StringUtils.isEmpty(robotLoginDto.getVarCode()) || null == robotLoginDto.getRobotNum()) {
+        if (null == robotLoginDto || StringUtils.isEmpty(robotLoginDto.getImageCode()) || null == robotLoginDto.getRobotNum()) {
             ExceptionCast.castFail("未传入验证码或机器人编号");
         }
-        Integer robotNum = robotLoginDto.getRobotNum();
         return  robotServer.login(
-                robotLoginDto.getVarCode(),
-                robotLoginDto.getRobotNum());
+                robotLoginDto.getImageCode(),
+                robotLoginDto.getRobotNum(),
+                robotLoginDto.getVarCode() );
     }
 
-    @ApiOperation("机器人增加")
+    @ApiOperation("机器人：增加")
     @PostMapping("/addRobot")
     public ResponseResult addRobot(@RequestBody VsRobotDto robotDto) throws Exception{
         if (null == robotDto
@@ -79,7 +77,21 @@ public class RedPacketController {
         return robotServer.addRobot(robotDto);
     }
 
-    @ApiOperation("机器人开启或关闭")
+    @ApiOperation("机器人：修改")
+    @PostMapping("/updateRobot")
+    public ResponseResult updateRobot(@RequestBody VsRobotDto robotDto) throws Exception{
+        if (null == robotDto
+                || null == robotDto.getId()
+                || StringUtils.isEmpty(robotDto.getRobotName())
+                || StringUtils.isEmpty(robotDto.getRobotDesc())
+                || StringUtils.isEmpty(robotDto.getPlatAccount())
+                || StringUtils.isEmpty(robotDto.getPlatPassword())
+        ) ExceptionCast.castFail("参数不全");
+        robotDto.setRobotNum(null);
+        return robotServer.updateRobot(robotDto);
+    }
+
+    @ApiOperation("机器人：开启或关闭")
     @PostMapping("/robotStatus")
     public ResponseResult robotStatus(@RequestBody VsRobotDto robotDto) throws Exception{
         if (null == robotDto
@@ -88,7 +100,7 @@ public class RedPacketController {
         return robotServer.robotStatus(robotDto);
     }
 
-    @ApiOperation("补单")
+    @ApiOperation("人工：补单")
     @GetMapping("/repayOrder")
     public ResponseResult repayOrder(@RequestParam Long id) throws Exception{
         if ( null == id) {
@@ -104,7 +116,7 @@ public class RedPacketController {
     }
 
     @GetMapping("/test")
-    @PreAuthorize("hasAuthority('query_salar')")
+//    @PreAuthorize("hasAuthority('query_salar')")
     public String test(){
         return  "测试成功";
     }

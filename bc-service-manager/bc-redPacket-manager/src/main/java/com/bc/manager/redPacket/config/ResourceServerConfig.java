@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)//激活方法上的PreAuthorize注解
 public class ResourceServerConfig extends ResourceServerConfigurerAdapter {
 
-    @Value("${permit.url}")
+    @Value("${redPacketM.permitUrl}")
     private String permitUrl;
 
     //公钥(这里只识别txt，cer不识别)

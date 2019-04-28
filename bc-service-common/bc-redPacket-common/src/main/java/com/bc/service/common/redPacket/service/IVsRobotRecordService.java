@@ -9,7 +9,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
  * </p>
  *
  * @author admin
- * @since 2019-04-19
+ * @since 2019-04-28
  */
 public interface IVsRobotRecordService extends IService<VsRobotRecord> {
 

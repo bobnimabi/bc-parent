@@ -16,6 +16,7 @@ import com.bc.service.common.redPacket.entity.*;
 import com.bc.service.common.redPacket.service.*;
 import com.bc.service.redPacket.dto.RobotLoginDto;
 import com.bc.utils.MyBloomFilter;
+import com.bc.utils.Validation;
 import com.bc.utils.project.MyBeanUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -102,7 +103,7 @@ public class RedPacketManagerServer {
                     redis.opsForValue().set(VarParam.RedPacketM.ACTIVE_KEY, JSON.toJSONString(active));
                 }
                 activeLock.unlock();
-                return active;
+                if (null != active) return active;
             } else {
                 Thread.sleep(100);
                 return getActive();
@@ -179,7 +180,6 @@ public class RedPacketManagerServer {
                     prizeList = prizeService.list();
                     if (CollectionUtils.isEmpty(prizeList)) ExceptionCast.castFail("数据库没有任何奖品");
                     //按照金额从小到大排序
-                    //奖品排序
                     prizeList.sort(new Comparator<VsAwardPrize>() {
                         @Override
                         public int compare(VsAwardPrize o1, VsAwardPrize o2) {
@@ -193,7 +193,7 @@ public class RedPacketManagerServer {
                     redis.opsForList().rightPushAll(VarParam.RedPacketM.PRIZE_KEY,prizeStrList);
                 }
                 prizeLock.unlock();
-                return prizeList;
+                if (CollectionUtils.isEmpty(prizeList)) return prizeList;
             } else {
                 Thread.sleep(100);
                 return getPrizes();
@@ -266,7 +266,6 @@ public class RedPacketManagerServer {
      */
     @Transactional
     public ResponseResult prizeSoldOut(VsAwardPrizeDto prizeDto) throws Exception {
-        prizeDto.setPrizeStatus(VarParam.NO);
         VsAwardPrize prize = new VsAwardPrize();
         MyBeanUtil.copyProperties(prizeDto,prize);
         boolean updateById = prizeService.updateById(prize);
@@ -360,6 +359,8 @@ public class RedPacketManagerServer {
     public ResponseResult addPlayer(VsAwardPlayerDto playerDto) throws Exception{
         VsAwardPlayer player = new VsAwardPlayer();
         MyBeanUtil.copyProperties(playerDto, player);
+        //将金额转换成次数
+        this.transPlayAmount(player);
         boolean save = playerService.save(player);
         if (!save) ExceptionCast.cast(CommonCode.FAIL);
         //布隆过滤器添加
@@ -395,7 +396,8 @@ public class RedPacketManagerServer {
             queryWrapper.likeRight("user_name", playerDto.getUserName());
         }
 
-        IPage<VsAwardPlayer> page = playerService.page(new Page<VsAwardPlayer>(playerDto.getCurrent(), playerDto.getSize()), queryWrapper);
+//        IPage<VsAwardPlayer> page = playerService.page(new Page<VsAwardPlayer>(playerDto.getCurrent(), playerDto.getSize()), queryWrapper);
+        IPage<VsAwardPlayer> page = playerService.page(playerDto, queryWrapper);
         return ResponseResult.SUCCESS(MyBeanUtil.copyPageToPage(page, VsAwardPlayerVo.class));
     }
 
@@ -417,6 +419,8 @@ public class RedPacketManagerServer {
     public ResponseResult updatePlayer(VsAwardPlayerDto playerDto) throws Exception{
         VsAwardPlayer player = new VsAwardPlayer();
         MyBeanUtil.copyProperties(playerDto, player);
+        //将金额转换成次数
+        this.transPlayAmount(player);
         boolean updateById = playerService.updateById(player);
         if (updateById) {
             return ResponseResult.SUCCESS();
@@ -433,8 +437,9 @@ public class RedPacketManagerServer {
         boolean update = playerService.update(
                 new UpdateWrapper<VsAwardPlayer>()
                         .eq("id", playerDto.getId())
-                        .set("active_status", VarParam.NO)
+                        .set("player_status", playerDto.getPlayerStatus())
         );
+
         if (!update) ExceptionCast.cast(CommonCode.FAIL);
         return ResponseResult.SUCCESS();
     }
@@ -456,16 +461,26 @@ public class RedPacketManagerServer {
         return ResponseResult.SUCCESS();
     }
 
-    /**
-     * 会员管理：批量导入
-     */
-    @Transactional
-    public ResponseResult readExcelPlays(List<Object> list) throws Exception{
-        List<VsAwardPlayer> exPlayers = MyBeanUtil.copyListToList(list, VsAwardPlayer.class);
+    //会员管理：会员添加时：金额->次数
+    private void transPlayAmount(Object object) throws Exception{
         //将金额全部转换成次数
-        List<VsAwardTransform> transforms = getTransforms();
+        List<VsAwardTransform> transforms = this.getTransforms();
         int size = transforms.size();
-        exPlayers.forEach(exPlay->{
+        if (object instanceof List) {
+            List<VsAwardPlayer> exPlayers = (List<VsAwardPlayer>) object;
+            exPlayers.forEach(exPlay->{
+                int i = 1;
+                while (i <= size) {
+                    if (exPlay.getHasAmount().compareTo(transforms.get(size - i).getAmount()) >= 0) {
+                        exPlay.setJoinTimes(exPlay.getJoinTimes() + transforms.get(size - i).getTimes());
+                        exPlay.setHasAmount(BigDecimal.ZERO);
+                        break;
+                    }
+                    i++;
+                }
+            });
+        } else if (object instanceof VsAwardPlayer) {
+            VsAwardPlayer exPlay = (VsAwardPlayer) object;
             int i = 1;
             while (i <= size) {
                 if (exPlay.getHasAmount().compareTo(transforms.get(size - i).getAmount()) >= 0) {
@@ -475,7 +490,20 @@ public class RedPacketManagerServer {
                 }
                 i++;
             }
-        });
+        } else {
+            ExceptionCast.castFail("会员管理：会员添加时：金额->次数：参数类型不正确");
+        }
+    }
+
+    /**
+     * 会员管理：批量导入
+     */
+    @Transactional
+    public ResponseResult readExcelPlays(List<Object> list) throws Exception{
+        //转换类型
+        List<VsAwardPlayer> exPlayers = MyBeanUtil.copyListToList(list, VsAwardPlayer.class);
+        //将金额全部转换成次数
+        this.transPlayAmount(exPlayers);
 
         List<String> userNameList = new ArrayList<>();
         exPlayers.forEach(player->userNameList.add(player.getUserName()));
@@ -550,7 +578,7 @@ public class RedPacketManagerServer {
     /**
      * 抽奖记录：删除
      */
-    public ResponseResult delRecordBatch(List<Integer> ids) {
+    public ResponseResult delRecord(List<Integer> ids) {
         boolean removeByIds = recordService.removeByIds(ids);
         if (!removeByIds) {
             ExceptionCast.cast(CommonCode.FAIL);
@@ -573,14 +601,16 @@ public class RedPacketManagerServer {
             queryWrapper.lt("time_order", recordDto.getEndTime());
         }
         if (!StringUtils.isEmpty(recordDto.getUserName())) {
-            queryWrapper.eq("id", recordDto.getUserName())
+            if (Validation.isSTR_NUM(recordDto.getUserName())) {
+                queryWrapper.eq("id", Long.parseLong(recordDto.getUserName()))
                         .or()
                         .eq("user_name", recordDto.getUserName());
+            } else {
+                queryWrapper.eq("user_name", recordDto.getUserName());
+            }
         }
         IPage<VsPayRecord> page = recordService.page(new Page<VsPayRecord>(recordDto.getCurrent(), recordDto.getSize()), queryWrapper);
-        Page<VsPayRecordVo> vsPayRecordVoPage = MyBeanUtil.copyPageToPage(page, VsPayRecordVo.class);
-        return vsPayRecordVoPage;
-
+        return MyBeanUtil.copyPageToPage(page, VsPayRecordVo.class);
     }
     /**
      * 抽奖记录：导出Excel
@@ -597,9 +627,13 @@ public class RedPacketManagerServer {
             queryWrapper.lt("time_order", recordDto.getEndTime());
         }
         if (!StringUtils.isEmpty(recordDto.getUserName())) {
-            queryWrapper.eq("id", recordDto.getUserName())
-                    .or()
-                    .eq("user_name", recordDto.getUserName());
+            if (Validation.isSTR_NUM(recordDto.getUserName())) {
+                queryWrapper.eq("id", Long.parseLong(recordDto.getUserName()))
+                        .or()
+                        .eq("user_name", recordDto.getUserName());
+            } else {
+                queryWrapper.eq("user_name", recordDto.getUserName());
+            }
         }
         List<VsPayRecord> list = recordService.list(queryWrapper);
         return MyBeanUtil.copyListToList(list, VsPayRecordVo.class);
@@ -608,7 +642,7 @@ public class RedPacketManagerServer {
     /**
      * 抽奖记录：清除
      */
-    public ResponseResult delRecords(VsPayRecordDto recordDto) throws Exception{
+    public ResponseResult delRecordBatch(VsPayRecordDto recordDto) throws Exception{
         //删除days天前的会员
         boolean remove = recordService.remove(
                 new QueryWrapper<VsPayRecord>()
@@ -617,48 +651,61 @@ public class RedPacketManagerServer {
         if (!remove) ExceptionCast.castFail("批量订单清除失败");
         return ResponseResult.SUCCESS();
     }
+
     /**
      * 抽奖记录：统计
      */
     public ResponseResult statisRecords() throws Exception{
         StaticRecordsVo staticRecordsVo = new StaticRecordsVo();
 
-        //查询今日每小时赠送明细
-        BigDecimal[] dayHour = staticRecordsVo.getDayHourAmount();
-        for (int i = 0; i < dayHour.length; i++) {
-            dayHour[i] = BigDecimal.ZERO;
+        //查询今日每小时总赠送明细
+        BigDecimal[] totalHourAmount = staticRecordsVo.getTotalHourAmount();
+        BigDecimal[] dispatchHourAmount = staticRecordsVo.getDispatchHourAmount();
+        BigDecimal[] waitHourAmount = staticRecordsVo.getWaitHourAmount();
+
+        for (int i = 0; i < totalHourAmount.length; i++) {
+            totalHourAmount[i] = BigDecimal.ZERO;
+            dispatchHourAmount[i] = BigDecimal.ZERO;
+            waitHourAmount[i] = BigDecimal.ZERO;
         }
         staticRecordsVo.setBeforeAmount(BigDecimal.ZERO);
         staticRecordsVo.setTodayAmount(BigDecimal.ZERO);
         staticRecordsVo.setYestAmount(BigDecimal.ZERO);
 
-        LocalDateTime todayStart = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);//今天零点
-        LocalDateTime todayEnd = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);//今天24点
-
-        List<VsPayRecord> todayRecords = recordService.list(
-                new QueryWrapper<VsPayRecord>()
-                        .select("id","total_amount as totalAmount","create_time as createTime")
-                        .between("create_time", todayStart, todayEnd)
-        );
-        todayRecords.forEach(record->{
-            int hour = record.getCreateTime().getHour();
-            dayHour[hour] = dayHour[hour].add(record.getTotalAmount());
-        });
-
+        //获取近3天所有的订单
         LocalDateTime beforeStart = LocalDateTime.of(LocalDate.now().minusDays(2), LocalTime.MIN);//前天零点
         LocalDateTime todayEnd2 = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);//今天24点
         int dayOfYear = LocalDateTime.now().getDayOfYear();
         List<VsPayRecord> threeDayRecords = recordService.list(
                 new QueryWrapper<VsPayRecord>()
+                        .select("id","total_amount as totalAmount","create_time as createTime")
                         .between("create_time", beforeStart, todayEnd2)
         );
         threeDayRecords.forEach(record->{
-            if (dayOfYear == record.getCreateTime().getDayOfYear()){
+            if (dayOfYear == record.getCreateTime().getDayOfYear()){//今天
+                //统计金额每小时金额明细
+                int hour = record.getCreateTime().getHour();
+                totalHourAmount[hour] = totalHourAmount[hour].add(record.getTotalAmount());
+                switch (record.getPayStatus()) {
+                    case VarParam.RedPacketM.PAY_STATUS_ONE:
+                        waitHourAmount[hour] = waitHourAmount[hour].add(record.getTotalAmount());
+                        break;
+                    case VarParam.RedPacketM.PAY_STATUS_THREE:
+                        dispatchHourAmount[hour] = dispatchHourAmount[hour].add(record.getTotalAmount());
+                        break;
+                    default:
+                        break;
+                }
+                //统计今日总金额
                 staticRecordsVo.setTodayAmount(staticRecordsVo.getTodayAmount().add(record.getTotalAmount()));
-            }else if (record.getCreateTime().getDayOfYear() == dayOfYear-1){
+                //统计今日总次数
+                staticRecordsVo.setTodayNum(staticRecordsVo.getTodayNum() + 1);
+            }else if (record.getCreateTime().getDayOfYear() == dayOfYear-1){//昨天
                 staticRecordsVo.setYestAmount(staticRecordsVo.getYestAmount().add(record.getTotalAmount()));
-            } else if (record.getCreateTime().getDayOfYear() == dayOfYear - 2) {
+                staticRecordsVo.setYestNum(staticRecordsVo.getYestNum() + 1);
+            } else if (record.getCreateTime().getDayOfYear() == dayOfYear - 2) {//前天
                 staticRecordsVo.setBeforeAmount(staticRecordsVo.getBeforeAmount().add(record.getTotalAmount()));
+                staticRecordsVo.setBeforeNum(staticRecordsVo.getBeforeNum() + 1);
             }
         });
         return ResponseResult.SUCCESS(staticRecordsVo);
@@ -703,7 +750,7 @@ public class RedPacketManagerServer {
         if (!removeById) {
             ExceptionCast.castFail("删除失败");
         }
-        return null;
+        return ResponseResult.SUCCESS();
     }
 
     /**
@@ -833,5 +880,13 @@ public class RedPacketManagerServer {
             }
         });
         return ResponseResult.SUCCESS(vsRobotVoPage);
+    }
+
+    public ResponseResult queryBrand() throws Exception{
+        VsSite one = siteService.getById(VarParam.RedPacketM.BRAND_ID);
+        if (null == one) {
+            ExceptionCast.castFail("品牌不存在，快添加吧");
+        }
+        return ResponseResult.SUCCESS(one);
     }
 }

@@ -35,10 +35,7 @@ import org.springframework.util.StringUtils;
 import javax.annotation.PostConstruct;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 /**
@@ -69,7 +66,6 @@ public class RedPacketServer {
     private StringRedisTemplate redis;
     @Autowired
     private IVsNavService navService;
-
     @Autowired
     private RobotServer robotServer;
 
@@ -81,13 +77,15 @@ public class RedPacketServer {
     /**
      * 初始化布隆过滤器
      */
+    @PostConstruct
     public void initBloomFilter() throws Exception{
         log.info("布隆过滤器初始化：开始");
         //删除原始的缓存
         redis.delete(VarParam.RedPacketM.BLOOM_RED);
 
         //为用户建立布隆过滤器
-        Page<VsAwardPlayer> page = new Page<>(0,100);
+        Page<VsAwardPlayer> page = new Page<>(0L,100);
+        page.setCurrent(0);//<1时默认current=1
         while (true) {
             page.setCurrent(page.getCurrent() + 1);
             Page<VsAwardPlayer> page1 = (Page<VsAwardPlayer>)playerService.page(page);
@@ -119,7 +117,7 @@ public class RedPacketServer {
         VsAwardPlayer player = this.checkUser(username);
         //检查奖品并获取可用奖品
         List<VsAwardPrize> prizes = this.checkPrize();
-        return userPlay(player,prizes,redPacketDto);
+        return userPlay(player,redPacketDto);
     }
     /**
      * 获取红包活动(防止并发和缓存雪崩)
@@ -128,14 +126,16 @@ public class RedPacketServer {
     private VsAwardActive getActive() throws Exception {
         String activeJson = redis.opsForValue().get(VarParam.RedPacketM.ACTIVE_KEY);
         if (null == activeJson) {
+            VsAwardActive active = null;
             if (activeLock.tryLock()) {
                 activeJson = redis.opsForValue().get(VarParam.RedPacketM.ACTIVE_KEY);
                 if (null == activeJson) {
-                    VsAwardActive active = activeService.getById(VarParam.RedPacketM.AWARD_ACTIVE_ID);
+                    active = activeService.getById(VarParam.RedPacketM.AWARD_ACTIVE_ID);
                     if (active == null) ExceptionCast.castFail("数据库没有任何红包活动");
                     redis.opsForValue().set(VarParam.RedPacketM.ACTIVE_KEY, JSON.toJSONString(active));
                 }
                 activeLock.unlock();
+                if (null != active) return active;
             } else {
                 Thread.sleep(100);
                 return getActive();
@@ -187,7 +187,7 @@ public class RedPacketServer {
                 VarParam.RedPacketM.SIZE_RED,
                 VarParam.RedPacketM.FPP_RED, redis
         );
-        if (!exist) ExceptionCast.castFail("账号不存在");
+        if (!exist) ExceptionCast.castFail("该账号不存在");
 
         VsAwardPlayer player = playerService.getOne(new QueryWrapper<VsAwardPlayer>().eq("user_name", userName));
         if (null == player) ExceptionCast.castFail("账号不存在");
@@ -208,33 +208,34 @@ public class RedPacketServer {
     private List<VsAwardPrize> getPrizes() throws Exception{
         List<String> prizesJsons = redis.opsForList().range(VarParam.RedPacketM.PRIZE_KEY, 0, -1);
         if (CollectionUtils.isEmpty(prizesJsons)){
+            List<VsAwardPrize> prizeList = null;
             if (prizeLock.tryLock()) {
                 prizesJsons = redis.opsForList().range(VarParam.RedPacketM.PRIZE_KEY, 0, -1);
                 if (CollectionUtils.isEmpty(prizesJsons)) {
                     //从数据库获取，放入缓存
-                    List<VsAwardPrize> prizeList = prizeService.list();
+                    prizeList = prizeService.list();
                     if (CollectionUtils.isEmpty(prizeList)) ExceptionCast.castFail("数据库没有任何奖品");
                     //按照金额从小到大排序
-                    //奖品排序
                     prizeList.sort(new Comparator<VsAwardPrize>() {
                         @Override
                         public int compare(VsAwardPrize o1, VsAwardPrize o2) {
                             return o1.getTotalAmount().compareTo(o2.getTotalAmount());
                         }
                     });
-                    List<String> prizeStrList = null;
+                    List<String> prizeStrList = new ArrayList<>();
                     for (VsAwardPrize prize : prizeList) {
                         prizeStrList.add(JSON.toJSONString(prize));
                     }
                     redis.opsForList().leftPushAll(VarParam.RedPacketM.PRIZE_KEY,prizeStrList);
                 }
                 prizeLock.unlock();
+                if (CollectionUtils.isEmpty(prizeList)) return prizeList;
             } else {
                 Thread.sleep(100);
                 return getPrizes();
             }
         }
-        List<VsAwardPrize> prizeList=  null;
+        List<VsAwardPrize> prizeList= new ArrayList<>();
         for (String prizeJson: prizesJsons) {
             VsAwardPrize prize = JSON.parseObject(prizeJson, VsAwardPrize.class);
             prizeList.add(prize);
@@ -246,7 +247,6 @@ public class RedPacketServer {
      * 奖品的检查
      */
     private List<VsAwardPrize> checkPrize() throws Exception{
-
         //获取所有的奖品，并去除下架的和库存为0的
         List<VsAwardPrize> prizes = this.getPrizes();
         Iterator<VsAwardPrize> iterator = prizes.iterator();
@@ -256,7 +256,7 @@ public class RedPacketServer {
                 iterator.remove();
         }
         if (CollectionUtils.isEmpty(prizes)) {
-            ExceptionCast.castFail("所有奖品已下架");
+            ExceptionCast.castFail("所有奖品已下架或库存为0");
         }
         return prizes;
     }
@@ -274,18 +274,8 @@ public class RedPacketServer {
      * 7.打款完成后修改订单状态
      */
     @Transactional
-    public ResponseResult userPlay(VsAwardPlayer player,List<VsAwardPrize> prizes,RedPacketDto redPacketDto) throws Exception{
-        int i = drawLottery(prizes);
-        VsAwardPrize prizeOld = prizes.get(i);
-        log.info("username:"+player.getUserName()+",抽得："+prizeOld.getPrizeName()+" index："+i);
+    public ResponseResult userPlay(VsAwardPlayer player,RedPacketDto redPacketDto) throws Exception{
 
-        //未中奖
-        if (VarParam.RedPacketM.PRIZE_TYPE_TWO == prizeOld.getPrizeType()) {
-            RedResultVo redResultVo = new RedResultVo();
-            redResultVo.setIsSuccess(false);
-            log.info("username:"+player.getUserName()+",抽得："+prizeOld.getPrizeName()+" index："+i+" 返回未中奖");
-            return ResponseResult.SUCCESS();
-        }
 
         //已中奖
         //开启redis事务(预备减库存)
@@ -293,15 +283,30 @@ public class RedPacketServer {
         List<Object> objects = redis.executePipelined(new SessionCallback<RedResultVo>() {
             @Override
             public RedResultVo execute(RedisOperations operations) throws DataAccessException {
+                //开启redis事务
                 operations.watch(VarParam.RedPacketM.PRIZE_KEY);
                 operations.multi();
+                //获取所有的奖品
+                List<VsAwardPrize> prizes = null;
+                try {
+                    prizes = checkPrize();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                //抽奖
+                int i = drawLottery(prizes);
+                VsAwardPrize prizeNew = prizes.get(i);
+                log.info("username:"+player.getUserName()+",抽得："+prizeNew.getPrizeName()+" index："+i);
+
+                //未中奖
+                if (VarParam.RedPacketM.PRIZE_TYPE_TWO == prizeNew.getPrizeType()) {
+                    RedResultVo redResultVo = new RedResultVo();
+                    redResultVo.setIsSuccess(false);
+                    redResultVo.setAmount(BigDecimal.ZERO);
+                    log.info("username:"+player.getUserName()+",抽得："+prizeNew.getPrizeName()+" index："+i+" 返回未中奖");
+                    return redResultVo;
+                }
                 ListOperations<String, String> kvListOperations = operations.opsForList();
-                String prizeJson = kvListOperations.index(VarParam.RedPacketM.PRIZE_KEY, i);
-                if (StringUtils.isEmpty(prizeJson)) ExceptionCast.cast(CommonCode.SERVER_ERROR);
-                VsAwardPrize prizeNew = JSON.parseObject(prizeJson, VsAwardPrize.class);
-                //防止代码运行期间某个奖品库存减为0
-                if (prizeOld.getId() != prizeNew.getId())
-                    ExceptionCast.cast(CommonCode.SERVER_ERROR);
                 if (prizeNew.getPrizeStoreNums() > 0) {
                     //减少库存
                     prizeNew.setPrizeStoreNums(prizeNew.getPrizeStoreNums() - 1);
@@ -309,13 +314,14 @@ public class RedPacketServer {
                     if (prizeNew.getPrizeStoreNums() == 0) {
                         prizeNew.setPrizeStatus(VarParam.NO);
                     }
+                    //将对应的奖品库存放入缓存
                     kvListOperations.set(VarParam.RedPacketM.PRIZE_KEY, i, JSON.toJSONString(prizeNew));
                     List<Object> exec = operations.exec();
                     if (CollectionUtils.isEmpty(exec)) {//执行失败
-                        log.error("username:"+player.getUserName()+",抽得："+prizeOld.getPrizeName()+" index："+i+" redis乐观锁:更新库存失败");
+                        log.error(" redis乐观锁:更新库存失败"+" username:"+player.getUserName()+",抽得："+prizeNew.getPrizeName()+" index："+i);
                         ExceptionCast.cast(CommonCode.SERVER_ERROR);
                     } else {//执行成功
-                        log.info("username:"+player.getUserName()+",抽得："+prizeOld.getPrizeName()+" index："+i+" redis乐观锁:更新库存成功");
+                        log.info(" redis乐观锁:更新库存成功"+" username:"+player.getUserName()+",抽得："+prizeNew.getPrizeName()+" index："+i);
                         updatePrizeStore(prizeNew);
                         RedResultVo redResultVo = new RedResultVo();
                         redResultVo.setIsSuccess(true);
@@ -323,7 +329,7 @@ public class RedPacketServer {
                         return redResultVo;
                     }
                 } else {//库存不足
-                    log.error("username:"+player.getUserName()+",抽得："+prizeOld.getPrizeName()+" index："+i+" 该红包库存不足");
+                    log.error("username:"+player.getUserName()+",抽得："+prizeNew.getPrizeName()+" 库存不足");
                     ExceptionCast.cast(CommonCode.SERVER_ERROR);
                 }
                 return null;
@@ -333,7 +339,6 @@ public class RedPacketServer {
         RedResultVo redResultVo = (RedResultVo) objects.get(0);
         redResultVo.setAmount(redResultVo.getAmount().divide(VarParam.ONE_HUNDRED).setScale(2, BigDecimal.ROUND_DOWN));
 
-
         //减少用户的库存（mysql乐观锁）
         boolean update = playerService.update(
                 new UpdateWrapper<VsAwardPlayer>()
@@ -341,12 +346,11 @@ public class RedPacketServer {
                         .eq("version", player.getVersion())
                         .set("version", player.getVersion() + 1)
                         .set("join_times", player.getJoinTimes() - 1)
-
         );
         if (update) {
-            log.info("username:" + player.getUserName() + ",抽得：" + prizeOld.getPrizeName() + " index：" + i + " mysql乐观锁：更新库存成功");
+            log.info("username:" + player.getUserName() + ",抽得：" + redResultVo.getAmount() + "元红包"+" mysql乐观锁：更新库存成功");
         } else {
-            log.info("username:"+player.getUserName()+",抽得："+prizeOld.getPrizeName()+" index："+i+" mysql乐观锁：更新库存失败");
+            log.info("username:" + player.getUserName() + ",抽得：" + redResultVo.getAmount() + "元红包" + " mysql乐观锁：更新库存失败");
         }
 
         //生成订单
@@ -401,9 +405,9 @@ public class RedPacketServer {
     public void updatePrizeStore(VsAwardPrize prizeNew){
         boolean updateById = prizeService.updateById(prizeNew);
         if (updateById){
-            log.info("更新红包库存成功："+JSON.toJSONString(prizeNew));
+            log.info("更新奖品库存（数据库）成功："+JSON.toJSONString(prizeNew));
         }else{
-            log.error("更新红包库存失败："+JSON.toJSONString(prizeNew));
+            log.error("更新奖品库存（数据库）失败："+JSON.toJSONString(prizeNew));
         }
     }
 
@@ -434,7 +438,7 @@ public class RedPacketServer {
     public ResponseResult repay(Long recordId) throws Exception{
         VsPayRecord record = recordService.getById(recordId);
         if (record.getPayStatus() != VarParam.RedPacketM.PAY_STATUS_FAIL)
-            return ResponseResult.FAIL("正常订单，无需补单");
+            return ResponseResult.FAIL("该订单不可补单");
         VsAwardPlayer player = playerService.getOne(new QueryWrapper<VsAwardPlayer>().eq("user_name", record.getUserName()));
         this.joinMyQueue(record,player);
         boolean update = recordService.update(

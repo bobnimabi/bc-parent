@@ -32,9 +32,6 @@ public class VsNav implements Serializable {
     @ApiModelProperty(value = "导航名称")
     private String navName;
 
-    @ApiModelProperty(value = "导航编码")
-    private String navCode;
-
     @ApiModelProperty(value = "导航url")
     private String navUrl;
 

@@ -120,13 +120,16 @@ public class ExcelUtil {
     private static OutputStream getOutputStream(String fileName, HttpServletResponse response) {
         //创建本地文件
         String filePath = fileName + ".xlsx";
-        File dbfFile = new File(filePath);
+//        File dbfFile = new File(filePath);
         try {
-            if (!dbfFile.exists() || dbfFile.isDirectory()) {
-                dbfFile.createNewFile();
-            }
+//            if (!dbfFile.exists() || dbfFile.isDirectory()) {
+//                dbfFile.createNewFile();
+//            }
             fileName = new String(filePath.getBytes(), "ISO-8859-1");
-            response.addHeader("Content-Disposition", "filename=" + fileName);
+//            response.setHeader("content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+//            response.setContentType("bin");
+//            response.addHeader("Content-Disposition", "filename=" + fileName);
+            response.addHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
             return response.getOutputStream();
         } catch (IOException e) {
             ExceptionCast.castFail("创建Excel文件失败");
@@ -136,7 +139,6 @@ public class ExcelUtil {
 
     /**
      * 返回 ExcelReader
-     *
      * @param excel         需要解析的 Excel 文件
      * @param excelListener new ExcelListener()
      */

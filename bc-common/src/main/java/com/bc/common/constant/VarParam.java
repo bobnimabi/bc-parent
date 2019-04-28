@@ -79,10 +79,8 @@ public class VarParam {
         public static final int WAIT_SECOND = 11;
         //机器人：平台密码加密
         public static final String PASS_KEY = "jfxmk!wl.c4yg6gg?#&*%~+=&jv4399";
-
-
-
-
+        //品牌id
+        public static final int BRAND_ID = 1;
 
         /**
          * 条件查询参数
@@ -113,6 +111,8 @@ public class VarParam {
         public static final int PAY_STATUS_THREE = 3;
         //支付状态：派送失败
         public static final int PAY_STATUS_FAIL = 4;
+        //支付状态：作废
+        public static final int PAY_STATUS_CANCLE = 0;
         //客户端类型：1pc
         public static final int CLIENT_TYPE_ONE = 1;
         //客户端类型：2mobile
@@ -121,6 +121,5 @@ public class VarParam {
         public static final int RECHARGE_TYPE = 2;
         //确认支付者
         public static final String CONFIRM_PAY = "system";
-
     }
 }

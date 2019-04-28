@@ -1,8 +1,6 @@
 package com.bc.service.common.redPacket.entity;
 
 import java.math.BigDecimal;
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
 import java.time.LocalDateTime;
 import java.io.Serializable;
 import io.swagger.annotations.ApiModel;
@@ -17,7 +15,7 @@ import lombok.experimental.Accessors;
  * </p>
  *
  * @author admin
- * @since 2019-04-19
+ * @since 2019-04-28
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -27,11 +25,13 @@ public class VsRobotRecord implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @TableId(value = "id", type = IdType.AUTO)
-    private Integer id;
+    private Long id;
+
+    @ApiModelProperty(value = "机器人编码")
+    private Integer robotNum;
 
     @ApiModelProperty(value = "订单ID")
-    private String payRecordId;
+    private Long payRecordId;
 
     @ApiModelProperty(value = "用户名")
     private String userName;

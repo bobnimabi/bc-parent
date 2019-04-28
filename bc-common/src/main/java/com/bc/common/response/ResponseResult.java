@@ -57,6 +57,10 @@ public class ResponseResult implements Response {
     public static ResponseResult SUCCESS(Object obj){
         return new ResponseResult(CommonCode.SUCCESS,obj);
     }
+    //请求成功，返回信息
+    public static ResponseResult SUCCESS_MES(String message){
+        return new ResponseResult(CommonCode.SUCCESS,message);
+    }
 
     //请求失败，无返回信息
     public static ResponseResult FAIL(){

@@ -7,7 +7,7 @@ import lombok.ToString;
 
 @ToString
 public enum RedCode implements ResultCode {
-    TIMES_NOT_ENOUGH(false,26000,"请输入账号！"),
+    TIMES_NOT_ENOUGH(false,26000,"无抽奖次数"),
     LOTTERY_EXCEPTION(false,26001,"抽红包系统故障"),
 
     ;

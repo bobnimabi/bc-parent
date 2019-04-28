@@ -27,7 +27,6 @@ public class FeignClientInterceptor implements RequestInterceptor {
                     String headerValue = request.getHeader(headerName);
                     // 将header向下传递
                     requestTemplate.header(headerName,headerValue);
-
                 }
             }
         }

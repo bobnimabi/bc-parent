@@ -14,14 +14,16 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.CollectionUtils;
-import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletResponse;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +39,8 @@ public class RedPacketManagerController {
 
     @Autowired
     RedPacketManagerServer rpmServer;
+    @Value("${redPacketM.excelDownUrl}")
+    private String excelDownUrl;
 
     @ApiOperation("红包活动：修改")
     @PostMapping("/updateActive")
@@ -86,10 +90,7 @@ public class RedPacketManagerController {
                 && VarParam.RedPacketM.PRIZE_TYPE_TWO != prizeDto.getPrizeType()) {
             ExceptionCast.castInvalid("奖品类型有误");
         }
-        if (VarParam.YES != prizeDto.getPrizeStatus()
-                && VarParam.NO != prizeDto.getPrizeStatus()) {
-            ExceptionCast.castInvalid("奖品状态有误");
-        }
+
         if (prizeDto.getPrizeStoreNums() <= VarParam.RedPacketM.PRIZE_STORE_NUM_MIN) {
             ExceptionCast.castInvalid("库存数量不能低于" + VarParam.RedPacketM.PRIZE_STORE_NUM_MIN);
         }
@@ -97,7 +98,7 @@ public class RedPacketManagerController {
             ExceptionCast.castInvalid("派送数量必须是0");
         }
         if (prizeDto.getTotalAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            ExceptionCast.castInvalid("奖品金额不能低于或等于0分");
+            ExceptionCast.castInvalid("奖品金额不能<=0分");
         }
         if (prizeDto.getPrizePercent() > 100 || prizeDto.getPrizePercent() <= 0){
             ExceptionCast.castInvalid("中奖概率不能超过100或不能小于0");
@@ -130,10 +131,7 @@ public class RedPacketManagerController {
                 && VarParam.RedPacketM.PRIZE_TYPE_TWO != prizeDto.getPrizeType()) {
             ExceptionCast.castInvalid("奖品类型有误");
         }
-        if (VarParam.YES != prizeDto.getPrizeStatus()
-                && VarParam.NO != prizeDto.getPrizeStatus()) {
-            ExceptionCast.castInvalid("奖品状态有误");
-        }
+
         if (prizeDto.getPrizeStoreNums() <= VarParam.RedPacketM.PRIZE_STORE_NUM_MIN) {
             ExceptionCast.castInvalid("库存数量不能低于" + VarParam.RedPacketM.PRIZE_STORE_NUM_MIN);
         }
@@ -174,11 +172,14 @@ public class RedPacketManagerController {
         return rpmServer.queryPrizeById(prizeDto);
     }
 
-    @ApiOperation("奖品管理：下架")
+    @ApiOperation("奖品管理：上下架")
     @PostMapping("/prizeSoldOut")
     public ResponseResult prizeSoldOut(@RequestBody VsAwardPrizeDto prizeDto) throws Exception{
-        if (null == prizeDto || null == prizeDto.getId()) {
+        if (null == prizeDto || null == prizeDto.getId() || null== prizeDto.getPrizeStatus()) {
             ExceptionCast.castInvalid("奖品Id不能为空");
+        }
+        if (VarParam.NO != prizeDto.getPrizeStatus() && VarParam.YES != prizeDto.getPrizeStatus()) {
+            ExceptionCast.castInvalid("奖品状态有误");
         }
         return rpmServer.prizeSoldOut(prizeDto);
     }
@@ -196,7 +197,6 @@ public class RedPacketManagerController {
         if (transformDto.getAmount().compareTo(BigDecimal.ZERO) < 0) {
             ExceptionCast.castInvalid("金额不能小于0");
         }
-
         return rpmServer.addTransform(transformDto);
     }
 
@@ -225,7 +225,7 @@ public class RedPacketManagerController {
         return rpmServer.queryTransformById(transformDto);
     }
 
-    @ApiOperation("转换规则：编辑")
+    @ApiOperation("转换规则：修改")
     @PostMapping("updateTransform")
     public ResponseResult updateTransform(@RequestBody VsAwardTransformDto transformDto) throws Exception{
         if (null == transformDto
@@ -235,13 +235,12 @@ public class RedPacketManagerController {
         ) {
             ExceptionCast.castInvalid("参数不全");
         }
-        if (transformDto.getTimes() < 0) {
-            ExceptionCast.castInvalid("抽奖次数不能小于0");
+        if (transformDto.getTimes() <= 0) {
+            ExceptionCast.castInvalid("抽奖次数不能<=0");
         }
-        if (transformDto.getAmount().compareTo(BigDecimal.ZERO) < 0) {
-            ExceptionCast.castInvalid("金额不能小于0");
+        if (transformDto.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            ExceptionCast.castInvalid("金额不能<=0");
         }
-
         return rpmServer.updateTransform(transformDto);
     }
 
@@ -259,12 +258,35 @@ public class RedPacketManagerController {
             ExceptionCast.castInvalid("上架状态有误");
         }
         if (playerDto.getHasAmount().compareTo(BigDecimal.ZERO) < 0) {
-            ExceptionCast.castInvalid("金额不能小于0");
+            ExceptionCast.castInvalid("金额不能<0");
         }
         if (playerDto.getJoinTimes() < 0) {
-            ExceptionCast.castInvalid("可抽奖次数不能小于0");
+            ExceptionCast.castInvalid("可抽奖次数不能<0");
         }
         return rpmServer.addPlayer(playerDto);
+    }
+
+    @ApiOperation("会员管理：下载Excel模板")
+    @GetMapping("/downPlayerExcel")
+    public void downPlayerExcel(HttpServletResponse response) throws Exception{
+        // 下载本地文件
+        String fileName = "player.xlsx"; // 文件的默认保存名/usr/local/games/澳门新濠影汇.mobileconfig
+        // 读到流中
+        InputStream inStream = new FileInputStream(excelDownUrl);// 文件的存放路径
+        // 设置输出的格式
+        response.reset();
+        response.setContentType("bin");
+        response.addHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
+        // 循环取出流中的数据
+        byte[] b = new byte[100];
+        int len;
+        try {
+            while ((len = inStream.read(b)) > 0)
+                response.getOutputStream().write(b, 0, len);
+            inStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     //sheet 的序号 从1开始
@@ -289,9 +311,9 @@ public class RedPacketManagerController {
         }
         //校验排序
         if (null != playerDto.getPlayerStatus()
-            && VarParam.RedPacketM.PLAYER_CREATTIME_DESC != playerDto.getPlayerStatus()
-            && VarParam.RedPacketM.PLAYER_AMOUNT_DESC != playerDto.getPlayerStatus()
-            && VarParam.RedPacketM.PLAYER_JOINTIME_DESC != playerDto.getPlayerStatus()
+            && VarParam.RedPacketM.PLAYER_CREATTIME_DESC != playerDto.getOrderBy()
+            && VarParam.RedPacketM.PLAYER_AMOUNT_DESC != playerDto.getOrderBy()
+            && VarParam.RedPacketM.PLAYER_JOINTIME_DESC != playerDto.getOrderBy()
             ) ExceptionCast.castFail("排序条件有误");
 
         //校验状态
@@ -334,16 +356,16 @@ public class RedPacketManagerController {
         return rpmServer.updatePlayer(playerDto);
 
     }
-    @ApiOperation("会员管理：下架")
+    @ApiOperation("会员管理：上下架")
     @PostMapping("/playerSoldOut")
     public ResponseResult playerSoldOut(@RequestBody VsAwardPlayerDto playerDto) throws Exception{
-        if (null == playerDto || null == playerDto.getId())
-            ExceptionCast.castInvalid("未传入id");
+        if (null == playerDto || null == playerDto.getId() || null == playerDto.getPlayerStatus())
+            ExceptionCast.castInvalid("参数不全");
         return rpmServer.playerSoldOut(playerDto);
     }
 
-    @ApiOperation("会员管理：清除会员")
-    @PostMapping("/delPlayers")
+    @ApiOperation("会员管理：批量清除会员")
+    @PostMapping("/delPlayersBatch")
     public ResponseResult delPlayers(@RequestBody VsAwardPlayerDto playerDto) throws Exception{
         if (null == playerDto || null == playerDto.getDays()) {
             ExceptionCast.castInvalid("参数不全");
@@ -354,8 +376,8 @@ public class RedPacketManagerController {
         return rpmServer.delPlayers(playerDto);
     }
 
-    @ApiOperation("会员管理：清除会员")
-    @PostMapping("/delPlayersBatch")
+    @ApiOperation("会员管理：删除会员")
+    @PostMapping("/delPlayers")
     public ResponseResult delPlayersBatch(@RequestBody IdList idList) throws Exception {
         if (null == idList || CollectionUtils.isEmpty(idList.getIds())) {
             ExceptionCast.castInvalid("参数不全");
@@ -364,17 +386,17 @@ public class RedPacketManagerController {
     }
 
     @ApiOperation("抽奖记录：删除")
-    @PostMapping("/delRecordBatch")
-    public ResponseResult delRecordBatch(@RequestBody IdList idList) throws Exception{
+    @PostMapping("/delRecord")
+    public ResponseResult delRecord(@RequestBody IdList idList) throws Exception{
         if (null == idList || null == idList.getIds()) {
             ExceptionCast.castInvalid("参数不全");
         }
-        return rpmServer.delRecordBatch(idList.getIds());
+        return rpmServer.delRecord(idList.getIds());
     }
 
 //    @ApiOperation("抽奖记录：重派")
 
-    @ApiOperation("抽奖记录：条件查询")
+    @ApiOperation("抽奖记录：条件分页查询")
     @PostMapping("/queryRecordByCriteria")
     public ResponseResult queryRecordByCriteria(@RequestBody VsPayRecordDto recordDto) throws Exception{
         if (null == recordDto) {
@@ -383,6 +405,9 @@ public class RedPacketManagerController {
         if (null != recordDto.getPayStatus()
                 &&VarParam.RedPacketM.PAY_STATUS_ONE != recordDto.getPayStatus()
                 &&VarParam.RedPacketM.PAY_STATUS_TWO != recordDto.getPayStatus()
+                &&VarParam.RedPacketM.PAY_STATUS_THREE != recordDto.getPayStatus()
+                &&VarParam.RedPacketM.PAY_STATUS_FAIL != recordDto.getPayStatus()
+                &&VarParam.RedPacketM.PAY_STATUS_CANCLE != recordDto.getPayStatus()
         ) ExceptionCast.castInvalid("派送状态有误");
         if (null != recordDto.getStartTime()
                 && null != recordDto.getEndTime()
@@ -393,14 +418,15 @@ public class RedPacketManagerController {
         return ResponseResult.SUCCESS(vsPayRecordVoPage);
     }
     @ApiOperation("抽奖记录：导出Excel")
-    @PostMapping("/exportRecordExcel")
-    public void exportRecordExcel(@RequestBody VsPayRecordDto recordDto,HttpServletResponse response) throws Exception {
-        if (null == recordDto) {
-            ExceptionCast.castInvalid("未传入参数");
-        }
+    @GetMapping("/exportRecordExcel")
+    public void exportRecordExcel(@RequestBody(required = false) VsPayRecordDto recordDto,HttpServletResponse response) throws Exception {
+        recordDto = new VsPayRecordDto();
         if (null != recordDto.getPayStatus()
                 &&VarParam.RedPacketM.PAY_STATUS_ONE != recordDto.getPayStatus()
                 &&VarParam.RedPacketM.PAY_STATUS_TWO != recordDto.getPayStatus()
+                &&VarParam.RedPacketM.PAY_STATUS_THREE != recordDto.getPayStatus()
+                &&VarParam.RedPacketM.PAY_STATUS_FAIL != recordDto.getPayStatus()
+                &&VarParam.RedPacketM.PAY_STATUS_CANCLE != recordDto.getPayStatus()
         ) ExceptionCast.castInvalid("派送状态有误");
         if (null != recordDto.getStartTime()
                 && null != recordDto.getEndTime()
@@ -410,38 +436,61 @@ public class RedPacketManagerController {
         List<VsPayRecordVo> vsPayRecordVos = rpmServer.queryRecordByCriteria2(recordDto);
         List<ExportRecordVo> exportRecordVos = new ArrayList<>();
         DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        vsPayRecordVos.forEach(recordVo->{
+        for (VsPayRecordVo recordVo : vsPayRecordVos) {
             ExportRecordVo exRecord = new ExportRecordVo();
             exRecord.setClientType(recordVo.getClientType() == VarParam.RedPacketM.CLIENT_TYPE_ONE ? "PC" : "MOBILE");
             exRecord.setId(recordVo.getId() + "");
-            exRecord.setPayStatus(recordVo.getPayStatus() == VarParam.RedPacketM.PAY_STATUS_ONE ? "待派送" : "已派送");
+            String payStatus = "";
+            switch (recordVo.getPayStatus()){
+                case 1:
+                    payStatus = "待派送";
+                    break;
+                case 2:
+                    payStatus = "待派中";
+                    break;
+                case 3:
+                    payStatus = "已派送";
+                    break;
+                case 4:
+                    payStatus = "派送失败";
+                    break;
+                case 0:
+                    payStatus = "作废";
+                    break;
+                default:
+
+            }
+            exRecord.setPayStatus(payStatus);
             exRecord.setTimeOrder(df.format(recordVo.getTimeOrder()));
-            exRecord.setTotalAmount(recordVo.getTotalAmount().longValue()+"");
-            exRecord.setUserName(recordDto.getUserName());
+            exRecord.setTotalAmount(recordVo.getTotalAmount().longValue() + "");
+            exRecord.setUserName(recordVo.getUserName());
             exRecord.setTimePay(df.format(recordVo.getTimePay()));
             exportRecordVos.add(exRecord);
-        });
-
-        Long time = LocalDateTime.now().toEpochSecond(ZoneOffset.of("+8"));;
-        ExcelUtil.writeExcel(response,exportRecordVos , time+"", time+"", new ExportRecordVo());
+        }
+        ExcelUtil.writeExcel(response,exportRecordVos , df.format( LocalDateTime.now()), "express", new ExportRecordVo());
     }
 
-    @ApiOperation("抽奖记录：清除记录")
-    @PostMapping("/delRecords")
-    public ResponseResult delRecords(@RequestBody VsPayRecordDto recordDto) throws Exception{
+    @ApiOperation("抽奖记录：清除n天前记录")
+    @PostMapping("/delRecordBatch")
+    public ResponseResult delRecordBatch(@RequestBody VsPayRecordDto recordDto) throws Exception{
         if (null == recordDto || null == recordDto.getDays()) {
             ExceptionCast.castInvalid("参数不全");
         }
         if (recordDto.getDays() < 0) {
             ExceptionCast.castInvalid("保留天数不能小于0");
         }
-        return rpmServer.delRecords(recordDto);
+        return rpmServer.delRecordBatch(recordDto);
     }
 
     @ApiOperation("抽奖记录：统计")
     @PostMapping("/statisRecords")
     public ResponseResult statisRecords() throws Exception{
         return rpmServer.statisRecords();
+    }
+    @ApiOperation("品牌设置：查询")
+    @PostMapping("/queryBrand")
+    public ResponseResult queryBrand() throws Exception {
+        return rpmServer.queryBrand();
     }
 
     @ApiOperation("品牌设置：修改")
@@ -461,23 +510,22 @@ public class RedPacketManagerController {
     public ResponseResult navAdd(@RequestBody VsNavDto navDto) throws Exception {
         if (null == navDto
                 || StringUtils.isEmpty(navDto.getNavName())
-                || StringUtils.isEmpty(navDto.getNavCode())
                 || StringUtils.isEmpty(navDto.getNavUrl())
                 || null == navDto.getNavTarget()
         ) ExceptionCast.castInvalid("参数不全");
         return rpmServer.navAdd(navDto);
     }
 
-    @ApiOperation("导航设置：查询")
+    @ApiOperation("导航设置：分页查询")
     @PostMapping("/navQuery")
     public ResponseResult navQuery(@RequestBody Page page) throws Exception {
         if (null == page
             ||  page.getCurrent() <= 0
             ||  page.getSize() <= 0
         ) ExceptionCast.castInvalid("参数无效或有误");
-
         return rpmServer.navQuery(page);
     }
+
     @ApiOperation("导航设置：删除")
     @PostMapping("/navDel")
     public ResponseResult navDel(@RequestBody VsNavDto navDto) throws Exception {
@@ -503,7 +551,6 @@ public class RedPacketManagerController {
     public ResponseResult navUpdateById(@RequestBody VsNavDto navDto) throws Exception {
         if (null == navDto
                 || StringUtils.isEmpty(navDto.getNavName())
-                || StringUtils.isEmpty(navDto.getNavCode())
                 || StringUtils.isEmpty(navDto.getNavUrl())
                 || null == navDto.getNavTarget()
         ) ExceptionCast.castInvalid("参数不全");
@@ -520,7 +567,7 @@ public class RedPacketManagerController {
         return rpmServer.configAdd(configureDto);
     }
 
-    @ApiOperation("配置项：查询")
+    @ApiOperation("配置项：分页查询")
     @PostMapping("/configQuery")
     public ResponseResult configQuery(@RequestBody Page page) throws Exception {
         if (null == page
@@ -579,7 +626,7 @@ public class RedPacketManagerController {
     @ApiOperation("机器人：登录")
     @PostMapping("/robotLogin")
     public ResponseResult robotLogin(@RequestBody RobotLoginDto robotLoginDto) throws Exception {
-        if (null == robotLoginDto || StringUtils.isEmpty(robotLoginDto.getVarCode()) || null == robotLoginDto.getRobotNum()) {
+        if (null == robotLoginDto || StringUtils.isEmpty(robotLoginDto.getImageCode()) || null == robotLoginDto.getRobotNum()) {
             ExceptionCast.castFail("未传入验证码或机器人编号");
         }
         return rpmServer.robotLogin(robotLoginDto);

@@ -13,6 +13,10 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RobotLoginDto implements Serializable {
-    private String varCode;
+    //图片验证码
+    private String imageCode;
+    //机器人编码
     private Integer robotNum;
+    //动态口令
+    private Integer varCode;
 }
