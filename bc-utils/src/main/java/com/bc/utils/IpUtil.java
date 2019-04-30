@@ -28,7 +28,8 @@ public class IpUtil {
             }
             catch (UnknownHostException unknownhostexception) {
             }
-        return ip;
-
+        //第一个ip是真ip
+        String[] ips = ip.split(",");
+        return ips[0];
     }
 }

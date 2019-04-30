@@ -1,6 +1,5 @@
-package com.bc.manager.redPacket.config;
+package com.bc.service.redPacket.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,11 +25,9 @@ import java.util.stream.Collectors;
 @Configuration
 @EnableResourceServer
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)//激活方法上的PreAuthorize注解
-public class ResourceServerConfig extends ResourceServerConfigurerAdapter {
-
-    @Value("${redPacketM.permitUrl}")
+public class AuthConfig extends ResourceServerConfigurerAdapter {
+    @Value("${redPacket.permitUrl}")
     private String permitUrl;
-
     //公钥(这里只识别txt，cer不识别)
     private static final String PUBLIC_KEY = "publickey.txt";
 

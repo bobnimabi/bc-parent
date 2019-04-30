@@ -14,6 +14,7 @@ import lombok.ToString;
 @AllArgsConstructor
 public class LoginResult  {
     private String token;
+    private String jwt;
 
 
 

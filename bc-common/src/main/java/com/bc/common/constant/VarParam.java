@@ -26,6 +26,8 @@ public class VarParam {
         public static final String LOGIN_FLAG_PRE = LOGIN_PRE + "Login_flag:";
         //图片验证码的sessionKey
         public static final String IMAGE_CODE = LOGIN_PRE+"IMAGECODE:";
+        //允许登录的ip
+        public static final String[] PERMIT_IP = {"113.130.124.138"};
     }
 
     /**
@@ -85,6 +87,8 @@ public class VarParam {
         public static final BigDecimal AMOUNT_QOUTA = new BigDecimal(300000);
         //机器人查询账号
         public static final String ROBOT_QUERY_ACCOUNT = "aaa7158";
+
+
         /**
          * 条件查询参数
          */

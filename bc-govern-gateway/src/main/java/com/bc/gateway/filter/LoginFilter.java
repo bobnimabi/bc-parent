@@ -28,8 +28,6 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class LoginFilter extends ZuulFilter {
 
-
-
     @Autowired
     StringRedisTemplate stringRedisTemplate;
 

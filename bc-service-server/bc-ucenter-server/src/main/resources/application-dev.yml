@@ -7,9 +7,9 @@ spring:
   jackson:
     default-property-inclusion: non_null #不返回空值和null
   redis:
-    host: 103.44.30.46
+    host: localhost
     port: 6379
-    password: W_y1:478!
+    password:
     timeout: 5000 #连接超时 毫秒
     database: 0
     jedis:
@@ -20,9 +20,9 @@ spring:
         maxWait: -1 #连接池最大等行时间 -1没有限制
   datasource:
     username: root
-    password: W_y1:478!
+    password: 'c01tqdsqfz?G'
     driver-class-name: com.mysql.jdbc.Driver
-    url: jdbc:mysql://103.44.30.46:3306/xc_user?characterEncoding=utf8
+    url: jdbc:mysql://localhost:3306/xc_user?characterEncoding=utf8
     hikari:
       minimum-idle: 5
       maximum-pool-size: 20
@@ -40,6 +40,9 @@ server:
 
 
 eureka:
+  instance:
+    lease-renewal-interval-in-seconds: 2
+    lease-expiration-duration-in-seconds: 3
   client:
     #表示是否将自己注册到Eureka Server，默认为true。测试环境下关闭注册，都在热部署会报错
     register-with-eureka: false
@@ -54,7 +57,7 @@ ribbon:
   MaxAutoRetriesNextServer: 3 #切换实例的重试次数
   OkToRetryOnAllOperations: false  #对所有操作请求都进行重试，如果是get则可以，如果是post，put等操作没有实现幂等的情况下是很危险的,所以设置为false
   ConnectTimeout: 5000  #请求连接的超时时间
-  ReadTimeout: 6000 #请求处理的超时时间
+  ReadTimeout: 20000 #请求处理的超时时间
 
 ucenter:
   permitUrl: /** #放行uri(测试需要)

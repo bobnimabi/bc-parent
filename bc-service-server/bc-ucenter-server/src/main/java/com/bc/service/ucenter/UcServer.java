@@ -28,7 +28,6 @@ public class UcServer {
         SpringApplication.run(UcServer.class, args);
     }
 
-
     @Bean
     @LoadBalanced//开始客户端负载均衡
     public RestTemplate restTemplate(){

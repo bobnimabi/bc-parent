@@ -7,8 +7,10 @@ import lombok.Data;
  */
 @Data
 public class ChangePassDto {
-    //就密码
+    //旧密码
     private String oldPass;
     //新密码
     private String newPass;
+    //重复新密码
+    private String reNewPass;
 }

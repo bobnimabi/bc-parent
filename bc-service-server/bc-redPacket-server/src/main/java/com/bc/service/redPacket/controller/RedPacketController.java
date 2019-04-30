@@ -7,7 +7,9 @@ import com.bc.common.constant.VarParam;
 import com.bc.common.response.ResponseResult;
 import com.bc.manager.redPacket.dto.IdList;
 import com.bc.manager.redPacket.dto.IdLongList;
+import com.bc.manager.redPacket.dto.VsPayRecordDto;
 import com.bc.manager.redPacket.dto.VsRobotDto;
+import com.bc.service.common.redPacket.service.IVsNavService;
 import com.bc.service.redPacket.dto.RedPacketDto;
 import com.bc.service.redPacket.dto.RobotLoginDto;
 import com.bc.service.redPacket.server.RedPacketServer;
@@ -28,7 +30,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 
-@CrossOrigin("*")
+@CrossOrigin(origins = "*",maxAge = 3600)
 @RestController
 @RequestMapping("/")
 public class RedPacketController {
@@ -130,6 +132,23 @@ public class RedPacketController {
             ExceptionCast.castInvalid("参数不全");
         }
         return packetServer.repay(idList.getIds());
+    }
+
+    @ApiOperation("标题栏：查询所有的站点")
+    @GetMapping("/queryNav")
+    public ResponseResult queryNav() throws Exception{
+        return packetServer.queryNav();
+    }
+
+    @ApiOperation("用户分页查询中奖纪录")
+    @PostMapping("/queryMyRecord")
+    public ResponseResult queryMyRecord(@RequestBody VsPayRecordDto recordDto) throws Exception{
+        if (null == recordDto
+                || StringUtils.isEmpty(recordDto.getUserName())
+                || recordDto.getCurrent() <= 0
+                || recordDto.getSize() <=0
+        )ExceptionCast.castFail("参数不全，或有误");
+        return packetServer.queryMyRecord(recordDto);
     }
 
     @ApiOperation("从新初始化布隆过滤器")

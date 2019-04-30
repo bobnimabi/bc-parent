@@ -11,10 +11,10 @@ import com.bc.common.Exception.ExceptionCast;
 import com.bc.common.constant.VarParam;
 import com.bc.common.response.CommonCode;
 import com.bc.common.response.ResponseResult;
-import com.bc.service.common.redPacket.entity.VsAwardActive;
-import com.bc.service.common.redPacket.entity.VsAwardPlayer;
-import com.bc.service.common.redPacket.entity.VsAwardPrize;
-import com.bc.service.common.redPacket.entity.VsPayRecord;
+import com.bc.manager.redPacket.dto.IdLongList;
+import com.bc.manager.redPacket.dto.VsPayRecordDto;
+import com.bc.manager.redPacket.vo.VsPayRecordVo;
+import com.bc.service.common.redPacket.entity.*;
 import com.bc.service.common.redPacket.service.*;
 import com.bc.service.redPacket.dto.RedPacketDto;
 import com.bc.service.redPacket.dto.TaskAtom;
@@ -22,6 +22,7 @@ import com.bc.service.redPacket.vo.RedResultVo;
 import com.bc.service.redPacket.exception.RedCode;
 import com.bc.utils.DateUtil;
 import com.bc.utils.MyBloomFilter;
+import com.bc.utils.project.MyBeanUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -444,5 +445,30 @@ public class RedPacketServer {
             this.joinMyQueue(record,player);
         }
         return ResponseResult.SUCCESS("已补单");
+    }
+
+    public ResponseResult queryNav() throws Exception{
+        List<VsNav> list = navService.list();
+        if (CollectionUtils.isEmpty(list)) {
+            ExceptionCast.castFail("未查询到任何导航网址");
+        }
+        return ResponseResult.SUCCESS(list);
+    }
+
+    public ResponseResult queryMyRecord(VsPayRecordDto recordDto) throws Exception{
+        //布隆过滤器防止恶意点击，DOS攻击
+        boolean exist = MyBloomFilter.isExist(
+                VarParam.RedPacketM.BLOOM_RED,
+                recordDto.getUserName(),
+                VarParam.RedPacketM.SIZE_RED,
+                VarParam.RedPacketM.FPP_RED, redis
+        );
+        if (!exist) ExceptionCast.castFail("该账号不存在");
+
+        IPage page = recordService.page(recordDto, new QueryWrapper<VsPayRecord>()
+                .eq("user_name", recordDto.getUserName())
+                .orderByDesc("create_time")
+        );
+        return ResponseResult.SUCCESS(MyBeanUtil.copyPageToPage(page, VsPayRecordVo.class));
     }
 }

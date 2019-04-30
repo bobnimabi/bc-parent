@@ -614,6 +614,7 @@ public class RedPacketManagerServer {
      */
     public ResponseResult queryRecordByCriteria(VsPayRecordDto recordDto) throws Exception{
         QueryWrapper<VsPayRecord> queryWrapper = new QueryWrapper<>();
+        queryWrapper.orderByDesc("create_time");
         if (null != recordDto.getPayStatus()) {
             queryWrapper.eq("pay_status", recordDto.getPayStatus());
         }
@@ -634,13 +635,6 @@ public class RedPacketManagerServer {
         }
         IPage<VsPayRecord> page = recordService.page(new Page<VsPayRecord>(recordDto.getCurrent(), recordDto.getSize()), queryWrapper);
         Page<VsPayRecordVo> vsPayRecordVoPage = MyBeanUtil.copyPageToPage(page, VsPayRecordVo.class);
-        //按时间倒排
-        vsPayRecordVoPage.getRecords().sort(new Comparator<VsPayRecordVo>() {
-            @Override
-            public int compare(VsPayRecordVo o1, VsPayRecordVo o2) {
-                return o1.getCreateTime().compareTo(o2.getCreateTime());
-            }
-        });
         return ResponseResult.SUCCESS(vsPayRecordVoPage);
     }
     /**

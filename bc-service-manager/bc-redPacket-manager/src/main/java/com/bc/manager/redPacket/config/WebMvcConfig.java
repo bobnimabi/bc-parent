@@ -1,5 +1,6 @@
 package com.bc.manager.redPacket.config;
 
+import com.bc.manager.redPacket.interceptor.AuthInterceptor;
 import com.bc.manager.redPacket.interceptor.LogInterceptor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -33,16 +34,23 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     //使用Bean标签是为了使得LogInterceptor可以使用@Autowire
     @Bean
-    public HandlerInterceptor getTokenInterceptor(){
+    public HandlerInterceptor getLogInterceptor(){
         return new LogInterceptor();
+    }
+
+    @Bean
+    public HandlerInterceptor getAuthInterceptor(){
+        return new AuthInterceptor();
     }
 
     //添加拦截器
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(getTokenInterceptor())
+        registry.addInterceptor(getLogInterceptor())
                 .addPathPatterns("/**")
                 .excludePathPatterns("/swagger-resources/**", "/webjars/**", "/v2/**", "/swagger-ui.html/**");
+        registry.addInterceptor(getAuthInterceptor())
+                .addPathPatterns("/**");
     }
 
     //将swagger-ui的静态资源文件加进去

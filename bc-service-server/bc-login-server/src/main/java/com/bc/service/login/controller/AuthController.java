@@ -4,6 +4,7 @@ import com.bc.common.Exception.ExceptionCast;
 import com.bc.common.constant.VarParam;
 import com.bc.common.response.CommonCode;
 import com.bc.common.response.ResponseResult;
+import com.bc.service.login.valImage.ImageCodeInterceptor;
 import com.bc.service.login.dto.LoginParams;
 import com.bc.service.login.exception.AuthCode;
 import com.bc.common.pojo.AuthToken;
@@ -24,7 +25,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit;
  **/
 @RestController
 @RequestMapping("/")
-@CrossOrigin(origins = "*", maxAge = 3600)
+@CrossOrigin("*")
 @Slf4j
 public class AuthController {
     @Value("${auth.clientId}")
@@ -50,26 +50,52 @@ public class AuthController {
     private ValidateCodeGenerator validateCodeGenerator;
     @Autowired
     private StringRedisTemplate redis;
+    @Autowired
+    private ImageCodeInterceptor imageCodeInterceptor;
+
 
 
     @PostMapping("/userlogin")
     public ResponseResult login(@RequestBody LoginParams loginParams, HttpServletRequest request) throws Exception{
-        System.out.println("userLogin,sessionId:"+request.getSession().getId());
+
+        //校验ip
+        boolean permit = false;
+        String ipAddress = IpUtil.getIpAddress(request);
+        for (String permitIp : VarParam.Login.PERMIT_IP) {
+            if (permitIp.equals(ipAddress)) {
+                permit = true;
+            }
+        }
+        if (!permit) {
+            ExceptionCast.castFail("该ip未放行");
+        }
+
+        //校验验证码
+        if (loginParams == null || StringUtils.isEmpty(loginParams.getImageCode())) {
+            ExceptionCast.castFail("验证码不能为空");
+        }
+        if(imageCodeInterceptor.match(request)) {
+            String imageCodeOld = redis.opsForValue().get(VarParam.Login.IMAGE_CODE + IpUtil.getIpAddress(request));
+            imageCodeInterceptor.validate(loginParams.getImageCode(),imageCodeOld,request);
+        }
+
+        //校验动态口令
+//        if (!authService.googleAuth(loginParams.getVarCode(),loginParams.getUsername()))
+//            ExceptionCast.castFail("口令错误");
+
+        //校验用户名和密码
         if(loginParams == null || StringUtils.isEmpty(loginParams.getUsername())){
             ExceptionCast.cast(AuthCode.AUTH_USERNAME_NONE);
         }
         if(loginParams == null || StringUtils.isEmpty(loginParams.getPassword())){
             ExceptionCast.cast(AuthCode.AUTH_PASSWORD_NONE);
         }
-
-//        if (!authService.googleAuth(loginParams.getVarCode(),loginParams.getUsername()))
-//            ExceptionCast.castFail("口令错误");
         String username = loginParams.getUsername();
         String password = loginParams.getPassword();
 
         //校验是否重复登录
-        String flag = redis.opsForValue().get(VarParam.Login.LOGIN_FLAG_PRE + username);
-        if (StringUtils.isNotEmpty(flag)) {
+        String usernameflag = redis.opsForValue().get(VarParam.Login.LOGIN_FLAG_PRE + username);
+        if (StringUtils.isNotEmpty(usernameflag)) {
             ExceptionCast.castFail("不能重复登录");
         }
 
@@ -77,7 +103,8 @@ public class AuthController {
         AuthToken authToken =  authService.login(username,password,clientId,clientSecret,request.getRemoteHost());
         String access_token = authToken.getAccess_token();
         XcCookieUtil.saveCookie(access_token,cookieDomain,cookieMaxAge);
-        LoginResult loginResult = new LoginResult(access_token);
+
+        LoginResult loginResult = new LoginResult(access_token,authToken.getJwt_token());
         return ResponseResult.SUCCESS(loginResult);
     }
 
@@ -90,11 +117,14 @@ public class AuthController {
         ImageIO.write(imageCode.getImage(), "JPEG", response.getOutputStream());
     }
 
-    //退出
+    //登出
     @PostMapping("/userlogout")
     public ResponseResult logout(HttpServletRequest httpRequest) throws Exception{
         //取出cookie中的用户身份令牌
         String uid =  XcCookieUtil.getTokenFormCookie(httpRequest);
+        //删除登录标志
+        AuthToken userToken = XcTokenUtil.getUserToken(uid, redis);
+        redis.delete(VarParam.Login.LOGIN_FLAG_PRE + userToken.getUsername());
         //删除redis中的token
         boolean result = XcTokenUtil.delToken(uid, redis);
         //清除cookie

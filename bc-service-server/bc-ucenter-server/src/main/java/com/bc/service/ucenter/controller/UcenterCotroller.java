@@ -22,6 +22,7 @@ import javax.servlet.http.HttpServletRequest;
  */
 @RestController
 @RequestMapping("/")
+@CrossOrigin("*")
 public class UcenterCotroller {
     @Autowired
     private UcenterServer ucenterServer;
@@ -31,13 +32,19 @@ public class UcenterCotroller {
     //查询用户信息
     @GetMapping("/queryUser")
     public ResponseResult queryUser(HttpServletRequest httpRequest) throws Exception{
-        String uid = XcCookieUtil.getTokenFormCookie(httpRequest);
-        AuthToken authToken = XcTokenUtil.getUserToken(uid, stringRedisTemplate);
-        authToken.setAccess_token(null);
-        authToken.setJwt_token(null);
-        authToken.setRefresh_token(null);
-        authToken.setUserId(null);
-        authToken.setUsername(null);
+//        String uid = XcCookieUtil.getTokenFormCookie(httpRequest);
+//        AuthToken authToken = XcTokenUtil.getUserToken(uid, stringRedisTemplate);
+//        authToken.setAccess_token(null);
+//        authToken.setJwt_token(null);
+//        authToken.setRefresh_token(null);
+
+//        authToken.setUserId(null);
+//        authToken.setUsername(null);
+        AuthToken authToken = new AuthToken();
+        authToken.setUsername("username");
+        authToken.setUserId(2L);
+        authToken.setName("小王");
+        authToken.setUtype(1);
         return ResponseResult.SUCCESS(authToken);
     }
 
