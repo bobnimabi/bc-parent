@@ -150,12 +150,6 @@
             <artifactId>feign-okhttp</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-        </dependency>
-
-
         <!--Excel操作-->
         <dependency>
             <groupId>com.alibaba</groupId>

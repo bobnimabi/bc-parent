@@ -1,9 +1,12 @@
 package com.bc.service.redPacket.controller;
 
 
+import com.alibaba.fastjson.JSON;
 import com.bc.common.Exception.ExceptionCast;
 import com.bc.common.constant.VarParam;
 import com.bc.common.response.ResponseResult;
+import com.bc.manager.redPacket.dto.IdList;
+import com.bc.manager.redPacket.dto.IdLongList;
 import com.bc.manager.redPacket.dto.VsRobotDto;
 import com.bc.service.redPacket.dto.RedPacketDto;
 import com.bc.service.redPacket.dto.RobotLoginDto;
@@ -11,13 +14,19 @@ import com.bc.service.redPacket.server.RedPacketServer;
 import com.bc.service.redPacket.server.RobotServer;
 import com.bc.utils.CheckMobile;
 import com.bc.utils.IpUtil;
+import com.bc.utils.MyHttpResult;
 import io.swagger.annotations.ApiOperation;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
+
+import javax.imageio.stream.ImageInputStream;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.*;
 
 @CrossOrigin("*")
 @RestController
@@ -40,13 +49,28 @@ public class RedPacketController {
     }
 
     @ApiOperation("机器人：获取图片验证码")
-    @PostMapping("/getVarCode")
-    public void getVarCode(@RequestBody RobotLoginDto robotLoginDto, HttpServletResponse response) throws Exception{
-        if (null == robotLoginDto ||  null == robotLoginDto.getRobotNum()) {
+    @GetMapping("/getVarCode")
+    public byte[] getVarCode(@RequestParam Integer robotNum, HttpServletResponse response) throws Exception{
+        if (null == robotNum) {
             ExceptionCast.castFail("未传入机器人编号");
         }
         ServletOutputStream outputStream = response.getOutputStream();
-        robotServer.getCode(outputStream,robotLoginDto.getRobotNum());
+        MyHttpResult result = robotServer.getCode(robotNum);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        result.getHttpEntity().writeTo(out);
+        byte[] bytes = out.toByteArray();
+        out.close();
+        return bytes;
+    }
+    @ApiOperation("机器人：获取图片验证码")
+    @GetMapping("/getVarCode2")
+    public void getVarCode2(@RequestParam Integer robotNum, HttpServletResponse response) throws Exception{
+        if (null == robotNum) {
+            ExceptionCast.castFail("未传入机器人编号");
+        }
+        ServletOutputStream outputStream = response.getOutputStream();
+        MyHttpResult result = robotServer.getCode(robotNum);
+        result.getHttpEntity().writeTo(outputStream);
         outputStream.flush();
         outputStream.close();
     }
@@ -72,7 +96,6 @@ public class RedPacketController {
             || StringUtils.isEmpty(robotDto.getRobotDesc())
             || StringUtils.isEmpty(robotDto.getPlatAccount())
             || StringUtils.isEmpty(robotDto.getPlatPassword())
-            || null == robotDto.getRobotStatus()
         ) ExceptionCast.castFail("参数不全");
         return robotServer.addRobot(robotDto);
     }
@@ -101,12 +124,12 @@ public class RedPacketController {
     }
 
     @ApiOperation("人工：补单")
-    @GetMapping("/repayOrder")
-    public ResponseResult repayOrder(@RequestParam Long id) throws Exception{
-        if ( null == id) {
-            ExceptionCast.castFail("未传入recordId");
+    @PostMapping("/repayOrder")
+    public ResponseResult repayOrder(@RequestBody IdLongList idList) throws Exception{
+        if (null == idList || CollectionUtils.isEmpty(idList.getIds())) {
+            ExceptionCast.castInvalid("参数不全");
         }
-        return packetServer.repay(id);
+        return packetServer.repay(idList.getIds());
     }
 
     @ApiOperation("从新初始化布隆过滤器")

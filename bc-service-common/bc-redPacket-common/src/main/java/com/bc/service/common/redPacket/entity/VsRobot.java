@@ -11,8 +11,12 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 /**
+ * <p>
+ * 
+ * </p>
+ *
  * @author admin
- * @since 2019-04-19
+ * @since 2019-04-28
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -47,7 +51,7 @@ public class VsRobot implements Serializable {
     private String robotInfo;
 
     @ApiModelProperty(value = "登录时间")
-    private LocalDateTime loginTime;
+    private Integer loginTime;
 
     @ApiModelProperty(value = "掉线次数")
     private Integer loseTimes;

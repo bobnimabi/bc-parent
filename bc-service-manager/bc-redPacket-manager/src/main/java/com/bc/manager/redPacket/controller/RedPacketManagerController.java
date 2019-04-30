@@ -1,5 +1,6 @@
 package com.bc.manager.redPacket.controller;
 
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.bc.common.Exception.ExceptionCast;
 import com.bc.common.constant.VarParam;
@@ -8,24 +9,30 @@ import com.bc.manager.redPacket.dto.*;
 import com.bc.manager.redPacket.server.RedPacketManagerServer;
 import com.bc.manager.redPacket.vo.ExportRecordVo;
 import com.bc.manager.redPacket.vo.VsPayRecordVo;
+import com.bc.service.common.redPacket.entity.VsRobotRecord;
 import com.bc.service.redPacket.dto.RobotLoginDto;
 import com.bc.utils.ExcelUtil;
+import com.bc.utils.FileUpload;
+import com.bc.utils.MyHttpResult;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -41,6 +48,7 @@ public class RedPacketManagerController {
     RedPacketManagerServer rpmServer;
     @Value("${redPacketM.excelDownUrl}")
     private String excelDownUrl;
+
 
     @ApiOperation("红包活动：修改")
     @PostMapping("/updateActive")
@@ -60,6 +68,16 @@ public class RedPacketManagerController {
                 && null != activeDto.getTimeStart()
                 && activeDto.getTimeStart().isAfter(activeDto.getTimeEnd()))) {
             ExceptionCast.castInvalid("活动开始时间不能晚于截止时间");
+        }
+        if (StringUtils.isNotEmpty(activeDto.getDayTimeStart())) {
+            if (activeDto.getDayTimeStart().length() < 5) {
+                activeDto.setDayTimeStart("0" + activeDto.getDayTimeStart());
+            }
+        }
+        if (StringUtils.isNotEmpty(activeDto.getDayTimeEnd())) {
+            if (activeDto.getDayTimeEnd().length() < 5) {
+                activeDto.setDayTimeEnd("0" + activeDto.getDayTimeEnd());
+            }
         }
         if (StringUtils.isNotEmpty(activeDto.getDayTimeStart())
                 && StringUtils.isNotEmpty(activeDto.getDayTimeEnd())
@@ -387,14 +405,29 @@ public class RedPacketManagerController {
 
     @ApiOperation("抽奖记录：删除")
     @PostMapping("/delRecord")
-    public ResponseResult delRecord(@RequestBody IdList idList) throws Exception{
-        if (null == idList || null == idList.getIds()) {
+    public ResponseResult delRecord(@RequestBody IdLongList idList) throws Exception{
+        if (null == idList || CollectionUtils.isEmpty(idList.getIds())) {
             ExceptionCast.castInvalid("参数不全");
         }
         return rpmServer.delRecord(idList.getIds());
     }
 
-//    @ApiOperation("抽奖记录：重派")
+    @ApiOperation("人工：补单")
+    @PostMapping("/repayOrder")
+    public ResponseResult repayOrder(@RequestBody IdLongList idList) throws Exception{
+        if (null == idList || CollectionUtils.isEmpty(idList.getIds())) {
+            ExceptionCast.castInvalid("参数不全");
+        }
+        return rpmServer.repayOrder(idList);
+    }
+    @ApiOperation("抽奖记录：作废")
+    @PostMapping("/cancelRecord")
+    public ResponseResult cancelRecord(@RequestBody IdLongList idList) throws Exception{
+        if (null == idList || CollectionUtils.isEmpty(idList.getIds())) {
+            ExceptionCast.castInvalid("参数不全");
+        }
+        return rpmServer.cancelRecord(idList.getIds());
+    }
 
     @ApiOperation("抽奖记录：条件分页查询")
     @PostMapping("/queryRecordByCriteria")
@@ -414,8 +447,7 @@ public class RedPacketManagerController {
                 && recordDto.getStartTime().isAfter(recordDto.getEndTime())) {
             ExceptionCast.castInvalid("起始时间不能早于结束时间");
         }
-        Page<VsPayRecordVo> vsPayRecordVoPage = rpmServer.queryRecordByCriteria(recordDto);
-        return ResponseResult.SUCCESS(vsPayRecordVoPage);
+        return rpmServer.queryRecordByCriteria(recordDto);
     }
     @ApiOperation("抽奖记录：导出Excel")
     @GetMapping("/exportRecordExcel")
@@ -502,6 +534,12 @@ public class RedPacketManagerController {
             || StringUtils.isEmpty(siteDto.getSiteUrl())
         ) ExceptionCast.castInvalid("参数不全");
         return rpmServer.updateBrand(siteDto);
+    }
+
+    @ApiOperation("品牌：logo上传")
+    @PostMapping("/brandUpload")
+    public ResponseResult brandUpload(MultipartFile logImage) throws Exception {
+        return rpmServer.brandUpload(logImage);
     }
 
 
@@ -605,22 +643,19 @@ public class RedPacketManagerController {
         return rpmServer.configUpdate(configureDto);
     }
 
-    @ApiOperation("补单")
-    @PostMapping("/repayOrder")
-    public ResponseResult repayOrder(@RequestParam Long id) throws Exception {
-        if (null == id) {
-            ExceptionCast.castFail("未传入补单的id");
-        }
-        return rpmServer.repayOrder(id);
-    }
+
 
     @ApiOperation("机器人：获取图片验证码")
-    @PostMapping("/getVarCode")
-    public void getVarCode(@RequestBody RobotLoginDto robotLoginDto, HttpServletResponse response) throws Exception {
-        if (null == robotLoginDto ||  null == robotLoginDto.getRobotNum()) {
+    @GetMapping("/getVarCode")
+    public void getVarCode(@RequestParam Integer robotNum, HttpServletResponse response) throws Exception {
+        if (null == robotNum) {
             ExceptionCast.castFail("未传入机器人编号");
         }
-        rpmServer.getVarCode(robotLoginDto);
+        byte[] varCode = rpmServer.getVarCode(robotNum);
+        ServletOutputStream outputStream = response.getOutputStream();
+        IOUtils.write(varCode,outputStream);
+        outputStream.flush();
+        outputStream.close();
     }
 
     @ApiOperation("机器人：登录")
@@ -641,7 +676,6 @@ public class RedPacketManagerController {
                 || StringUtils.isEmpty(robotDto.getRobotDesc())
                 || StringUtils.isEmpty(robotDto.getPlatAccount())
                 || StringUtils.isEmpty(robotDto.getPlatPassword())
-                || null == robotDto.getRobotStatus()
         ) ExceptionCast.castFail("参数不全");
         return rpmServer.addRobot(robotDto);
     }
@@ -655,9 +689,21 @@ public class RedPacketManagerController {
         return rpmServer.robotStatus(robotDto);
     }
 
-    /**
-     * 机器人：查询全部，分页
-     */
+    @ApiOperation("机器人：修改")
+    @PostMapping("/updateRobot")
+    public ResponseResult updateRobot(@RequestBody VsRobotDto robotDto) throws Exception{
+        if (null == robotDto
+                || null == robotDto.getId()
+                || StringUtils.isEmpty(robotDto.getRobotName())
+                || StringUtils.isEmpty(robotDto.getRobotDesc())
+                || StringUtils.isEmpty(robotDto.getPlatAccount())
+                || StringUtils.isEmpty(robotDto.getPlatPassword())
+        ) ExceptionCast.castFail("参数不全");
+        robotDto.setRobotNum(null);
+        return rpmServer.updateRobot(robotDto);
+    }
+
+
     @ApiOperation("机器人：分页查询")
     @PostMapping("/robotQuery")
     public ResponseResult robotQuery(@RequestBody VsRobotDto robotDto) throws Exception {
@@ -665,6 +711,46 @@ public class RedPacketManagerController {
             ExceptionCast.castFail("参数不全或有误");
         }
         return rpmServer.robotQuery(robotDto);
+    }
+
+    @ApiOperation("机器人记录：条件分页查询")
+    @PostMapping("/robotRecByCri")
+    public ResponseResult robotRecByCri(@RequestBody VsRobotRecordDto recordDto) throws Exception {
+        if (null == recordDto)
+            ExceptionCast.castFail("未传入参数");
+        if (null != recordDto.getRecordStatus()
+            && VarParam.NO != recordDto.getRecordStatus()
+            && VarParam.YES != recordDto.getRecordStatus()
+        ) ExceptionCast.castFail("状态有误");
+        return rpmServer.robotRecByCri(recordDto);
+    }
+    @ApiOperation("机器人记录：删除")
+    @PostMapping("/robotRecDel")
+    public ResponseResult robotRecDel(@RequestBody IdLongList idList) throws Exception {
+        if (null == idList || CollectionUtils.isEmpty(idList.getIds()))
+            ExceptionCast.castInvalid("未传入id");
+        return rpmServer.robotRecDel(idList.getIds());
+    }
+
+    @ApiOperation("机器人记录：清空")
+    @PostMapping("/robotRecEmpty")
+    public ResponseResult robotRecEmpty() throws Exception {
+        return rpmServer.robotRecEmpty();
+    }
+
+    @ApiOperation("机器人：查询全部")
+    @GetMapping("/robotQuery")
+    public ResponseResult robotQuery() throws Exception {
+        return rpmServer.robotQuery();
+    }
+
+    @ApiOperation("机器人：根据id查询")
+    @PostMapping("/robotGetById")
+    public ResponseResult robotGetById(@RequestBody VsRobotDto robotDto) throws Exception {
+        if (null == robotDto || null == robotDto.getId()) {
+            ExceptionCast.castFail("参数不全");
+        }
+        return rpmServer.robotGetById(robotDto.getId());
     }
 
     @ApiOperation("测试")

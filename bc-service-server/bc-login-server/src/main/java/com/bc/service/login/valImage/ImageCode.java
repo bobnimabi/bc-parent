@@ -9,24 +9,14 @@ public class ImageCode {
 	
 	private String code;
 	
-	private LocalDateTime expireTime;
+	private int expireTime;
 
 	public ImageCode(BufferedImage image,String code,int expireIn) {
 		this.image = image;
 		this.code = code;
-		this.expireTime = LocalDateTime.now().plusSeconds(expireIn);
+		this.expireTime = expireIn;
 	}
-	
-	public ImageCode(BufferedImage image,String code,LocalDateTime expireTime) {
-		this.image = image;
-		this.code = code;
-		this.expireTime = expireTime;
-	}
-	
-	public boolean isExpried() {
-		return LocalDateTime.now().isAfter(expireTime);
-	}
-	
+
 	public BufferedImage getImage() {
 		return image;
 	}
@@ -43,11 +33,11 @@ public class ImageCode {
 		this.code = code;
 	}
 
-	public LocalDateTime getExpireTime() {
+	public int getExpireTime() {
 		return expireTime;
 	}
 
-	public void setExpireTime(LocalDateTime expireTime) {
+	public void setExpireTime(int expireTime) {
 		this.expireTime = expireTime;
 	}
 	

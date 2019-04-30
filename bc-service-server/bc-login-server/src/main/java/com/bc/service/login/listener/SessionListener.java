@@ -14,8 +14,8 @@ import javax.servlet.http.HttpSessionListener;
 /**
  * Created by mrt on 2019/4/6.
  */
-@WebListener
-@Component
+//@WebListener
+//@Component
 @Slf4j
 public class SessionListener implements HttpSessionListener {
     @Autowired

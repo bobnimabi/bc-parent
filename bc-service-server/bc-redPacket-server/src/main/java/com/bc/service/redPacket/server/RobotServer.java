@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.aspectj.weaver.ast.Var;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Async;
@@ -72,13 +73,14 @@ public class RobotServer {
     private static int robinNum = 0;
 
     //初始化机器人集合
-//    @PostConstruct
+    @PostConstruct
     public void initRobots() throws Exception{
         redis.delete(VarParam.RedPacketM.ROBOT_MAP);
         List<VsRobot> robots = getRobots();
     }
 
     //初始化所有client
+    @PostConstruct
     public void initClient() throws Exception{
         List<VsRobot> robots = getRobots();
         robots.forEach(robot -> {
@@ -89,6 +91,7 @@ public class RobotServer {
     }
 
     //初始化所有client的锁
+    @PostConstruct
     public void initClientLock() throws Exception{
         List<VsRobot> robots = getRobots();
         robots.forEach(robot -> {
@@ -97,7 +100,7 @@ public class RobotServer {
     }
 
     //调用循环查询=>异步调用
-//    @PostConstruct
+    @PostConstruct
     public void initInterval() throws Exception{
         new Thread(new Runnable() {
             @Override
@@ -110,24 +113,38 @@ public class RobotServer {
             }
         }).start();
     }
-    private static TaskAtom commTaskAtom = new TaskAtom(null,"jishu001",null);
+    //刷新cookie用
+    private static TaskAtom commTaskAtom = new TaskAtom(null,VarParam.RedPacketM.ROBOT_QUERY_ACCOUNT,null);
 
     //每10分钟轮询查询一次，防止cookie失效
     @Async
     public void intervalQuery() throws Exception {
         while (true) {
-            //先睡10分钟，防止刚启动机器人还没有登录
+            //先睡5分钟，防止刚启动机器人还没有登录
             Thread.sleep(1000*60*10);
             List<VsRobot> robots = getRobots();
-            for (VsRobot robot:robots) {
-                log.info("10分钟机器人轮询：robotNum:" + robot.getRobotNum());
-                ReentrantLock lock = clientLockMap.get(robot.getRobotNum());
-                //如果能获取到锁，说明该客户端现在空闲，故调用一次查询
-                if (lock.tryLock()) {
-                    this.queryInfo(commTaskAtom, robot.getRobotNum());
-                    log.info("10分钟机器人轮询：robotNum:" + robot.getRobotNum()+",刷新cookie成功");
-                }else{
-                    log.info("10分钟机器人轮询：robotNum:" + robot.getRobotNum()+",正在执行，无需cookie刷新");
+            if (!CollectionUtils.isEmpty(robots)) {
+                //去除状态为0的机器人
+                Iterator<VsRobot> iterator = robots.iterator();
+                while (iterator.hasNext()) {
+                    VsRobot next = iterator.next();
+                    if (VarParam.NO == next.getRobotStatus()) {
+                        iterator.remove();
+                    }
+                }
+                if (!CollectionUtils.isEmpty(robots)) {
+                    for (VsRobot robot:robots) {
+                        log.info("5分钟机器人轮询：robotNum:" + robot.getRobotNum());
+                        ReentrantLock lock = clientLockMap.get(robot.getRobotNum());
+                        //如果能获取到锁，说明该客户端现在空闲，故调用一次查询
+                        if (lock.tryLock()) {
+                            this.queryInfo(commTaskAtom, robot);
+                            log.info("5分钟机器人轮询：robotNum:" + robot.getRobotNum()+",刷新cookie成功");
+                            lock.unlock();
+                        }else{
+                            log.info("5分钟机器人轮询：robotNum:" + robot.getRobotNum()+",正在执行，无需cookie刷新");
+                        }
+                    }
                 }
             }
         }
@@ -176,7 +193,7 @@ public class RobotServer {
                     log.info("机器人初始化：入redis队列成功");
                 }
                 initRobotLock.unlock();
-                if (CollectionUtils.isEmpty(list)) return list;
+                if (!CollectionUtils.isEmpty(list)) return list;
             } else {
                 Thread.sleep(100);
                 return getRobots();
@@ -248,6 +265,7 @@ public class RobotServer {
         }
         //更新下机器人缓存
         redis.delete(VarParam.RedPacketM.ROBOT_MAP);
+        getRobots();
         return ResponseResult.SUCCESS();
     }
 
@@ -256,8 +274,8 @@ public class RobotServer {
     public void exeQueue() throws Exception{
         //只允许一个线程执行调整队列
         if (exeQueueLock.tryLock()){
-            Long recordId = 0L;
-            while (true){
+            long recordId = 0L;
+            out:while (true){
                 Set<String> range = redis.opsForZSet().range(VarParam.RedPacketM.JUST_TASK_QUEUE, 0, 0);//包头包尾
                 if (CollectionUtils.isEmpty(range)){
                     break; //只有队列为空退出
@@ -274,7 +292,7 @@ public class RobotServer {
                 if (expireTime > 0) {
                     //如果recordId没有变化，说明队列头没有变化，则sleep
                     if (recordId == taskAtom.getRecordId()) {
-                        Thread.sleep(100);//这里不是sleep(expireTime)，防止新任务进来等待
+                        Thread.sleep(1000);//这里不是sleep(expireTime)，防止新任务进来等待
                         continue;
                     }
                     //调整score为expireTime
@@ -282,9 +300,8 @@ public class RobotServer {
                     redis.opsForZSet().incrementScore(VarParam.RedPacketM.JUST_TASK_QUEUE, json, Double.valueOf(expireTime + "") - oldScore);
                     //记录首位的recordId
                     recordId = taskAtom.getRecordId();
+                    continue;
                 }else{//可执行
-                    redis.opsForZSet().removeRange(VarParam.RedPacketM.JUST_TASK_QUEUE, 0, 0);
-                    redis.opsForList().leftPush(VarParam.RedPacketM.TASK_QUEUE, json);
                     //负载均衡
                     List<VsRobot> robots = getRobots();
                     VsRobot robotGo = null;
@@ -295,10 +312,15 @@ public class RobotServer {
                             robotGo=robot;
                             break;
                         }
-                        if (++i == robots.size())
-                            ExceptionCast.castFail("机器人轮询：所有机器人状态：关闭,或不存在");
+                        if (++i == robots.size()) {
+                            log.error("机器人轮询：所有机器人状态：关闭,或不存在");
+                            break out;
+                        }
                     }
-                    log.info("机器人：负载均衡：启动机器人执行任务：robotNum:" + robotGo.getRobotNum());
+                    log.info("机器人：负载均衡：启动机器人执行任务：robotNum:" + robotGo.getRobotNum()+"任务："+json);
+                    //找到机器人再入任务队列
+                    redis.opsForZSet().removeRange(VarParam.RedPacketM.JUST_TASK_QUEUE, 0, 0);
+                    redis.opsForList().leftPush(VarParam.RedPacketM.TASK_QUEUE, json);
                     //抢食模式=>打款
                     ReentrantLock clientLock = this.getClientLock(robotGo.getRobotNum());
                     robinGo(robotGo,clientLock);
@@ -316,13 +338,16 @@ public class RobotServer {
     @Async
     public void robinGo(VsRobot robotGo,ReentrantLock clientLock) throws Exception{
         if (clientLock.tryLock()) {
+            log.info("robinGo:加锁线程："+Thread.currentThread().getId());
             while (true) {
+                if (VarParam.NO == robotGo.getRobotStatus()) break;
                 String jsonStr = redis.opsForList().rightPop(VarParam.RedPacketM.TASK_QUEUE);
                 if (StringUtils.isEmpty(jsonStr)) break;
                 TaskAtom taskAtom = JSON.parseObject(jsonStr, TaskAtom.class);
                 log.info("机器人执行队列任务：robotNum:" + robotGo.getRobotNum() + " ,任务：" + jsonStr);
                 dispatcher(taskAtom, robotGo);
             }
+            log.info("robinGo:开锁线程："+Thread.currentThread().getId());
             clientLock.unlock();
         }
     }
@@ -334,14 +359,15 @@ public class RobotServer {
         log.info("机器人：分配：开始："+ JSON.toJSONString(taskAtom)+" robot"+JSON.toJSONString(robot));
 
         //打钱前：查询
-        QueryResultVo queryResultVo = this.queryInfo(taskAtom, robot.getRobotNum());
+        QueryResultVo queryResultVo = this.queryInfo(taskAtom, robot);
+        if (null == queryResultVo) return;
 
         //打钱前：更新record记录
         VsPayRecord record = recordService.getById(taskAtom.getRecordId());
         if (null == record) ExceptionCast.castFail("打款前：该条记录不存在：recordId:"+record.getId());
         log.info("机器人：分配：获取用户记录："+ JSON.toJSONString(record));
         record.setPayStatus(VarParam.RedPacketM.PAY_STATUS_TWO);
-        record.setOperatorDispatch("robotNum:"+robot.getRobotNum());
+        record.setOperatorDispatch(StringUtils.isEmpty(record.getOperatorDispatch()) ? "robotNum:"+robot.getRobotNum() : record.getOperatorDispatch());
         record.setTimePay(LocalDateTime.now());
         record.setAutoTry(record.getAutoTry() + 1);
         record.setPayInfo(JSON.toJSONString(taskAtom));
@@ -357,7 +383,8 @@ public class RobotServer {
 
         //打钱：单位：分 ->元
         BigDecimal payAmount = record.getTotalAmount().divide(VarParam.ONE_HUNDRED).setScale(2, BigDecimal.ROUND_DOWN);
-        PayResultVo payResultVo = this.pay(record.getUserName(), queryResultVo.getMemberId(), payAmount.toString(),robot.getRobotNum(),record.getId());
+        PayResultVo payResultVo = this.pay(record.getUserName(), queryResultVo.getMemberId(), payAmount.toString(),robot,record.getId());
+        if (null == payResultVo) return;
         if (payResultVo.getSuccess() == false) {
             log.info("机器人：分配：打款失败");
             record.setPayStatus(VarParam.RedPacketM.PAY_STATUS_FAIL);
@@ -379,7 +406,7 @@ public class RobotServer {
     /**
      * 获取验证码
      */
-    public void  getCode(OutputStream outputStream,int robinNum) throws Exception {
+    public MyHttpResult  getCode(int robinNum) throws Exception {
         log.info("机器人：获取验证码：开始：入参：robotNum：" + robinNum);
         CloseableHttpClient client = this.getClient(robinNum);
         //头
@@ -390,8 +417,7 @@ public class RobotServer {
         bodyMap.put("t", ""+Math.random());
         log.info("机器人：获取验证码:发送参数："+JSON.toJSONString(bodyMap));
         MyHttpResult result = SendRequest.sendGet(client,VarParam.RedPacketM.CODE_URL, headMap, bodyMap, VarParam.ENCODING,true);
-        new BufferedInputStream(result.getHttpEntity().getContent());
-        result.getHttpEntity().writeTo(outputStream);
+       return result;
     }
 
     /**
@@ -432,13 +458,19 @@ public class RobotServer {
         }
         log.info("登录成功：响应json："+jsonStr);
         log.info("机器人：登录结束");
+
+        //更新下数据库的登录次数
+        robotService.update(new UpdateWrapper<VsRobot>().eq("id", robot.getId()).set("login_time", robot.getLoseTimes() + 1));
+        redis.delete(VarParam.RedPacketM.ROBOT_MAP);
+        this.getRobots();
         return ResponseResult.SUCCESS_MES("登录成功");
     }
 
     /**
      * 查询 memeberId和现金余额
      */
-    public QueryResultVo queryInfo(TaskAtom taskAtom,int robotNum) throws Exception{
+    public QueryResultVo queryInfo(TaskAtom taskAtom,VsRobot robot) throws Exception{
+        int robotNum = robot.getRobotNum();
         log.info("机器人：查询账户信息开始：userName:"+taskAtom.getUsername()+" robotNum:"+robotNum);
         CloseableHttpClient client = clientMap.get(robotNum);
         //头
@@ -452,20 +484,22 @@ public class RobotServer {
         try {
             MyHttpResult result = SendRequest.sendGet(client,VarParam.RedPacketM.QUERY_URL, headMap, bodyMap, VarParam.ENCODING,true);
             htmlCode = result.getResultInfo();
+            Document doc = Jsoup.parse(htmlCode);
+            String memberId = doc.getElementById("memberId").attr("value");
+
+            //第2个table的第3个tr的第2个td的值(注意：顺序都是从0开始)
+            Elements table = doc.getElementsByTag("table");
+            Element table2 = table.get(1);
+            Elements trs = table2.getElementsByTag("tr");
+            Element tr3 = trs.get(2);
+            Elements tds = tr3.getElementsByTag("td");
+            Element td = tds.get(1);
+            String balance = td.text();
+            log.info("机器人：查询账户信息：响应结果：账号:"+taskAtom.getUsername()+",memberId："+memberId+",现金余额：" + balance+"元");
+            return new QueryResultVo(memberId,balance);
         } catch (Exception e) {
             //这里如果出现异常说明cookie有问题，机器人就处理离线状态
-            //更新robot
-            Object robotjsonStr = redis.opsForHash().get(VarParam.RedPacketM.ROBOT_MAP, robotNum+"");
-            if (null == robotjsonStr) {
-                redis.delete(VarParam.RedPacketM.ROBOT_MAP);
-                getRobots();
-                robotjsonStr = redis.opsForHash().get(VarParam.RedPacketM.ROBOT_MAP, robotNum+"");
-                if (null == robotjsonStr) {
-                    ExceptionCast.castFail("机器人：查询账户信息：未获取到robot，robotNum：" + robotNum);
-                }
-            }
-            VsRobot robot = JSON.parseObject(String.valueOf(robotjsonStr), VsRobot.class);
-            robot.setRobotStatus(VarParam.NO);
+            robot.setRobotStatus(VarParam.NO);//通知该机器人的循环停止
             robot.setLoseTimes(robot.getLoseTimes() + 1);
             robot.setRobotInfo("查询账户信息异常，请联系管理员检查");
             log.info("查询账户信息异常:更新数据库robot"+JSON.toJSONString(robot));
@@ -482,46 +516,35 @@ public class RobotServer {
             this.getRobots();
 
             //更新record
-            VsPayRecord record = recordService.getById(taskAtom.getRecordId());
-            if (null == record) ExceptionCast.castFail("查询账户信息异常：该条记录不存在：recordId:"+record.getId());
-            record.setPayStatus(VarParam.RedPacketM.PAY_STATUS_FAIL);
-            record.setResultInfo("机器人查询：离线，编号：" + robotNum + "，派送失败，请人工打款");
-            record.setPayRemark("机器人查询：离线，编号：" + robotNum + "，派送失败，请人工打款");
-            record.setTimeNotice(LocalDateTime.now());
-            boolean update1 = recordService.update(
-                    new UpdateWrapper<VsPayRecord>()
-                            .eq("id", record.getId())
-                            .set("pay_status",record.getPayStatus())
-                            .set("pay_remark", record.getPayRemark())
-                            .set("result_info",record.getResultInfo())
-                            .set("time_notice", record.getTimeNotice())
-            );
-            log.info("查询账户信息异常:更新record："+JSON.toJSONString(record));
-            if (!update1) ExceptionCast.castFail("查询账户信息异常:更新record失败："+JSON.toJSONString(record));
-            ExceptionCast.castFail("查询账户信息异常,请人工处理");
+            if (null != taskAtom.getRecordId()) {
+                VsPayRecord record = recordService.getById(taskAtom.getRecordId());
+                if (null == record) ExceptionCast.castFail("查询账户信息异常：该条记录不存在：recordId:"+taskAtom.getRecordId());
+                record.setPayStatus(VarParam.RedPacketM.PAY_STATUS_FAIL);
+                record.setResultInfo("机器人查询：离线，编号：" + robotNum + "，派送失败，请人工打款");
+                record.setPayRemark("机器人查询：离线，编号：" + robotNum + "，派送失败，请人工打款");
+                record.setTimeNotice(LocalDateTime.now());
+                boolean update1 = recordService.update(
+                        new UpdateWrapper<VsPayRecord>()
+                                .eq("id", record.getId())
+                                .set("pay_status",record.getPayStatus())
+                                .set("pay_remark", record.getPayRemark())
+                                .set("result_info",record.getResultInfo())
+                                .set("time_notice", record.getTimeNotice())
+                );
+                log.info("查询账户信息异常:更新record："+JSON.toJSONString(record));
+                if (!update1) ExceptionCast.castFail("查询账户信息异常:更新record失败："+JSON.toJSONString(record));
+            }
+            return null;
         }
-        Document doc = Jsoup.parse(htmlCode);
-        String memberId = doc.getElementById("memberId").attr("value");
 
-        //第2个table的第3个tr的第2个td的值(注意：顺序都是从0开始)
-        Elements table = doc.getElementsByTag("table");
-        Element table2 = table.get(1);
-        Elements trs = table2.getElementsByTag("tr");
-        Element tr3 = trs.get(2);
-        Elements tds = tr3.getElementsByTag("td");
-        Element td = tds.get(1);
-        String balance = td.text();
-        log.info("机器人：查询账户信息：响应结果：账号:"+taskAtom.getUsername()+",memberId："+memberId+",现金余额：" + balance+"元");
-        return new QueryResultVo(memberId,balance);
     }
 
     /**
      * 打钱
      */
-    public PayResultVo pay(String account,String memberId,String payAmount,int robotNum,Long recordId)throws Exception{
+    public PayResultVo pay(String account,String memberId,String payAmount,VsRobot robot,Long recordId)throws Exception{
         log.info("机器人：打款:开始：账号："+account+" memberId:"+memberId+" 打入金额："+payAmount+"  ");
-
-
+        int robotNum = robot.getRobotNum();
         CloseableHttpClient client = this.getClient(robotNum);
         //头
         Map<String, String> headMap = new HashMap<>();
@@ -560,20 +583,23 @@ public class RobotServer {
         try {
             MyHttpResult result = SendRequest.sendPost(client,VarParam.RedPacketM.PAY_URL, headMap, bodyMap, VarParam.ENCODING,true);
             jsonStr = result.getResultInfo();
+            log.info("机器人：打款：响应结果："+jsonStr);
+            PayResultVo payResultVo = JSON.parseObject(jsonStr, PayResultVo.class);
+            log.info("机器人：打款：结束：账号："+account+" memberId:"+memberId+" 打入金额："+payAmount+"元");
+            boolean update = robotRecordService.update(
+                    new UpdateWrapper<VsRobotRecord>()
+                            .eq("id", robotRecord.getId())
+                            .set("resp_info", jsonStr)
+                            .set("record_status", payResultVo.getSuccess() == true ? VarParam.YES : VarParam.NO)
+            );
+            if (!update)
+                ExceptionCast.castFail("机器人：打款：结束：更新机器人流水失败：resp_info:" + jsonStr + " record_status:" + VarParam.YES);
+            log.info("机器人：打款：结束：更新机器人流水成功：resp_info:" + jsonStr + " record_status:" + VarParam.YES);
+            return payResultVo;
         } catch (Exception e) {
             //这里如果出现异常说明cookie有问题，机器人就处理离线状态
             //更新robot
-            Object robotjsonStr = redis.opsForHash().get(VarParam.RedPacketM.ROBOT_MAP, robotNum+"");
-            if (null == robotjsonStr) {
-                redis.delete(VarParam.RedPacketM.ROBOT_MAP);
-                getRobots();
-                robotjsonStr = redis.opsForHash().get(VarParam.RedPacketM.ROBOT_MAP, robotNum+"");
-                if (null == robotjsonStr) {
-                    ExceptionCast.castFail("机器人：打款：未获取到robot，robotNum：" + robotNum);
-                }
-            }
-            VsRobot robot = JSON.parseObject(String.valueOf(robotjsonStr), VsRobot.class);
-            robot.setRobotStatus(VarParam.NO);
+            robot.setRobotStatus(VarParam.NO);//通知该机器人循环停止
             robot.setLoseTimes(robot.getLoseTimes() + 1);
             robot.setRobotInfo("机器人：打款：异常，请联系管理员检查");
             log.info("机器人：打款：异常:更新数据库robot"+JSON.toJSONString(robot));
@@ -617,24 +643,9 @@ public class RobotServer {
             );
             log.info("机器人：打款：异常:更新record："+JSON.toJSONString(record));
             if (!update1) ExceptionCast.castFail("机器人：打款：异常:更新record失败："+JSON.toJSONString(record));
-
-
-
-            ExceptionCast.castFail("机器人：打款：异常,请人工处理");
+            return null;
         }
-
-        log.info("机器人：打款：响应结果："+jsonStr);
-        PayResultVo payResultVo = JSON.parseObject(jsonStr, PayResultVo.class);
-        log.info("机器人：打款：结束：账号："+account+" memberId:"+memberId+" 打入金额："+payAmount+"元");
-        boolean update = robotRecordService.update(
-                new UpdateWrapper<VsRobotRecord>()
-                        .eq("id", robotRecord.getId())
-                        .set("resp_info", jsonStr)
-                        .set("record_status", VarParam.YES)
-        );
-        if (!update)
-            ExceptionCast.castFail("机器人：打款：结束：更新机器人流水失败：resp_info:" + jsonStr + " record_status:" + VarParam.YES);
-        log.info("机器人：打款：结束：更新机器人流水成功：resp_info:" + jsonStr + " record_status:" + VarParam.YES);
-        return payResultVo;
     }
+
+
 }

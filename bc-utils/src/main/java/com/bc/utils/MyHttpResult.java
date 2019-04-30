@@ -6,10 +6,7 @@ import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.util.EntityUtils;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.HashMap;
 import java.util.zip.GZIPInputStream;
 
@@ -23,7 +20,7 @@ import java.util.zip.GZIPInputStream;
  *           Time：2015年8月1日 上午9:45:33
  */
 @ToString
-public class MyHttpResult {
+public class MyHttpResult implements Serializable {
     /**
      * Logger for this class
      */

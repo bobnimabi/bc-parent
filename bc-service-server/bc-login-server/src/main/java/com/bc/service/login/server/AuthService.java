@@ -27,6 +27,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Administrator
@@ -43,7 +44,7 @@ public class AuthService {
     private LoadBalancerClient loadBalancerClient;
 
     @Autowired
-    private StringRedisTemplate stringRedisTemplate;
+    private StringRedisTemplate redis;
 
     @Autowired
     private RestTemplate restTemplate;
@@ -62,15 +63,15 @@ public class AuthService {
     public AuthToken login(String username, String password, String clientId, String clientSecret, String ip) throws Exception {
 
         //防止用户多次登录
-        Object ObjIp = stringRedisTemplate.opsForValue().get(VarParam.Login.LOGIN_FLAG_PRE + username);
-        if (null != ObjIp) {
-            String loginIp = String.valueOf(ObjIp);
-            if (loginIp.equals(ip)) {
-                ExceptionCast.cast(AuthCode.AUTH_LOGIN_SAME_REPETITION);
-            } else {
-                ExceptionCast.cast(AuthCode.AUTH_LOGIN_DIFF_REPETITION);
-            }
-        }
+//        Object ObjIp = redis.opsForValue().get(VarParam.Login.LOGIN_FLAG_PRE + username);
+//        if (null != ObjIp) {
+//            String loginIp = String.valueOf(ObjIp);
+//            if (loginIp.equals(ip)) {
+//                ExceptionCast.cast(AuthCode.AUTH_LOGIN_SAME_REPETITION);
+//            } else {
+//                ExceptionCast.cast(AuthCode.AUTH_LOGIN_DIFF_REPETITION);
+//            }
+//        }
         //请求spring security申请令牌
         AuthToken authToken = this.applyToken(username, password, clientId, clientSecret);
         if (authToken == null) {
@@ -88,13 +89,12 @@ public class AuthService {
         //存储到redis中的内容
         String jsonString = JSON.toJSONString(authToken);
         //将令牌存储到redis
-        boolean result = XcTokenUtil.saveToken(access_token, jsonString, tokenValiditySeconds,stringRedisTemplate);
+        boolean result = XcTokenUtil.saveToken(access_token, jsonString, tokenValiditySeconds, redis);
         if (!result) {
             ExceptionCast.cast(AuthCode.AUTH_LOGIN_TOKEN_SAVEFAIL);
         }
-        //将登录IP存入redis
-        stringRedisTemplate.opsForValue().set(VarParam.Login.LOGIN_FLAG_PRE + username, ip);
-
+        //设置登录标志
+        redis.opsForValue().set(VarParam.Login.LOGIN_FLAG_PRE + username, "1", tokenValiditySeconds, TimeUnit.SECONDS);
         return authToken;
     }
 

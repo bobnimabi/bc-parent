@@ -11,6 +11,6 @@ public class LoginParams {
    private String username;
    private String password;
    private String imageCode;
-   private String dynamicCode;
+   private String varCode;
 
 }

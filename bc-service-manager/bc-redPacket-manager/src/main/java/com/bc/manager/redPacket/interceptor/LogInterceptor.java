@@ -23,5 +23,6 @@ public class LogInterceptor extends HandlerInterceptorAdapter {
 //		log.info("IP:"+ IpUtil.getIpAddress(request)+" userName:"+userToken.getUsername()+" 动作："+request.getRequestURI());
 		log.info("IP:"+ IpUtil.getIpAddress(request)+" 动作："+request.getRequestURI());
 		return true;
+
 	}
 }

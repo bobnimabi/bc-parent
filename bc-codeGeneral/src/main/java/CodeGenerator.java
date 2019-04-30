@@ -21,8 +21,8 @@ public class CodeGenerator {
         String modelName="redPacket";
         //生成表的名称
         String[] tables={
-//                "vs_robot",
-                "vs_robot_record",
+                "vs_robot",
+//                "vs_robot_record",
         };
 
         //配置数据库信息

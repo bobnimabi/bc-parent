@@ -25,7 +25,7 @@ public class VarParam {
         //用户的登录标志（redis的key）
         public static final String LOGIN_FLAG_PRE = LOGIN_PRE + "Login_flag:";
         //图片验证码的sessionKey
-        public static final String SESSION_KEY_VALIDATE_IMAGE = "Session_key_validate_image";
+        public static final String IMAGE_CODE = LOGIN_PRE+"IMAGECODE:";
     }
 
     /**
@@ -81,7 +81,10 @@ public class VarParam {
         public static final String PASS_KEY = "jfxmk!wl.c4yg6gg?#&*%~+=&jv4399";
         //品牌id
         public static final int BRAND_ID = 1;
-
+        //打款限额（单位：分）
+        public static final BigDecimal AMOUNT_QOUTA = new BigDecimal(300000);
+        //机器人查询账号
+        public static final String ROBOT_QUERY_ACCOUNT = "aaa7158";
         /**
          * 条件查询参数
          */

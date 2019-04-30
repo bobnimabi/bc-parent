@@ -7,8 +7,10 @@ import com.bc.service.login.valImage.ImageCode;
 import com.bc.service.login.valImage.ImageCodeDefaultProperties;
 import com.bc.utils.IpUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
 import javax.servlet.http.HttpServletRequest;
@@ -35,25 +37,21 @@ public class ImageCodeInterceptor extends HandlerInterceptorAdapter {
 		return true;
 	}
 	private void validate(HttpServletRequest request) throws Exception {
+		String imageCodeOld = redis.opsForValue().get(VarParam.Login.IMAGE_CODE + IpUtil.getIpAddress(request));
 
-		ImageCode codeInSession = (ImageCode) request.getSession().getAttribute(VarParam.Login.SESSION_KEY_VALIDATE_IMAGE);
-		String codeInRequest = request.getParameter("imageCode");
-		if(codeInRequest == null) {
+		String imageCodeNew = request.getParameter("imageCode");
+		if(imageCodeNew == null) {
 			ExceptionCast.castFail("验证码不能为空");
 		}
 
-		if(codeInSession == null) {
-			ExceptionCast.castFail("验证码不存在");
+		if(StringUtils.isEmpty(imageCodeOld)) {
+			ExceptionCast.castFail("验证码不存在或已过期");
 		}
 
-		if(codeInSession.isExpried()) {
-			request.getSession().removeAttribute(VarParam.Login.SESSION_KEY_VALIDATE_IMAGE);
-			ExceptionCast.castFail("验证码已经过期");
-		}
-
-		if(!codeInRequest.equalsIgnoreCase(codeInSession.getCode())) {
+		if(!imageCodeNew.equalsIgnoreCase(imageCodeOld)) {
 			ExceptionCast.castFail("验证码不匹配");
 		}
-		request.getSession().removeAttribute(VarParam.Login.SESSION_KEY_VALIDATE_IMAGE);
+		//校验通过移除redis中的验证码
+		redis.delete(VarParam.Login.IMAGE_CODE + IpUtil.getIpAddress(request));
 	}
 }
