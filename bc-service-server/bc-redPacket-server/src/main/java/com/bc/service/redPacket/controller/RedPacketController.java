@@ -30,7 +30,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 
-@CrossOrigin(origins = "*",maxAge = 3600)
 @RestController
 @RequestMapping("/")
 public class RedPacketController {
@@ -40,11 +39,13 @@ public class RedPacketController {
     private RobotServer robotServer;
 
     @ApiOperation("用户：抽红包")
-    @PostMapping("/playRedPacket")
-    public ResponseResult playRedPacket(@RequestBody RedPacketDto redPacketDto, HttpServletRequest request) throws Exception{
-        if (null == redPacketDto || StringUtils.isEmpty(redPacketDto.getUsername())) {
+    @GetMapping("/playRedPacket")
+    public ResponseResult playRedPacket(@RequestParam String username, HttpServletRequest request) throws Exception{
+        if (StringUtils.isEmpty(username)) {
             ExceptionCast.castFail("无效账号");
         }
+        RedPacketDto redPacketDto = new RedPacketDto();
+        redPacketDto.setUsername(username);
         redPacketDto.setClientIp(IpUtil.getIpAddress(request));
         redPacketDto.setClientType(CheckMobile.isMobile(request) == true ? VarParam.RedPacketM.CLIENT_TYPE_TWO : VarParam.RedPacketM.CLIENT_TYPE_ONE);
         return packetServer.playRedPacket(redPacketDto);
@@ -80,8 +81,8 @@ public class RedPacketController {
     @ApiOperation("机器人：登录")
     @PostMapping("/robotLogin")
     public ResponseResult robotLogin(@RequestBody RobotLoginDto robotLoginDto) throws Exception{
-        if (null == robotLoginDto || StringUtils.isEmpty(robotLoginDto.getImageCode()) || null == robotLoginDto.getRobotNum()) {
-            ExceptionCast.castFail("未传入验证码或机器人编号");
+        if (null == robotLoginDto || StringUtils.isEmpty(robotLoginDto.getImageCode()) || null == robotLoginDto.getRobotNum()|| null == robotLoginDto.getVarCode()) {
+            ExceptionCast.castFail("参数不全");
         }
         return  robotServer.login(
                 robotLoginDto.getImageCode(),

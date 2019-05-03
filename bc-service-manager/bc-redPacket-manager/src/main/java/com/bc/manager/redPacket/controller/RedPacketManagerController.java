@@ -470,33 +470,35 @@ public class RedPacketManagerController {
         DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         for (VsPayRecordVo recordVo : vsPayRecordVos) {
             ExportRecordVo exRecord = new ExportRecordVo();
-            exRecord.setClientType(recordVo.getClientType() == VarParam.RedPacketM.CLIENT_TYPE_ONE ? "PC" : "MOBILE");
-            exRecord.setId(recordVo.getId() + "");
+            exRecord.setClientType(recordVo.getClientType()!=null && recordVo.getClientType() == VarParam.RedPacketM.CLIENT_TYPE_ONE ? "PC" : "MOBILE");
+            exRecord.setId(null != recordVo.getId() ? recordVo.getId() + "" : "");
             String payStatus = "";
-            switch (recordVo.getPayStatus()){
-                case 1:
-                    payStatus = "待派送";
-                    break;
-                case 2:
-                    payStatus = "待派中";
-                    break;
-                case 3:
-                    payStatus = "已派送";
-                    break;
-                case 4:
-                    payStatus = "派送失败";
-                    break;
-                case 0:
-                    payStatus = "作废";
-                    break;
-                default:
+            if (null != recordVo.getPayStatus()) {
+                switch (recordVo.getPayStatus()){
+                    case 1:
+                        payStatus = "待派送";
+                        break;
+                    case 2:
+                        payStatus = "待派中";
+                        break;
+                    case 3:
+                        payStatus = "已派送";
+                        break;
+                    case 4:
+                        payStatus = "派送失败";
+                        break;
+                    case 0:
+                        payStatus = "作废";
+                        break;
+                    default:
 
+                }
             }
             exRecord.setPayStatus(payStatus);
-            exRecord.setTimeOrder(df.format(recordVo.getTimeOrder()));
-            exRecord.setTotalAmount(recordVo.getTotalAmount().longValue() + "");
-            exRecord.setUserName(recordVo.getUserName());
-            exRecord.setTimePay(df.format(recordVo.getTimePay()));
+            exRecord.setTimeOrder(null != recordVo.getTimeOrder() ? df.format(recordVo.getTimeOrder()) : "");
+            exRecord.setTotalAmount(null != recordVo.getTotalAmount() ? recordVo.getTotalAmount().longValue() + "" : "");
+            exRecord.setUserName((null != recordVo.getUserName() ? recordVo.getUserName() : ""));
+            exRecord.setTimePay(null != recordVo.getTimePay() ? df.format(recordVo.getTimePay()) : "");
             exportRecordVos.add(exRecord);
         }
         ExcelUtil.writeExcel(response,exportRecordVos , df.format( LocalDateTime.now()), "express", new ExportRecordVo());

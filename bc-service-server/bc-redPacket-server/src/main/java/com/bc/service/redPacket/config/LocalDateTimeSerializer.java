@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
@@ -31,5 +32,16 @@ public class LocalDateTimeSerializer extends JsonSerializer<LocalDateTime> {
         timeModule.addSerializer(LocalDateTime.class, new LocalDateTimeSerializer());
         mapper.registerModule(timeModule);
         return mapper;
+    }
+
+    // 方案一
+    @Bean
+    public LocalDateTimeSerializer localDateTimeDeserializer() {
+        return new LocalDateTimeSerializer();
+    }
+
+    @Bean
+    public Jackson2ObjectMapperBuilderCustomizer jackson2ObjectMapperBuilderCustomizer() {
+        return builder -> builder.serializerByType(LocalDateTime.class, localDateTimeDeserializer());
     }
 }

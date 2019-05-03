@@ -365,6 +365,11 @@ public class RedPacketManagerServer {
      */
     @Transactional
     public ResponseResult addPlayer(VsAwardPlayerDto playerDto) throws Exception{
+        VsAwardPlayer dataPlay = playerService.getOne(new QueryWrapper<VsAwardPlayer>().eq("user_name", playerDto.getUserName()));
+        if (null != dataPlay) {
+            ExceptionCast.castFail("重复添加");
+        }
+
         VsAwardPlayer player = new VsAwardPlayer();
         MyBeanUtil.copyProperties(playerDto, player);
         //将金额转换成次数
@@ -532,8 +537,8 @@ public class RedPacketManagerServer {
         );
         //将已有的用户，次数覆盖或累加，并筛选真正的新用户
         if (!CollectionUtils.isEmpty(dataPlays)){
-            Iterator<VsAwardPlayer> iterator = exPlayers.iterator();
             dataPlays.forEach(dataPlay->{
+                Iterator<VsAwardPlayer> iterator = exPlayers.iterator();
                 while (iterator.hasNext()) {
                     VsAwardPlayer exPlayer = iterator.next();
                     if (dataPlay.getUserName().equals(exPlayer.getUserName())) {

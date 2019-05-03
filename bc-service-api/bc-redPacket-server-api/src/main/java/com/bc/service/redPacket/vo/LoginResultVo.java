@@ -12,5 +12,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class LoginResultVo {
     private Boolean success;
-    private String meg;
+    private String msg;
 }

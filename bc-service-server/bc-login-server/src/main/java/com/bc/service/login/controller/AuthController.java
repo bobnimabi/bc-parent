@@ -58,17 +58,6 @@ public class AuthController {
     @PostMapping("/userlogin")
     public ResponseResult login(@RequestBody LoginParams loginParams, HttpServletRequest request) throws Exception{
 
-        //校验ip
-        boolean permit = false;
-        String ipAddress = IpUtil.getIpAddress(request);
-        for (String permitIp : VarParam.Login.PERMIT_IP) {
-            if (permitIp.equals(ipAddress)) {
-                permit = true;
-            }
-        }
-        if (!permit) {
-            ExceptionCast.castFail("该ip未放行");
-        }
 
         //校验验证码
         if (loginParams == null || StringUtils.isEmpty(loginParams.getImageCode())) {
@@ -105,6 +94,7 @@ public class AuthController {
         XcCookieUtil.saveCookie(access_token,cookieDomain,cookieMaxAge);
 
         LoginResult loginResult = new LoginResult(access_token,authToken.getJwt_token());
+        log.info("IP:"+ IpUtil.getIpAddress(request)+" userName:"+loginParams.getUsername()+" 动作：登录成功");
         return ResponseResult.SUCCESS(loginResult);
     }
 

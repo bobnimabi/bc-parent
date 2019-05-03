@@ -69,7 +69,7 @@ auth:
 encrypt:
   key-store:
     location: classpath:/bc.keystore
-    secret: bckeystore
+    secret: bckeystore  #用户
     alias: bckey
     password: bc9527
 

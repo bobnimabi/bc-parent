@@ -341,7 +341,7 @@ public class RedPacketServer {
 
         //生成订单
         VsPayRecord record = new VsPayRecord();
-        record.setId(IdWorker.getId());
+        record.setId(Long.parseLong(System.currentTimeMillis()+""+(int)(Math.random()*10)));
         record.setUserName(player.getUserName());
         record.setClientIp(redPacketDto.getClientIp());
         record.setClientType(redPacketDto.getClientType());
@@ -433,12 +433,14 @@ public class RedPacketServer {
         List<VsPayRecord> records = recordService.list(new QueryWrapper<VsPayRecord>().in("id", ids));
         for (VsPayRecord record : records) {
             if (record.getPayStatus() != VarParam.RedPacketM.PAY_STATUS_FAIL)
-                return ResponseResult.FAIL("该订单不可补单");
+                ExceptionCast.castFail("有订单不可补单");
             VsAwardPlayer player = playerService.getOne(new QueryWrapper<VsAwardPlayer>().eq("user_name", record.getUserName()));
             boolean update = recordService.update(
                     new UpdateWrapper<VsPayRecord>()
                             .eq("id", record.getId())
+                            .eq("version",record.getVersion())
                             .set("operator_dispatch", "人工")
+                            .set("version", record.getVersion()+1)
             );
             if (!update) ExceptionCast.castFail("人工补单：更新record失败");
             //入队
@@ -467,8 +469,13 @@ public class RedPacketServer {
 
         IPage page = recordService.page(recordDto, new QueryWrapper<VsPayRecord>()
                 .eq("user_name", recordDto.getUserName())
+                .eq("pay_status",VarParam.RedPacketM.PAY_STATUS_THREE)
                 .orderByDesc("create_time")
         );
-        return ResponseResult.SUCCESS(MyBeanUtil.copyPageToPage(page, VsPayRecordVo.class));
+        Page<VsPayRecordVo> vsPayRecordVoPage = MyBeanUtil.copyPageToPage(page, VsPayRecordVo.class);
+        vsPayRecordVoPage.getRecords().forEach(recordVo->{
+            recordVo.setCreateTimeStr(DateUtil.MONTH_DAY_MORE.format(recordVo.getCreateTime()));
+        });
+       return ResponseResult.SUCCESS(vsPayRecordVoPage);
     }
 }

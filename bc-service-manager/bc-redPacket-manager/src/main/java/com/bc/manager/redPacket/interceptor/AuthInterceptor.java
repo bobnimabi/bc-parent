@@ -32,15 +32,6 @@ public class AuthInterceptor extends HandlerInterceptorAdapter {
 
 		String requestURI = request.getRequestURI();
 
-		//放行登录,获取jwt长令牌,图片验证码
-		if (requestURI.contains("/auth/userlogin")
-				|| requestURI.contains("/auth/userjwt")
-				|| requestURI.contains("/auth/validateImage")
-
-		) return true;
-
-
-
 		//1.取cookie中的短令牌
 		String tokenFromCookie = getTokenFromCookie(request);
 		if(StringUtils.isEmpty(tokenFromCookie)){

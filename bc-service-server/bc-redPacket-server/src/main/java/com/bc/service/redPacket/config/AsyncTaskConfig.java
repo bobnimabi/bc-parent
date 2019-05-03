@@ -1,5 +1,6 @@
 package com.bc.service.redPacket.config;
 
+import com.alibaba.fastjson.JSON;
 import com.bc.common.Exception.ExceptionCast;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
@@ -61,7 +62,7 @@ public class AsyncTaskConfig implements AsyncConfigurer {
     class SpringAsyncExceptionHandler implements AsyncUncaughtExceptionHandler {
         @Override
         public void handleUncaughtException(Throwable throwable, Method method, Object... obj) {
-            ExceptionCast.castFail(throwable.getMessage());
+            ExceptionCast.castFail(method.getName()+":"+ JSON.toJSONString(throwable));
         }
     }
 }

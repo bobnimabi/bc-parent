@@ -121,7 +121,7 @@ public class RobotServer {
     public void intervalQuery() throws Exception {
         while (true) {
             //先睡5分钟，防止刚启动机器人还没有登录
-            Thread.sleep(1000*60*10);
+            Thread.sleep(1000*60*5);
             List<VsRobot> robots = getRobots();
             if (!CollectionUtils.isEmpty(robots)) {
                 //去除状态为0的机器人
@@ -259,6 +259,8 @@ public class RobotServer {
     public ResponseResult robotStatus(VsRobotDto robotDto) throws Exception{
         VsRobot robot = new VsRobot();
         MyBeanUtil.copyProperties(robotDto,robot);
+        robot.setRobotInfo(robotDto.getRobotStatus() == VarParam.YES ? "机器人已开启：运行中" : "机器人已关闭");
+
         boolean updateById = robotService.updateById(robot);
         if (!updateById) {
             ExceptionCast.castFail("操作失败");
@@ -454,13 +456,18 @@ public class RobotServer {
         log.info("机器人：响应结果："+jsonStr);
         LoginResultVo loginResultVo = JSON.parseObject(jsonStr, LoginResultVo.class);
         if (VarParam.SUCCESS_CODE != result.getStatusCode() || loginResultVo.getSuccess()== false) {
-            ExceptionCast.castFail("登录失败");
+            ExceptionCast.castFail(loginResultVo.getMsg());
         }
         log.info("登录成功：响应json："+jsonStr);
         log.info("机器人：登录结束");
 
         //更新下数据库的登录次数
-        robotService.update(new UpdateWrapper<VsRobot>().eq("id", robot.getId()).set("login_time", robot.getLoseTimes() + 1));
+        robotService.update(
+                new UpdateWrapper<VsRobot>()
+                        .eq("id", robot.getId())
+                        .set("login_time", robot.getLoseTimes() + 1)
+                        .set("robot_info", robot.getRobotStatus() == VarParam.YES ? "登录成功，机器人：运行中" : "登录成功：请开启机器人")
+        );
         redis.delete(VarParam.RedPacketM.ROBOT_MAP);
         this.getRobots();
         return ResponseResult.SUCCESS_MES("登录成功");
@@ -569,7 +576,7 @@ public class RobotServer {
 
         //机器人流水
         VsRobotRecord robotRecord = new VsRobotRecord();
-        robotRecord.setId(IdWorker.getId());
+        robotRecord.setId(Long.parseLong(System.currentTimeMillis()+""+(int)(Math.random()*10)));
         robotRecord.setRobotNum(robotNum);
         robotRecord.setPayRecordId(recordId);
         robotRecord.setUserName(account);

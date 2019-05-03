@@ -1,6 +1,11 @@
 package com.bc.service.login.interceptor;
 
+import com.bc.common.Exception.ExceptionCast;
+import com.bc.common.constant.VarParam;
+import com.bc.common.pojo.AuthToken;
 import com.bc.utils.IpUtil;
+import com.bc.utils.project.XcCookieUtil;
+import com.bc.utils.project.XcTokenUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -16,10 +21,28 @@ public class LogInterceptor extends HandlerInterceptorAdapter {
 	@Override
 	public boolean preHandle(HttpServletRequest request,
 							 HttpServletResponse response, Object handler) throws Exception {
-//		String uid = XcCookieUtil.getTokenFormCookie(request);
-//		AuthToken userToken = XcTokenUtil.getUserToken(uid, redis);
-//		log.info("IP:"+ IpUtil.getIpAddress(request)+" userName:"+userToken.getUsername()+" 动作："+request.getRequestURI());
-		log.info("IP:"+ IpUtil.getIpAddress(request)+" 动作："+request.getRequestURI());
+
+		//校验ip
+		boolean permit = false;
+		String ipAddress = IpUtil.getIpAddress(request);
+		for (String permitIp : VarParam.Login.PERMIT_IP) {
+			if (permitIp.equals(ipAddress)) {
+				permit = true;
+			}
+		}
+		if (!permit) {
+			ExceptionCast.castFail("ip拒绝，ip:"+ipAddress);
+		}
+
+		//记录用户行为
+		String requestURI = request.getRequestURI();
+		if (requestURI.contains("/userlogin") || requestURI.contains("/validateImage")) {
+			log.info("IP:"+ IpUtil.getIpAddress(request)+" 动作："+request.getRequestURI());
+			return true;
+		}
+		String uid = XcCookieUtil.getTokenFormCookie(request);
+		AuthToken userToken = XcTokenUtil.getUserToken(uid, redis);
+		log.info("IP:"+ IpUtil.getIpAddress(request)+" userName:"+userToken.getUsername()+" 动作："+requestURI);
 		return true;
 
 	}
