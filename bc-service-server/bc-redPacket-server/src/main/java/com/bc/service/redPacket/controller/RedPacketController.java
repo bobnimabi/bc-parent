@@ -18,6 +18,7 @@ import com.bc.utils.CheckMobile;
 import com.bc.utils.IpUtil;
 import com.bc.utils.MyHttpResult;
 import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +30,7 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
-
+@Slf4j
 @RestController
 @RequestMapping("/")
 public class RedPacketController {
@@ -41,6 +42,7 @@ public class RedPacketController {
     @ApiOperation("用户：抽红包")
     @GetMapping("/playRedPacket")
     public ResponseResult playRedPacket(@RequestParam String username, HttpServletRequest request) throws Exception{
+        log.info("抽红包:IP:"+IpUtil.getIpAddress(request)+" username："+username);
         if (StringUtils.isEmpty(username)) {
             ExceptionCast.castFail("无效账号");
         }
@@ -158,8 +160,8 @@ public class RedPacketController {
         packetServer.initBloomFilter();
     }
 
+    //@PreAuthorize("hasAuthority('query_salar')")
     @GetMapping("/test")
-//    @PreAuthorize("hasAuthority('query_salar')")
     public String test(){
         return  "测试成功";
     }

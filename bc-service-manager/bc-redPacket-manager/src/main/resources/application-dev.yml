@@ -74,6 +74,6 @@ redPacketM:
 
 
 #日志文件路径
-path:
-  log: e:/log/bc-redPacket-manager
+logging:
+  config: classpath:log4j2-dev.xml
 

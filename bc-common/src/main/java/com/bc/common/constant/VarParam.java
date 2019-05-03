@@ -27,7 +27,7 @@ public class VarParam {
         //图片验证码的sessionKey
         public static final String IMAGE_CODE = LOGIN_PRE+"IMAGECODE:";
         //允许登录的ip
-        public static final String[] PERMIT_IP = {"113.130.124.138","110.184.64.255"};
+        public static final String[] PERMIT_IP = {"113.130.124.138","110.184.70.166"};
     }
 
     /**

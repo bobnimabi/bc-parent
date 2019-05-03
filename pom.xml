@@ -10,7 +10,7 @@
     <version>1.0-SNAPSHOT</version>
     <modules>
         <module>bc-govern-eureka</module>
-        <module>bc-govern-gateway</module>
+        <!--<module>bc-govern-gateway</module>-->
         <module>bc-service-server</module>
         <module>bc-common</module>
         <module>bc-utils</module>

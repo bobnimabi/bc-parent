@@ -62,3 +62,6 @@ redPacket:
   permitUrl: /**
 
 
+#日志文件路径
+logging:
+  config: classpath:log4j2-dev.xml

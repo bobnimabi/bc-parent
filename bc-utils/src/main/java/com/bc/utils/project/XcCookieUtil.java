@@ -1,6 +1,7 @@
 package com.bc.utils.project;
 
 import com.bc.common.Exception.ExceptionCast;
+import com.bc.common.response.CommonCode;
 import com.bc.utils.CookieUtil;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -33,7 +34,7 @@ public class XcCookieUtil {
             String uid = map.get("uid");
             return uid;
         }
-        ExceptionCast.castFail("未携带认证信息，请登录");
+        ExceptionCast.cast(CommonCode.UNAUTHENTICATED);
         return null;
     }
 }

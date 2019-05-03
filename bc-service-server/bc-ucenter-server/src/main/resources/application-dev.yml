@@ -45,9 +45,9 @@ eureka:
     lease-expiration-duration-in-seconds: 3
   client:
     #表示是否将自己注册到Eureka Server，默认为true。测试环境下关闭注册，都在热部署会报错
-    register-with-eureka: false
+#    register-with-eureka: false
     #表示是否从Eureka Server获取注册信息，默认为true。
-    fetch-registry: false
+#    fetch-registry: false
     serviceUrl:
       defaultZone: http://localhost:8761/eureka
 
@@ -61,3 +61,7 @@ ribbon:
 
 ucenter:
   permitUrl: /** #放行uri(测试需要)
+
+#日志文件路径
+logging:
+  config: classpath:log4j2-dev.xml
