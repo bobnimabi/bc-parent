@@ -653,7 +653,7 @@ public class RedPacketManagerController {
         if (null == robotNum) {
             ExceptionCast.castFail("未传入机器人编号");
         }
-        byte[] varCode = rpmServer.getVarCode(robotNum);
+        byte[] varCode = rpmServer.getImageCode(robotNum);
         ServletOutputStream outputStream = response.getOutputStream();
         IOUtils.write(varCode,outputStream);
         outputStream.flush();

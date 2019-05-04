@@ -898,8 +898,8 @@ public class RedPacketManagerServer {
     /**
      * 机器人：获取图片验证码
      */
-    public byte[] getVarCode(Integer robotNum) throws Exception{
-        return packetClient.getVarCode(robotNum);
+    public byte[] getImageCode(Integer robotNum) throws Exception{
+        return packetClient.getImageCode(robotNum);
     }
 
     /**

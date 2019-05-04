@@ -54,8 +54,8 @@ public class RedPacketController {
     }
 
     @ApiOperation("机器人：获取图片验证码")
-    @GetMapping("/getVarCode")
-    public byte[] getVarCode(@RequestParam Integer robotNum, HttpServletResponse response) throws Exception{
+    @GetMapping("/getImageCode")
+    public byte[] getImageCode(@RequestParam Integer robotNum, HttpServletResponse response) throws Exception{
         if (null == robotNum) {
             ExceptionCast.castFail("未传入机器人编号");
         }
