@@ -67,8 +67,8 @@ ribbon:
 
 
 redPacketM:
-  permitUrl: /test,/getImageCode #放行uri(测试需要)
-  excelDownUrl: E:/player.xlsx  #excel模板存放路径
+  permitUrl: /test,/downPlayerExcel,/exportRecordExcel,/brandUpload,/readExcelPlays #放行uri(测试需要)
+  excelDownUrl: /usr/local/javaApp/file/player.xlsx  #excel模板存放路径
   upfilePath: /static/siteLogo
 
 

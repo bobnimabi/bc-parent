@@ -27,8 +27,8 @@ public interface RedPacketClient {
     public ResponseResult robotLogin(@RequestBody RobotLoginDto robotLoginDto) throws Exception;
 
     @ApiOperation("获取图片验证码")
-    @GetMapping("/getVarCode")
-    public byte[] getImageCode(@RequestParam Integer robotNum) throws Exception;
+    @GetMapping("/getImageCode")
+    public ResponseResult getImageCode(@RequestParam Integer robotNum) throws Exception;
 
     @ApiOperation("机器人增加")
     @PostMapping("/addRobot")

@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.Base64Utils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,6 +31,8 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.util.Base64;
+
 @Slf4j
 @RestController
 @RequestMapping("/")
@@ -55,7 +58,7 @@ public class RedPacketController {
 
     @ApiOperation("机器人：获取图片验证码")
     @GetMapping("/getImageCode")
-    public byte[] getImageCode(@RequestParam Integer robotNum, HttpServletResponse response) throws Exception{
+    public ResponseResult getImageCode(@RequestParam Integer robotNum, HttpServletResponse response) throws Exception{
         if (null == robotNum) {
             ExceptionCast.castFail("未传入机器人编号");
         }
@@ -65,7 +68,7 @@ public class RedPacketController {
         result.getHttpEntity().writeTo(out);
         byte[] bytes = out.toByteArray();
         out.close();
-        return bytes;
+       return ResponseResult.SUCCESS(Base64Utils.encodeToString(bytes));
     }
     @ApiOperation("机器人：获取图片验证码")
     @GetMapping("/getVarCode2")

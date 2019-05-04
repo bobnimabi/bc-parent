@@ -310,7 +310,7 @@ public class RedPacketManagerController {
     //sheet 的序号 从1开始
     //headLineNum 行号最小值为0，去掉表头所以从第1行开始读
     @ApiOperation("会员管理：批量导入")
-    @PostMapping("readExcelPlays")
+    @PostMapping("/readExcelPlays")
     public ResponseResult readExcelPlays(MultipartFile excel,@RequestParam(defaultValue = "1") int sheetNo,
                             @RequestParam(defaultValue = "1") int headLineNum) throws Exception{
         List<Object> list = ExcelUtil.readExcel(excel, new ImportPlaysDto(), sheetNo, headLineNum);
@@ -649,15 +649,16 @@ public class RedPacketManagerController {
 
     @ApiOperation("机器人：获取图片验证码")
     @GetMapping("/getImageCode")
-    public void getImageCode(@RequestParam Integer robotNum, HttpServletResponse response) throws Exception {
+    public ResponseResult getImageCode(@RequestParam Integer robotNum, HttpServletResponse response) throws Exception {
         if (null == robotNum) {
             ExceptionCast.castFail("未传入机器人编号");
         }
-        byte[] varCode = rpmServer.getImageCode(robotNum);
-        ServletOutputStream outputStream = response.getOutputStream();
-        IOUtils.write(varCode,outputStream);
-        outputStream.flush();
-        outputStream.close();
+        return rpmServer.getImageCode(robotNum);
+//        byte[] varCode = rpmServer.getImageCode(robotNum);
+//        ServletOutputStream outputStream = response.getOutputStream();
+//        IOUtils.write(varCode,outputStream);
+//        outputStream.flush();
+//        outputStream.close();
     }
 
     @ApiOperation("机器人：登录")

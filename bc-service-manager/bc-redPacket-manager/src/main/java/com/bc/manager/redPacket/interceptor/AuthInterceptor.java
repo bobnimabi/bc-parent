@@ -9,6 +9,7 @@ import com.bc.utils.IpUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
@@ -24,6 +25,8 @@ import java.util.concurrent.TimeUnit;
 public class AuthInterceptor extends HandlerInterceptorAdapter {
 	@Autowired
 	private StringRedisTemplate redis;
+	@Value("${redPacketM.permitUrl}")
+	private String permitUrl;
 	@Override
 	public boolean preHandle(HttpServletRequest request,
 							 HttpServletResponse response, Object handler) throws Exception {
@@ -46,11 +49,20 @@ public class AuthInterceptor extends HandlerInterceptorAdapter {
 //            return null;
 //        }
 		//2.从header中取jwt长令牌（里面加密这用户的信息）
-		String jwtFromHeader = getJwtFromHeader(request);
-		if(StringUtils.isEmpty(jwtFromHeader)){
-			//拒绝访问
-			access_denied(response);
-			return false;
+		String[] urls = permitUrl.split(",");
+		boolean flag = false;//默认不包含
+		for (String url: urls) {
+			if (requestURI.contains(url)) {
+				flag = true;
+			}
+		}
+		if (!flag) {
+			String jwtFromHeader = getJwtFromHeader(request);
+			if(StringUtils.isEmpty(jwtFromHeader)){
+				//拒绝访问
+				access_denied(response);
+				return false;
+			}
 		}
 		//3.从redis校验短令牌的过期时间(1和3共同保证jwt长令牌没有过期)
 		long expire = getExpire(tokenFromCookie);

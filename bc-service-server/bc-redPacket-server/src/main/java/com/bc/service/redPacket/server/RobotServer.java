@@ -429,15 +429,22 @@ public class RobotServer {
         log.info("机器人：登录开始：入参：验证码："+imageCode+",机器人编码："+robotNum);
         Object robotjsonStr = redis.opsForHash().get(VarParam.RedPacketM.ROBOT_MAP, robotNum+"");
         if (null == robotjsonStr) ExceptionCast.castFail("机器人：登录：未获取到robot，robotNum：" + robotNum);
+        log.info("robotjsonStr:"+robotjsonStr);
         VsRobot robot = JSON.parseObject(String.valueOf(robotjsonStr), VsRobot.class);
         //获取账号后base64编码
         String account = robot.getPlatAccount();
+        log.info("原账号："+account);
         String deAccount = new String(Base64Utils.encode(account.getBytes())).trim();
-
+        log.info("编码后账号："+deAccount);
         //获取密码后先解密，在编码
-        String password = SymmetricEncoder.AESDncode(VarParam.RedPacketM.PASS_KEY, robot.getPlatPassword());
+        String platPassword = robot.getPlatPassword();
+        log.info("解密前密码："+platPassword);
+        String password = SymmetricEncoder.AESDncode(VarParam.RedPacketM.PASS_KEY, platPassword);
+        log.info("解密后密码："+password);
         String dePassword = new String(Base64Utils.encode(DigestUtils.md5DigestAsHex(password.trim().getBytes()).getBytes()));
+        log.info("编码后密码："+dePassword);
         CloseableHttpClient client = this.getClient(robotNum);
+
 
         //头
         Map<String, String> headMap = new HashMap<>();
