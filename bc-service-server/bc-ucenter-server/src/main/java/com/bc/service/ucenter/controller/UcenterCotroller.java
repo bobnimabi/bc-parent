@@ -30,7 +30,7 @@ public class UcenterCotroller {
     private StringRedisTemplate stringRedisTemplate;
 
     //查询用户信息
-    @GetMapping("/queryUser")
+    @PostMapping("/queryUser")
     public ResponseResult queryUser(HttpServletRequest httpRequest) throws Exception{
 //        String uid = XcCookieUtil.getTokenFormCookie(httpRequest);
 //        AuthToken authToken = XcTokenUtil.getUserToken(uid, stringRedisTemplate);

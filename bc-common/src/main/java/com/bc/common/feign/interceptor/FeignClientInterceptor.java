@@ -2,6 +2,7 @@ package com.bc.common.feign.interceptor;
 
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -13,6 +14,7 @@ import java.util.Enumeration;
  * @author Administrator
  * @version 1.0
  **/
+@Slf4j
 public class FeignClientInterceptor implements RequestInterceptor {
     @Override
     public void apply(RequestTemplate requestTemplate) {
@@ -25,6 +27,7 @@ public class FeignClientInterceptor implements RequestInterceptor {
                 while (headerNames.hasMoreElements()){
                     String headerName = headerNames.nextElement();
                     String headerValue = request.getHeader(headerName);
+                    log.info("Feign头填充器：headName："+headerName+",headValue:"+headerValue);
                     // 将header向下传递
                     requestTemplate.header(headerName,headerValue);
                 }
