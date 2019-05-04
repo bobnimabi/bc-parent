@@ -27,7 +27,6 @@ public class FeignClientInterceptor implements RequestInterceptor {
                 while (headerNames.hasMoreElements()){
                     String headerName = headerNames.nextElement();
                     String headerValue = request.getHeader(headerName);
-                    log.info("Feign头填充器：headName："+headerName+",headValue:"+headerValue);
                     // 将header向下传递
                     requestTemplate.header(headerName,headerValue);
                 }
