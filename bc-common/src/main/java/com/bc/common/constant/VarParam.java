@@ -27,7 +27,7 @@ public class VarParam {
         //图片验证码的sessionKey
         public static final String IMAGE_CODE = LOGIN_PRE+"IMAGECODE:";
         //允许登录的ip
-        public static final String[] PERMIT_IP = {"113.130.124.138","110.184.70.166","192.168.101.248"};
+//        public static final String[] PERMIT_IP = {"113.130.124.138","110.184.70.166","192.168.101.248"};
     }
 
     /**
@@ -80,7 +80,7 @@ public class VarParam {
         //限制玩家11秒内不能重复打款
         public static final int WAIT_SECOND = 11;
         //机器人：平台密码加密
-        public static final String PASS_KEY = "jfxmk!wl.c4yg6gg?#&*%~+=&jv4399";
+        public static final String PASS_KEY = "bc9527";
         //品牌id
         public static final int BRAND_ID = 1;
         //打款限额（单位：分）

@@ -86,7 +86,10 @@ public class RedPacketController {
     @ApiOperation("机器人：登录")
     @PostMapping("/robotLogin")
     public ResponseResult robotLogin(@RequestBody RobotLoginDto robotLoginDto) throws Exception{
-        if (null == robotLoginDto || StringUtils.isEmpty(robotLoginDto.getImageCode()) || null == robotLoginDto.getRobotNum()|| null == robotLoginDto.getVarCode()) {
+        if (null == robotLoginDto
+                || StringUtils.isEmpty(robotLoginDto.getImageCode())
+                || null == robotLoginDto.getRobotNum()
+                || null == robotLoginDto.getVarCode()) {
             ExceptionCast.castFail("参数不全");
         }
         return  robotServer.login(

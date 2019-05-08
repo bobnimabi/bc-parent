@@ -62,7 +62,9 @@ public class AsyncTaskConfig implements AsyncConfigurer {
     class SpringAsyncExceptionHandler implements AsyncUncaughtExceptionHandler {
         @Override
         public void handleUncaughtException(Throwable throwable, Method method, Object... obj) {
+            log.error("异步错误："+method.getName(), throwable);
             ExceptionCast.castFail(method.getName()+":"+ JSON.toJSONString(throwable));
+
         }
     }
 }

@@ -288,7 +288,7 @@ public class RedPacketManagerController {
     @GetMapping("/downPlayerExcel")
     public void downPlayerExcel(HttpServletResponse response) throws Exception{
         // 下载本地文件
-        String fileName = "player.xlsx"; // 文件的默认保存名/usr/local/games/澳门新濠影汇.mobileconfig
+        String fileName = "player.xlsx";
         // 读到流中
         InputStream inStream = new FileInputStream(excelDownUrl);// 文件的存放路径
         // 设置输出的格式

@@ -20,17 +20,7 @@ public class LogInterceptor extends HandlerInterceptorAdapter {
 	@Override
 	public boolean preHandle(HttpServletRequest request,
 							 HttpServletResponse response, Object handler) throws Exception {
-		//校验ip
-		boolean permit = false;
-		String ipAddress = IpUtil.getIpAddress(request);
-		for (String permitIp : VarParam.Login.PERMIT_IP) {
-			if (permitIp.equals(ipAddress)) {
-				permit = true;
-			}
-		}
-		if (!permit) {
-			ExceptionCast.castFail("ip拒绝，ip:"+ipAddress);
-		}
+
 
 		//记录用户行为
 		String uid = XcCookieUtil.getTokenFormCookie(request);

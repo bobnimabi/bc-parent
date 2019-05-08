@@ -56,7 +56,6 @@ public class RobotServer {
     private IVsPayRecordService recordService;
     @Autowired
     private StringRedisTemplate redis;
-
     @Autowired
     private IVsRobotService robotService;
     @Autowired
@@ -221,8 +220,6 @@ public class RobotServer {
             if (robot.getRobotNum() == robotc.getRobotNum())
                 ExceptionCast.castFail("robotNum重复");
         });
-        //给密码加密
-        robot.setPlatPassword(SymmetricEncoder.AESEncode(VarParam.RedPacketM.PASS_KEY, robot.getPlatPassword()));
         boolean save = robotService.save(robot);
         if (!save) ExceptionCast.castFail("机器人增加：入库失败");
         //给机器人增加客户端和锁
@@ -242,8 +239,6 @@ public class RobotServer {
     public ResponseResult updateRobot(VsRobotDto robotDto) throws Exception{
         VsRobot robot = new VsRobot();
         MyBeanUtil.copyProperties(robotDto,robot);
-        //给密码加密
-        robot.setPlatPassword(SymmetricEncoder.AESEncode(VarParam.RedPacketM.PASS_KEY, robot.getPlatPassword()));
         boolean updateById = robotService.updateById(robot);
         if (!updateById) ExceptionCast.castFail("机器人修改：修改失败:"+JSON.toJSONString(robot));
         log.info("机器人修改：修改成功：robotId:"+robot.getId());
@@ -427,24 +422,18 @@ public class RobotServer {
      */
     public ResponseResult login(String imageCode,int robotNum,int varCode) throws Exception{
         log.info("机器人：登录开始：入参：验证码："+imageCode+",机器人编码："+robotNum);
+
         Object robotjsonStr = redis.opsForHash().get(VarParam.RedPacketM.ROBOT_MAP, robotNum+"");
         if (null == robotjsonStr) ExceptionCast.castFail("机器人：登录：未获取到robot，robotNum：" + robotNum);
         log.info("robotjsonStr:"+robotjsonStr);
         VsRobot robot = JSON.parseObject(String.valueOf(robotjsonStr), VsRobot.class);
         //获取账号后base64编码
         String account = robot.getPlatAccount();
-        log.info("原账号："+account);
         String deAccount = new String(Base64Utils.encode(account.getBytes())).trim();
-        log.info("编码后账号："+deAccount);
         //获取密码后先解密，在编码
         String platPassword = robot.getPlatPassword();
-        log.info("解密前密码："+platPassword);
-        String password = SymmetricEncoder.AESDncode(VarParam.RedPacketM.PASS_KEY, platPassword);
-        log.info("解密后密码："+password);
-        String dePassword = new String(Base64Utils.encode(DigestUtils.md5DigestAsHex(password.trim().getBytes()).getBytes()));
-        log.info("编码后密码："+dePassword);
+        String dePassword = new String(Base64Utils.encode(DigestUtils.md5DigestAsHex(platPassword.trim().getBytes()).getBytes()));
         CloseableHttpClient client = this.getClient(robotNum);
-
 
         //头
         Map<String, String> headMap = new HashMap<>();
@@ -452,6 +441,7 @@ public class RobotServer {
         Map<String, String> bodyMap = new HashMap<>();
         bodyMap.put("account",deAccount);
         bodyMap.put("password",dePassword);
+        bodyMap.put("dynamicPassword",varCode+"");
         bodyMap.put("type","agentLogin");
         bodyMap.put("rmNum",imageCode);
         //日志里不打印密码
@@ -477,6 +467,8 @@ public class RobotServer {
         );
         redis.delete(VarParam.RedPacketM.ROBOT_MAP);
         this.getRobots();
+        //登录完以后再调红包队列
+        exeQueue();
         return ResponseResult.SUCCESS_MES("登录成功");
     }
 

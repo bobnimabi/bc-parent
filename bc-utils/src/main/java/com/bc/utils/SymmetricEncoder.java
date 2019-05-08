@@ -13,6 +13,8 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+
+import com.bc.common.constant.VarParam;
 import sun.misc.BASE64Decoder;
 import sun.misc.BASE64Encoder;
 
@@ -128,15 +130,14 @@ public class SymmetricEncoder {
         /*
          * 加密
          */
-        String passKey = "jfxmk!wl.c4yg6gg?#&*%~+=&jv4399";
         String content = "aaa888";
-        String encode = SymmetricEncoder.AESEncode(passKey, content);
-        System.out.println("原文："+content+", 密码："+passKey);
+        String encode = SymmetricEncoder.AESEncode(VarParam.RedPacketM.PASS_KEY, content);
+        System.out.println("原文："+content+", 密码："+VarParam.RedPacketM.PASS_KEY);
         System.out.println("加密密文:"+encode);
         /*
          * 解密
          */
-        String dncode = SymmetricEncoder.AESDncode(passKey, encode);
+        String dncode = SymmetricEncoder.AESDncode(VarParam.RedPacketM.PASS_KEY, encode);
         System.out.println("解密明文:"+dncode);
     }
 

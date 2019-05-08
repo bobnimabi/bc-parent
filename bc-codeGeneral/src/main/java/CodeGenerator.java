@@ -14,14 +14,15 @@ public class CodeGenerator {
 
         /*********************************************红包系统***********************************************/
         //项目路径
-        String projectPath="F:\\javaCode\\bc-parent\\bc-service-common\\bc-redPacket-common"+"\\";
+        String projectPath="F:\\javaCode\\bc-parent\\bc-service-common\\bc-login-common"+"\\";
         //父package
         String parentName="com.bc.service.common";
         //模块名
-        String modelName="redPacket";
+//        String modelName="redPacket";
+        String modelName="login";
         //生成表的名称
         String[] tables={
-                "vs_robot",
+                "vs_ip",
 //                "vs_robot_record",
         };
 

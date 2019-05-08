@@ -1,20 +1,26 @@
 package com.bc.service.ucenter.interceptor;
 
 import com.alibaba.fastjson.JSON;
+import com.bc.common.Exception.ExceptionCast;
 import com.bc.common.constant.VarParam;
 import com.bc.common.response.CommonCode;
 import com.bc.common.response.ResponseResult;
+import com.bc.service.common.login.entity.VsIp;
+import com.bc.service.common.login.service.IVsIpService;
 import com.bc.utils.CookieUtil;
+import com.bc.utils.IpUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.PrintWriter;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -23,11 +29,29 @@ import java.util.concurrent.TimeUnit;
 public class AuthInterceptor extends HandlerInterceptorAdapter {
 	@Autowired
 	private StringRedisTemplate redis;
+
+	@Autowired
+	private IVsIpService ipService;
+
 	@Override
 	public boolean preHandle(HttpServletRequest request,
 							 HttpServletResponse response, Object handler) throws Exception {
 
-//		IpUtil.getIpAddress(request);
+		//校验ip
+		boolean permit = false;
+		String ipAddress = IpUtil.getIpAddress(request);
+		List<VsIp> ips = ipService.list();
+		if (CollectionUtils.isEmpty(ips)) {
+			ExceptionCast.castFail("未放行任何ip");
+		}
+		for (VsIp ipEntity : ips) {
+			if (ipEntity.getIp().equals(ipAddress)) {
+				permit = true;
+			}
+		}
+		if (!permit) {
+			ExceptionCast.castFail("ip拒绝，ip:"+ipAddress);
+		}
 
 		String requestURI = request.getRequestURI();
 
@@ -38,8 +62,6 @@ public class AuthInterceptor extends HandlerInterceptorAdapter {
 
 		) return true;
 
-
-
 		//1.取cookie中的短令牌
 		String tokenFromCookie = getTokenFromCookie(request);
 		if(StringUtils.isEmpty(tokenFromCookie)){
@@ -47,12 +69,6 @@ public class AuthInterceptor extends HandlerInterceptorAdapter {
 			access_denied(response);
 			return false;
 		}
-//        String jwtToken = authService.getJwtToken(tokenFromCookie);
-//        if(StringUtils.isEmpty(jwtToken)){
-//            //拒绝访问
-//            access_denied();
-//            return null;
-//        }
 		//2.从header中取jwt长令牌（里面加密这用户的信息）
 		String jwtFromHeader = getJwtFromHeader(request);
 		if(StringUtils.isEmpty(jwtFromHeader)){

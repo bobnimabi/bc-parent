@@ -69,8 +69,8 @@ public class AuthController {
         }
 
         //校验动态口令
-//        if (!authService.googleAuth(loginParams.getVarCode(),loginParams.getUsername()))
-//            ExceptionCast.castFail("口令错误");
+        if (!authService.googleAuth(loginParams.getVarCode(),loginParams.getUsername()))
+            ExceptionCast.castFail("口令错误");
 
         //校验用户名和密码
         if(loginParams == null || StringUtils.isEmpty(loginParams.getUsername())){
