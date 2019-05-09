@@ -475,6 +475,7 @@ public class RedPacketServer {
         Page<VsPayRecordVo> vsPayRecordVoPage = MyBeanUtil.copyPageToPage(page, VsPayRecordVo.class);
         vsPayRecordVoPage.getRecords().forEach(recordVo->{
             recordVo.setCreateTimeStr(DateUtil.MONTH_DAY_MORE.format(recordVo.getCreateTime()));
+            recordVo.setTotalAmount(recordVo.getTotalAmount().divide(VarParam.ONE_HUNDRED).setScale(2, BigDecimal.ROUND_DOWN));
         });
        return ResponseResult.SUCCESS(vsPayRecordVoPage);
     }

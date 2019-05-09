@@ -62,7 +62,7 @@ auth:
   tokenValiditySeconds: 1200  #token存储到redis的过期时间
   clientId: BcWebApp
   clientSecret: w90582144
-  cookieDomain:  #测试设置为空，可以让所有域名获得
+  cookieDomain:  hb7158.com #测试设置为空，可以让所有域名获得
   cookieMaxAge: -1 #浏览器关闭cookie立刻失效
 
 #秘钥参数
