@@ -58,7 +58,6 @@ public class AuthController {
     @PostMapping("/userlogin")
     public ResponseResult login(@RequestBody LoginParams loginParams, HttpServletRequest request) throws Exception{
 
-
         //校验验证码
         if (loginParams == null || StringUtils.isEmpty(loginParams.getImageCode())) {
             ExceptionCast.castFail("验证码不能为空");

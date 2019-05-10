@@ -15,6 +15,7 @@
         <module>bc-login-server</module>
         <module>bc-redPacket-server</module>
         <module>bc-ucenter-server</module>
+        <module>bc-robot-server</module>
     </modules>
 
     <dependencies>
