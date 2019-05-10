@@ -334,9 +334,9 @@ public class RedPacketServer {
                         .set("join_times", player.getJoinTimes() - 1)
         );
         if (update) {
-            log.info("username:" + player.getUserName() + ",抽得：" + redResultVo.getAmount() + "元红包"+" mysql乐观锁：更新库存成功，剩余库存："+(player.getJoinTimes() - 1));
+            log.info("username:" + player.getUserName() + ",抽得：" + redResultVo.getAmount() + "分红包"+" mysql乐观锁：更新库存成功，剩余库存："+(player.getJoinTimes() - 1));
         } else {
-            log.info("username:" + player.getUserName() + ",抽得：" + redResultVo.getAmount() + "元红包" + " mysql乐观锁：更新库存失败");
+            log.info("username:" + player.getUserName() + ",抽得：" + redResultVo.getAmount() + "分红包" + " mysql乐观锁：更新库存失败");
         }
 
         //生成订单

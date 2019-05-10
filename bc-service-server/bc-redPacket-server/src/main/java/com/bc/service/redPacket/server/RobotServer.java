@@ -60,6 +60,8 @@ public class RobotServer {
     private IVsRobotService robotService;
     @Autowired
     private IVsRobotRecordService robotRecordService;
+    @Autowired
+    private IVsAwardPlayerService playerService;
     //总执行队列锁
     private static ReentrantLock exeQueueLock = new ReentrantLock();
     //初始化机器人集合锁
@@ -84,7 +86,8 @@ public class RobotServer {
         List<VsRobot> robots = getRobots();
         robots.forEach(robot -> {
             BasicCookieStore cookieStore = new BasicCookieStore();
-            CloseableHttpClient client = HttpClients.custom().setDefaultCookieStore(cookieStore).build();
+            String userAgent = "Mozilla/5.0 (Windows NT 6.2; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.87 Safari/537.36";
+            CloseableHttpClient client = HttpClients.custom().setDefaultCookieStore(cookieStore).setUserAgent(userAgent).build();
             clientMap.put(robot.getRobotNum(), client);
         });
     }
@@ -603,23 +606,34 @@ public class RobotServer {
             log.info("机器人：打款：结束：更新机器人流水成功：resp_info:" + jsonStr + " record_status:" + VarParam.YES);
             return payResultVo;
         } catch (Exception e) {
-            //这里如果出现异常说明cookie有问题，机器人就处理离线状态
-            //更新robot
-            robot.setRobotStatus(VarParam.NO);//通知该机器人循环停止
-            robot.setLoseTimes(robot.getLoseTimes() + 1);
-            robot.setRobotInfo("机器人：打款：异常，请联系管理员检查");
-            log.info("机器人：打款：异常:更新数据库robot"+JSON.toJSONString(robot));
-            boolean update = robotService.update(
-                    new UpdateWrapper<VsRobot>()
-                            .eq("id", robot.getId())
-                            .set("robot_status", robot.getRobotStatus())
-                            .set("login_time", robot.getLoseTimes())
-                            .set("robot_info", robot.getRobotInfo())
-
-            );
-            if (!update) ExceptionCast.castFail("机器人：打款：异常,更新数据库robot状态失败:"+JSON.toJSONString(robot));
-            redis.delete(VarParam.RedPacketM.ROBOT_MAP);
-            this.getRobots();
+            log.error("机器人：打款异常", e);
+            //测试是否是真的掉线 username,recordId
+            VsPayRecord payRecord = recordService.getById(recordId);
+            if (null == payRecord) {
+                log.error("机器人：打款:异常,获取不到payRecord:recordId"+recordId);
+                return null;
+            }
+            //如果掉线，修改机器人状态为不可用
+            Thread.sleep(3000);
+            QueryResultVo queryResultVo = this.queryInfo(new TaskAtom(null, payRecord.getUserName(), recordId), robot);
+            if (null == queryResultVo) {
+                robot.setRobotStatus(VarParam.NO);//通知该机器人循环停止
+                robot.setLoseTimes(robot.getLoseTimes() + 1);
+                robot.setRobotInfo("机器人：打款：异常，请联系管理员检查");
+                log.info("机器人：打款：异常:更新数据库robot" + JSON.toJSONString(robot));
+                boolean update = robotService.update(
+                        new UpdateWrapper<VsRobot>()
+                                .eq("id", robot.getId())
+                                .set("robot_status", robot.getRobotStatus())
+                                .set("login_time", robot.getLoseTimes())
+                                .set("robot_info", robot.getRobotInfo())
+                );
+                if (!update) ExceptionCast.castFail("机器人：打款：异常,更新数据库robot状态失败:" + JSON.toJSONString(robot));
+                redis.delete(VarParam.RedPacketM.ROBOT_MAP);
+                this.getRobots();
+            } else {
+                log.info("机器人：打款：异常:机器人未掉线,查询测试成功："+JSON.toJSONString(queryResultVo));
+            }
 
             //更新机器人流水
             boolean update2 = robotRecordService.update(
