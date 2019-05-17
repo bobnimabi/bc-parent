@@ -562,7 +562,7 @@ public class RobotServer {
         bodyMap.put("type","saveSet"); //存款类型
         bodyMap.put("memberId",memberId);// 身份信息
         bodyMap.put("depositMoney",payAmount); //存入金额，单位：元
-        bodyMap.put("depositMoneyRemark","红包入款");//存入金额备注
+        bodyMap.put("depositMoneyRemark","红包彩金");//存入金额备注
         bodyMap.put("depositPreStatus","0");//是否开启存款优惠 0不开启 1开启
         bodyMap.put("depositPre","0");//存款优惠
         bodyMap.put("depositPreRemark","");//存款优惠备注

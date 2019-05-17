@@ -1,15 +1,24 @@
 package com.bc.service.ucenter.server;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.bc.common.constant.VarParam;
 import com.bc.common.pojo.AuthToken;
 import com.bc.common.response.ResponseResult;
 import com.bc.service.common.login.entity.XcUser;
 import com.bc.service.common.login.service.IXcUserService;
+import com.bc.service.login.dto.XcUserDto;
 import com.bc.utils.BCryptUtil;
+import com.bc.utils.project.MyBeanUtil;
 import com.bc.utils.project.XcTokenUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Created by mrt on 2019/4/7 0007 下午 4:01
@@ -21,9 +30,10 @@ public class UcenterServer {
 
     @Autowired
     private IXcUserService userService;
+
     //修改密码
-    public ResponseResult changePassword(String oldPass, String newPass, String uid) throws Exception{
-        AuthToken authToken = XcTokenUtil.getUserToken(uid,stringRedisTemplate);
+    public ResponseResult changePassword(String oldPass, String newPass, String uid) throws Exception {
+        AuthToken authToken = XcTokenUtil.getUserToken(uid, stringRedisTemplate);
         XcUser user = userService.getById(authToken.getUserId());
         if (null == user) ResponseResult.FAIL("用户不存在");
 
@@ -37,5 +47,46 @@ public class UcenterServer {
         } else {
             return ResponseResult.FAIL("旧密码不正确");
         }
+    }
+
+    public ResponseResult queryUser(AuthToken authToken) throws Exception {
+        XcUser user = userService.getById(authToken.getUserId());
+        if (user.getUtype() == VarParam.NO) {
+            List<XcUser> users = userService.list(
+                    new QueryWrapper<XcUser>()
+                            .select(
+                                    "username",
+                                    "name",
+                                    "utype",
+                                    "status",
+                                    "create_time"
+                            )
+            );
+            if (CollectionUtils.isEmpty(users)) return ResponseResult.SUCCESS(Collections.EMPTY_LIST);
+            return ResponseResult.SUCCESS(users);
+        }
+        return ResponseResult.SUCCESS(user);
+    }
+
+    public ResponseResult addChildUser(AuthToken authToken, XcUserDto userDto) throws Exception{
+        XcUser user = userService.getById(authToken.getUserId());
+        if (VarParam.NO != user.getUtype()) {
+            return ResponseResult.FAIL("无权限");
+        }
+        XcUser user1 = new XcUser();
+        MyBeanUtil.copyProperties(userDto, user1);
+        boolean isSave = userService.save(user1);
+        if (!isSave) return ResponseResult.FAIL();
+        return ResponseResult.SUCCESS();
+    }
+
+    public ResponseResult delChildUser(AuthToken authToken, Long userId) throws Exception{
+        XcUser user = userService.getById(authToken.getUserId());
+        if (VarParam.NO != user.getUtype()) {
+            return ResponseResult.FAIL("无权限");
+        }
+        boolean isDel = userService.removeById(userId);
+        if (!isDel) return ResponseResult.FAIL();
+        return ResponseResult.SUCCESS();
     }
 }

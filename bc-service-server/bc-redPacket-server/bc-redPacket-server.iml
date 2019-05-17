@@ -25,7 +25,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="bc-redPacket-common" />
+    <orderEntry type="library" name="Maven: siemReap:bc-redPacket-common:1.0-SNAPSHOT" level="project" />
     <orderEntry type="module" module-name="bc-login-common" />
     <orderEntry type="module" module-name="bc-redPacket-server-api" />
     <orderEntry type="library" name="Maven: org.jsoup:jsoup:1.11.3" level="project" />

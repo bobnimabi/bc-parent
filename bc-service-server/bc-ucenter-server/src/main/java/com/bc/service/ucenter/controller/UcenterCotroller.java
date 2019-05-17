@@ -3,7 +3,9 @@ package com.bc.service.ucenter.controller;
 import com.bc.common.Exception.ExceptionCast;
 import com.bc.common.pojo.AuthToken;
 import com.bc.common.response.ResponseResult;
+import com.bc.service.common.login.entity.XcUser;
 import com.bc.service.common.login.service.IXcUserService;
+import com.bc.service.login.dto.XcUserDto;
 import com.bc.service.ucenter.dto.ChangePassDto;
 import com.bc.service.ucenter.server.UcenterServer;
 import com.bc.utils.project.XcCookieUtil;
@@ -32,20 +34,12 @@ public class UcenterCotroller {
     //查询用户信息
     @PostMapping("/queryUser")
     public ResponseResult queryUser(HttpServletRequest httpRequest) throws Exception{
-//        String uid = XcCookieUtil.getTokenFormCookie(httpRequest);
-//        AuthToken authToken = XcTokenUtil.getUserToken(uid, stringRedisTemplate);
-//        authToken.setAccess_token(null);
-//        authToken.setJwt_token(null);
-//        authToken.setRefresh_token(null);
-
-//        authToken.setUserId(null);
-//        authToken.setUsername(null);
-        AuthToken authToken = new AuthToken();
-        authToken.setUsername("username");
-        authToken.setUserId(2L);
-        authToken.setName("小王");
-        authToken.setUtype(1);
-        return ResponseResult.SUCCESS(authToken);
+        String uid = XcCookieUtil.getTokenFormCookie(httpRequest);
+        AuthToken authToken = XcTokenUtil.getUserToken(uid, stringRedisTemplate);
+        authToken.setAccess_token(null);
+        authToken.setJwt_token(null);
+        authToken.setRefresh_token(null);
+        return ucenterServer.queryUser(authToken);
     }
 
     //修改密码
@@ -62,6 +56,32 @@ public class UcenterCotroller {
         String uid = XcCookieUtil.getTokenFormCookie(httpRequest);
         if (StringUtils.isEmpty(uid)) return ResponseResult.FAIL("未携带身份信息，请登录");
         return ucenterServer.changePassword(passDto.getOldPass(),passDto.getNewPass(),uid);
+    }
+
+
+    //增加子账号
+    @GetMapping("/addChildUser")
+    public ResponseResult addChildUser(@RequestBody XcUserDto userDto, HttpServletRequest httpRequest) throws Exception{
+        if (null == userDto
+                || StringUtils.isEmpty(userDto.getName())
+                || StringUtils.isEmpty(userDto.getPassword())
+                || StringUtils.isEmpty(userDto.getUsername())) {
+            return ResponseResult.FAIL("参数不全");
+        }
+        String uid = XcCookieUtil.getTokenFormCookie(httpRequest);
+        AuthToken authToken = XcTokenUtil.getUserToken(uid, stringRedisTemplate);
+
+        return ucenterServer.addChildUser(authToken,userDto);
+    }
+
+
+    //删除子账号
+    @PostMapping("/delChildUser")
+    public ResponseResult delChildUser(@RequestBody Long userId, HttpServletRequest httpRequest) throws Exception{
+        String uid = XcCookieUtil.getTokenFormCookie(httpRequest);
+        AuthToken authToken = XcTokenUtil.getUserToken(uid, stringRedisTemplate);
+
+        return ucenterServer.delChildUser(authToken,userId);
     }
 
     @GetMapping("test")
