@@ -54,7 +54,6 @@ public class AuthController {
     private ImageCodeInterceptor imageCodeInterceptor;
 
 
-
     @PostMapping("/userlogin")
     public ResponseResult login(@RequestBody LoginParams loginParams, HttpServletRequest request) throws Exception{
 
@@ -66,10 +65,11 @@ public class AuthController {
             String imageCodeOld = redis.opsForValue().get(VarParam.Login.IMAGE_CODE + IpUtil.getIpAddress(request));
             imageCodeInterceptor.validate(loginParams.getImageCode(),imageCodeOld,request);
         }
-
-        //校验动态口令
-        if (!authService.googleAuth(loginParams.getVarCode(),loginParams.getUsername()))
-            ExceptionCast.castFail("口令错误");
+        //管理员则校验动态口令
+        if (authService.checkUserType(loginParams.getUsername())) {
+            if (!authService.googleAuth(loginParams.getVarCode(),loginParams.getUsername()))
+                ExceptionCast.castFail("口令错误");
+        }
 
         //校验用户名和密码
         if(loginParams == null || StringUtils.isEmpty(loginParams.getUsername())){

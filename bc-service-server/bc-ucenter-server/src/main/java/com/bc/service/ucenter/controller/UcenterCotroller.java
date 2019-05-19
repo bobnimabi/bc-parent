@@ -60,7 +60,7 @@ public class UcenterCotroller {
 
 
     //增加子账号
-    @GetMapping("/addChildUser")
+    @PostMapping("/addChildUser")
     public ResponseResult addChildUser(@RequestBody XcUserDto userDto, HttpServletRequest httpRequest) throws Exception{
         if (null == userDto
                 || StringUtils.isEmpty(userDto.getName())
@@ -80,7 +80,6 @@ public class UcenterCotroller {
     public ResponseResult delChildUser(@RequestBody Long userId, HttpServletRequest httpRequest) throws Exception{
         String uid = XcCookieUtil.getTokenFormCookie(httpRequest);
         AuthToken authToken = XcTokenUtil.getUserToken(uid, stringRedisTemplate);
-
         return ucenterServer.delChildUser(authToken,userId);
     }
 

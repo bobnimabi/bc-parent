@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bc.common.Exception.ExceptionCast;
 import com.bc.common.constant.VarParam;
+import com.bc.common.response.ResponseResult;
 import com.bc.servcie.login.googleAuth.GoogleAuthenticator;
 import com.bc.service.common.login.entity.XcUser;
 import com.bc.service.common.login.service.IXcUserService;
@@ -166,5 +167,12 @@ public class AuthService {
         //将串进行base64编码
         byte[] encode = Base64Utils.encode(string.getBytes());
         return "Basic " + new String(encode);
+    }
+
+    public boolean checkUserType(String username) throws Exception{
+        XcUser user = userService.getOne(new QueryWrapper<XcUser>().eq("username",username));
+        if (null == user) ExceptionCast.castFail("用户不存在");
+        if (user.getStatus()==VarParam.NO) ExceptionCast.castFail("该用户已停用");
+        return user.getUtype()== VarParam.Login.USER_TYPE_MANAGER;
     }
 }

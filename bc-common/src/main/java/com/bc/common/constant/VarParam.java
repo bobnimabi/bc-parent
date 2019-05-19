@@ -26,8 +26,11 @@ public class VarParam {
         public static final String LOGIN_FLAG_PRE = LOGIN_PRE + "Login_flag:";
         //图片验证码的sessionKey
         public static final String IMAGE_CODE = LOGIN_PRE+"IMAGECODE:";
-        //允许登录的ip
-//        public static final String[] PERMIT_IP = {"113.130.124.138","110.184.70.166","192.168.101.248"};
+        //用户类型：管理员
+        public static final int USER_TYPE_MANAGER= 0;
+        //用户类型：普通用户
+        public static final int USER_TYPE_ORDIN= 1;
+
     }
 
     /**

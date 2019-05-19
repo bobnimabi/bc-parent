@@ -51,7 +51,9 @@ public class UcenterServer {
 
     public ResponseResult queryUser(AuthToken authToken) throws Exception {
         XcUser user = userService.getById(authToken.getUserId());
-        if (user.getUtype() == VarParam.NO) {
+        user.setPassword("");
+        user.setSalt("");
+        if (user.getUtype() == VarParam.Login.USER_TYPE_MANAGER) {
             List<XcUser> users = userService.list(
                     new QueryWrapper<XcUser>()
                             .select(
@@ -70,11 +72,13 @@ public class UcenterServer {
 
     public ResponseResult addChildUser(AuthToken authToken, XcUserDto userDto) throws Exception{
         XcUser user = userService.getById(authToken.getUserId());
-        if (VarParam.NO != user.getUtype()) {
+        if (VarParam.Login.USER_TYPE_MANAGER != user.getUtype()) {
             return ResponseResult.FAIL("无权限");
         }
         XcUser user1 = new XcUser();
         MyBeanUtil.copyProperties(userDto, user1);
+        user1.setPassword(BCryptUtil.encode(user1.getPassword()));
+        user1.setUtype(VarParam.Login.USER_TYPE_ORDIN);
         boolean isSave = userService.save(user1);
         if (!isSave) return ResponseResult.FAIL();
         return ResponseResult.SUCCESS();
