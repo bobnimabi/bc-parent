@@ -21,7 +21,6 @@ import org.springframework.web.client.RestTemplate;
 @ComponentScan(basePackages ={"com.bc.common"}) //扫描common
 @EntityScan("com.bc.service.common.login.entity")//扫描实体类
 @MapperScan("com.bc.service.common.login.mapper")//扫描mapper
-//@ServletComponentScan(basePackages = {""})//扫描监听器
 @SpringBootApplication
 public class UcServer {
     public static void main(String[] args) {

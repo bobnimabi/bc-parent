@@ -61,7 +61,8 @@ class WebSecurityConfig extends WebSecurityConfigurerAdapter {
      */
     @Override
     public void configure(HttpSecurity http) throws Exception {
-        http.csrf().disable() //关闭csrf防护
+            http
+                .csrf().disable() //关闭csrf防护
                 .httpBasic()
                 .and()
                 .formLogin()
@@ -72,7 +73,5 @@ class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .authorizeRequests()
                 .anyRequest().authenticated();
-        //防止同一账号重复登录
-        http.sessionManagement().maximumSessions(1).expiredUrl("/userlogin");
     }
 }

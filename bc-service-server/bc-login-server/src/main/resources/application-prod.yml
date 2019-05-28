@@ -21,9 +21,9 @@ spring:
 
   datasource:
     username: 'auto_update'
-    password: 'akgdjl%_yr0QC?uto'
-    driver-class-name: com.mysql.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/xc_user?characterEncoding=utf8
+    password: 'p7oXaL)(8det*&h^540k**76jfikc*f'
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/xc_user?characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true
     hikari:
       minimum-idle: 5
       maximum-pool-size: 20
@@ -59,10 +59,10 @@ ribbon:
 
 #客户端账号
 auth:
-  tokenValiditySeconds: 1200  #token存储到redis的过期时间
+  tokenValiditySeconds: 1800  #token存储到redis的过期时间
   clientId: BcWebApp
   clientSecret: w90582144
-  cookieDomain:  hb7158.com #测试设置为空，可以让所有域名获得
+  cookieDomain:  7158555.com #域名
   cookieMaxAge: -1 #浏览器关闭cookie立刻失效
 
 #秘钥参数

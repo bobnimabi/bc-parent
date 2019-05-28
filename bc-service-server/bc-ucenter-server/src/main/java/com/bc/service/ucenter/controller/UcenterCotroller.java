@@ -3,8 +3,7 @@ package com.bc.service.ucenter.controller;
 import com.bc.common.Exception.ExceptionCast;
 import com.bc.common.pojo.AuthToken;
 import com.bc.common.response.ResponseResult;
-import com.bc.service.common.login.entity.XcUser;
-import com.bc.service.common.login.service.IXcUserService;
+import com.bc.service.login.dto.IdListLongDto;
 import com.bc.service.login.dto.XcUserDto;
 import com.bc.service.ucenter.dto.ChangePassDto;
 import com.bc.service.ucenter.server.UcenterServer;
@@ -12,11 +11,10 @@ import com.bc.utils.project.XcCookieUtil;
 import com.bc.utils.project.XcTokenUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
-
 import javax.servlet.http.HttpServletRequest;
 
 /**
@@ -44,6 +42,7 @@ public class UcenterCotroller {
 
     //修改密码
     @PostMapping("/changePassword")
+    @PreAuthorize("hasAuthority('changePassword')")
     public ResponseResult changePassword(@RequestBody ChangePassDto passDto, HttpServletRequest httpRequest) throws Exception{
         if (null == passDto)  ExceptionCast.castFail("未收取到任何参数");
         if (StringUtils.isEmpty(passDto.getOldPass()))
@@ -61,6 +60,7 @@ public class UcenterCotroller {
 
     //增加子账号
     @PostMapping("/addChildUser")
+    @PreAuthorize("hasAuthority('addChildUser')")
     public ResponseResult addChildUser(@RequestBody XcUserDto userDto, HttpServletRequest httpRequest) throws Exception{
         if (null == userDto
                 || StringUtils.isEmpty(userDto.getName())
@@ -77,10 +77,14 @@ public class UcenterCotroller {
 
     //删除子账号
     @PostMapping("/delChildUser")
-    public ResponseResult delChildUser(@RequestBody Long userId, HttpServletRequest httpRequest) throws Exception{
+    @PreAuthorize("hasAuthority('delChildUser')")
+    public ResponseResult delChildUser(@RequestBody IdListLongDto idList, HttpServletRequest httpRequest) throws Exception{
+        if (null == idList || CollectionUtils.isEmpty(idList.getIds())) {
+            return ResponseResult.FAIL("未传入id");
+        }
         String uid = XcCookieUtil.getTokenFormCookie(httpRequest);
         AuthToken authToken = XcTokenUtil.getUserToken(uid, stringRedisTemplate);
-        return ucenterServer.delChildUser(authToken,userId);
+        return ucenterServer.delChildUser(authToken,idList.getIds());
     }
 
     @GetMapping("test")

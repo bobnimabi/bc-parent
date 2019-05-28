@@ -14,6 +14,7 @@ import com.bc.utils.project.XcTokenUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.util.Collection;
@@ -32,6 +33,7 @@ public class UcenterServer {
     private IXcUserService userService;
 
     //修改密码
+    @Transactional
     public ResponseResult changePassword(String oldPass, String newPass, String uid) throws Exception {
         AuthToken authToken = XcTokenUtil.getUserToken(uid, stringRedisTemplate);
         XcUser user = userService.getById(authToken.getUserId());
@@ -57,6 +59,7 @@ public class UcenterServer {
             List<XcUser> users = userService.list(
                     new QueryWrapper<XcUser>()
                             .select(
+                                    "id",
                                     "username",
                                     "name",
                                     "utype",
@@ -70,6 +73,7 @@ public class UcenterServer {
         return ResponseResult.SUCCESS(user);
     }
 
+    @Transactional
     public ResponseResult addChildUser(AuthToken authToken, XcUserDto userDto) throws Exception{
         XcUser user = userService.getById(authToken.getUserId());
         if (VarParam.Login.USER_TYPE_MANAGER != user.getUtype()) {
@@ -84,12 +88,13 @@ public class UcenterServer {
         return ResponseResult.SUCCESS();
     }
 
-    public ResponseResult delChildUser(AuthToken authToken, Long userId) throws Exception{
+    @Transactional
+    public ResponseResult delChildUser(AuthToken authToken, List<Long> userIds) throws Exception{
         XcUser user = userService.getById(authToken.getUserId());
         if (VarParam.NO != user.getUtype()) {
             return ResponseResult.FAIL("无权限");
         }
-        boolean isDel = userService.removeById(userId);
+        boolean isDel = userService.removeByIds(userIds);
         if (!isDel) return ResponseResult.FAIL();
         return ResponseResult.SUCCESS();
     }
