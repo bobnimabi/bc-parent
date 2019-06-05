@@ -23,5 +23,4 @@ public class decode {
         String encoded = jwt.getEncoded();
         System.out.println(encoded);
     }
-
 }
