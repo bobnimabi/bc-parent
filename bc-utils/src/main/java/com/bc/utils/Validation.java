@@ -1,8 +1,8 @@
 package com.bc.utils;
 
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;  
- 
+import java.util.regex.Pattern;
+
 /**
  * 验证工具类
  * @author admin
@@ -31,7 +31,9 @@ public class Validation {
     /** 
      * 正整数正则表达式 >=0 ^[1-9]\d*|0$ 
      */
-    public static final String  INTEGER_NEGATIVE = "^[1-9]\\d*|0$";  
+    public static final String  INTEGER_NEGATIVE = "^[1-9]\\d*|0$";
+    public static final String IP = "^(([1-9]|([1-9]\\d)|(1\\d\\d)|(2([0-4]\\d|5[0-5])))\\.)(([1-9]|([1-9]\\d)|(1\\d\\d)|(2([0-4]\\d|5[0-5])))\\.){2}([1-9]|([1-9]\\d)|(1\\d\\d)|(2([0-4]\\d|5[0-5])))$";
+
     /** 
      * 负整数正则表达式 <=0 ^-[1-9]\d*|0$ 
      */
@@ -172,14 +174,22 @@ public class Validation {
     public static  boolean isPhone(String str) {  
         return Regular(str,PHONE);  
     }  
-    /** 
-     * 判断是否为手机号码 符合返回ture 
-     * @param str 
-     * @return boolean 
+    /**
+     * 判断是否为手机号码 符合返回ture
+     * @param str
+     * @return boolean
      */
-    public static  boolean isMobile(String str) {  
-        return Regular(str,MOBILE);  
-    }  
+    public static  boolean isMobile(String str) {
+        return Regular(str,MOBILE);
+    }
+    /**
+     * 判断是否为ip地址 符合返回ture
+     * @param str
+     * @return boolean
+     */
+    public static  boolean isIp(String str) {
+        return Regular(str,IP);
+    }
     /** 
      * 判断是否为Url 符合返回ture 
      * @param str 

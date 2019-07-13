@@ -29,20 +29,20 @@ public class LogInterceptor extends HandlerInterceptorAdapter {
 	public boolean preHandle(HttpServletRequest request,
 							 HttpServletResponse response, Object handler) throws Exception {
 		//校验ip
-		boolean permit = false;
-		String ipAddress = IpUtil.getIpAddress(request);
-		List<VsIp> ips = ipService.list();
-		if (CollectionUtils.isEmpty(ips)) {
-			ExceptionCast.castFail("未放行任何ip");
-		}
-		for (VsIp ipEntity : ips) {
-			if (ipEntity.getIp().equals(ipAddress)) {
-				permit = true;
-			}
-		}
-		if (!permit) {
-			ExceptionCast.castFail("ip拒绝，ip:"+ipAddress);
-		}
+//		boolean permit = false;
+//		String ipAddress = IpUtil.getIpAddress(request);
+//		List<VsIp> ips = ipService.list();
+//		if (CollectionUtils.isEmpty(ips)) {
+//			ExceptionCast.castFail("未放行任何ip");
+//		}
+//		for (VsIp ipEntity : ips) {
+//			if (ipEntity.getIp().equals(ipAddress)) {
+//				permit = true;
+//			}
+//		}
+//		if (!permit) {
+//			ExceptionCast.castFail("ip拒绝，ip:"+ipAddress);
+//		}
 
 		//记录用户行为
 		String requestURI = request.getRequestURI();

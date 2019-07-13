@@ -42,21 +42,28 @@ public class UcenterCotroller {
 
     //修改密码
     @PostMapping("/changePassword")
-    @PreAuthorize("hasAuthority('changePassword')")
     public ResponseResult changePassword(@RequestBody ChangePassDto passDto, HttpServletRequest httpRequest) throws Exception{
         if (null == passDto)  ExceptionCast.castFail("未收取到任何参数");
-        if (StringUtils.isEmpty(passDto.getOldPass()))
-            ExceptionCast.castFail("旧密码不能为空");
-        if (StringUtils.isEmpty(passDto.getNewPass()))
-            ExceptionCast.castFail("新密码不能为空");
-        if (passDto.getNewPass().length() < 8)
-            ExceptionCast.castFail("新密码的长度不能低于8位");
+        if (StringUtils.isEmpty(passDto.getOldPass())){
+            return ResponseResult.FAIL("旧密码不能为空");
+        }
+        if (StringUtils.isEmpty(passDto.getNewPass())) {
+            return ResponseResult.FAIL("新密码不能为空");
+        }
+        if (StringUtils.isEmpty(passDto.getReNewPass())) {
+            return ResponseResult.FAIL("重复新密码不能为空");
+        }
+        if (passDto.getNewPass().length() < 8) {
+            return ResponseResult.FAIL("新密码的长度不能低于8位");
+        }
+        if (!passDto.getNewPass().equals(passDto.getReNewPass())) {
+            return ResponseResult.FAIL("新密码不一致");
+        }
 
         String uid = XcCookieUtil.getTokenFormCookie(httpRequest);
         if (StringUtils.isEmpty(uid)) return ResponseResult.FAIL("未携带身份信息，请登录");
         return ucenterServer.changePassword(passDto.getOldPass(),passDto.getNewPass(),uid);
     }
-
 
     //增加子账号
     @PostMapping("/addChildUser")

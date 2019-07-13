@@ -21,7 +21,7 @@ spring:
 
   datasource:
     username: 'auto_update'
-    password: 'p7oXaL)(8det*&h^540k**76jfikc*f'
+    password: 'akgdjl%_yr0QC?uto'
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/xc_user?characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true
     hikari:

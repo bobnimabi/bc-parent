@@ -9,6 +9,7 @@ import com.bc.manager.redPacket.dto.IdList;
 import com.bc.manager.redPacket.dto.IdLongList;
 import com.bc.manager.redPacket.dto.VsPayRecordDto;
 import com.bc.manager.redPacket.dto.VsRobotDto;
+import com.bc.service.common.redPacket.entity.VsHtml;
 import com.bc.service.common.redPacket.service.IVsNavService;
 import com.bc.service.redPacket.dto.RedPacketDto;
 import com.bc.service.redPacket.dto.RobotLoginDto;
@@ -160,10 +161,22 @@ public class RedPacketController {
         return packetServer.queryMyRecord(recordDto);
     }
 
-    @ApiOperation("从新初始化布隆过滤器")
-    @GetMapping("/initBloomFilter")
-    public void initBloomFilter() throws Exception{
-        packetServer.initBloomFilter();
+//    @ApiOperation("从新初始化布隆过滤器")
+//    @GetMapping("/initBloomFilter")
+//    public void initBloomFilter() throws Exception{
+//        packetServer.initBloomFilter();
+//    }
+
+    @ApiOperation("富文本：查看")
+    @GetMapping("/queryHtml")
+    public ResponseResult queryHtml() throws Exception {
+        return packetServer.queryHtml();
+    }
+
+    @ApiOperation("红包活动:查看")
+    @GetMapping("/queryActive")
+    public ResponseResult queryActive() throws Exception{
+        return packetServer.queryActive();
     }
 
     //@PreAuthorize("hasAuthority('query_salar')")

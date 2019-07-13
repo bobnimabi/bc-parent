@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.additional.query.impl.QueryChainWrapper;
 import com.bc.common.Exception.ExceptionCast;
 import com.bc.common.constant.VarParam;
 import com.bc.common.response.CommonCode;
@@ -79,6 +80,9 @@ public class RedPacketManagerServer {
     //获取文件存储路径
     @Value("${redPacketM.upfilePath}")
     private String upfilePath;
+
+    @Autowired
+    private IVsHtmlService htmlService;
 
     /**
      * 红包活动修改
@@ -1002,5 +1006,62 @@ public class RedPacketManagerServer {
             ExceptionCast.castFail("未查询到");
         }
         return ResponseResult.SUCCESS(robot);
+    }
+
+    @Autowired
+    private IVsIpService ipService;
+    public ResponseResult ipAdd(VsIpDto permitDto) throws Exception{
+        VsIp existIp = getIpByAdress(permitDto.getIp());
+        if (null != existIp) {
+            return ResponseResult.FAIL("重复添加");
+        }
+        VsIp ip = new VsIp();
+        MyBeanUtil.copyProperties(permitDto, ip);
+        boolean isSave = ipService.save(ip);
+        if (!isSave) {
+            return ResponseResult.FAIL("添加失败");
+        }
+        return ResponseResult.SUCCESS();
+    }
+
+    //单个查询
+    private VsIp getIpByAdress(String adress) throws Exception {
+        return ipService.getOne(
+                new QueryWrapper<VsIp>()
+                        .eq("ip", adress)
+        );
+    }
+
+    //ip查询
+    public ResponseResult ipQueryAll() throws Exception{
+        List<VsIp> list = ipService.list();
+        if (CollectionUtils.isEmpty(list)) {
+            return ResponseResult.SUCCESS(Collections.emptyList());
+        }
+        return ResponseResult.SUCCESS(list);
+    }
+
+
+    public ResponseResult ipDel(List<Integer> ids) throws Exception {
+        boolean isRemove = ipService.remove(new QueryWrapper<VsIp>().in("id", ids));
+        if (!isRemove) {
+            ExceptionCast.castFail("删除失败");
+        }
+        return ResponseResult.SUCCESS();
+    }
+
+
+    public ResponseResult queryHtml() throws Exception{
+        VsHtml html = htmlService.getById(1L);
+        return ResponseResult.SUCCESS(html);
+    }
+
+    public ResponseResult updateHtml(VsHtml html) throws Exception{
+        html.setId(1L);
+        boolean isUpdate = htmlService.updateById(html);
+        if (!isUpdate) {
+            return ResponseResult.FAIL("修改失败");
+        }
+        return ResponseResult.SUCCESS();
     }
 }

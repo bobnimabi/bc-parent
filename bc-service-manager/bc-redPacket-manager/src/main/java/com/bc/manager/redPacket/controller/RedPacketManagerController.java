@@ -4,16 +4,20 @@ import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.bc.common.Exception.ExceptionCast;
 import com.bc.common.constant.VarParam;
+import com.bc.common.pojo.AuthToken;
 import com.bc.common.response.ResponseResult;
 import com.bc.manager.redPacket.dto.*;
 import com.bc.manager.redPacket.server.RedPacketManagerServer;
 import com.bc.manager.redPacket.vo.ExportRecordVo;
 import com.bc.manager.redPacket.vo.VsPayRecordVo;
+import com.bc.service.common.redPacket.entity.VsHtml;
 import com.bc.service.common.redPacket.entity.VsRobotRecord;
 import com.bc.service.redPacket.dto.RobotLoginDto;
 import com.bc.utils.ExcelUtil;
 import com.bc.utils.FileUpload;
 import com.bc.utils.MyHttpResult;
+import com.bc.utils.Validation;
+import com.bc.utils.project.XcTokenUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.io.IOUtils;
@@ -24,7 +28,9 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.math.BigDecimal;
@@ -754,6 +760,49 @@ public class RedPacketManagerController {
             ExceptionCast.castFail("参数不全");
         }
         return rpmServer.robotGetById(robotDto.getId());
+    }
+
+    @ApiOperation("ip限制：添加")
+    @PostMapping("/ipAdd")
+    public ResponseResult ipAdd(@RequestBody VsIpDto permitDto, HttpServletRequest request) throws Exception {
+        if (null == permitDto || StringUtils.isEmpty(permitDto.getIp())) {
+            return ResponseResult.FAIL("未传ip");
+        }
+        if (!Validation.isIp(permitDto.getIp())) {
+            return ResponseResult.FAIL("ip格式有误");
+
+        }
+        return rpmServer.ipAdd(permitDto);
+    }
+
+    @ApiOperation("ip限制：查询全部")
+    @GetMapping("/ipQueryAll")
+    public ResponseResult ipQueryAll() throws Exception {
+        return rpmServer.ipQueryAll();
+    }
+
+    @ApiOperation("ip限制：删除")
+    @PostMapping("/ipDel")
+    public ResponseResult ipDel(@RequestBody IdList idList) throws Exception {
+        if (null == idList || org.apache.commons.collections4.CollectionUtils.isEmpty(idList.getIds())) {
+            return ResponseResult.FAIL("参数不全");
+        }
+        return rpmServer.ipDel(idList.getIds());
+    }
+
+    @ApiOperation("富文本：查看")
+    @GetMapping("/queryHtml")
+    public ResponseResult queryHtml() throws Exception {
+        return rpmServer.queryHtml();
+    }
+
+    @ApiOperation("富文本：更新")
+    @PostMapping("/updateHtml")
+    public ResponseResult updateHtml(@RequestBody VsHtml html) throws Exception {
+        if (null == html || StringUtils.isEmpty(html.getHtml())) {
+            ResponseResult.FAIL("参数不全");
+        }
+        return rpmServer.updateHtml(html);
     }
 
     @ApiOperation("测试")

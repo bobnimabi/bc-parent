@@ -13,6 +13,7 @@ import com.bc.common.response.CommonCode;
 import com.bc.common.response.ResponseResult;
 import com.bc.manager.redPacket.dto.IdLongList;
 import com.bc.manager.redPacket.dto.VsPayRecordDto;
+import com.bc.manager.redPacket.vo.VsAwardActiveVo;
 import com.bc.manager.redPacket.vo.VsPayRecordVo;
 import com.bc.service.common.redPacket.entity.*;
 import com.bc.service.common.redPacket.service.*;
@@ -70,6 +71,9 @@ public class RedPacketServer {
     @Autowired
     private RobotServer robotServer;
 
+    @Autowired
+    private IVsHtmlService htmlService;
+
     //活动锁
     private ReentrantLock activeLock = new ReentrantLock();
     //奖品锁
@@ -105,6 +109,16 @@ public class RedPacketServer {
             }
         }
         log.info("布隆过滤器初始化：结束");
+    }
+
+    /**
+     * 红包活动的查看
+     */
+    public ResponseResult queryActive() throws Exception {
+        VsAwardActive active = this.getActive();
+        VsAwardActiveVo activeVo = new VsAwardActiveVo();
+        MyBeanUtil.copyProperties(active,activeVo);
+        return ResponseResult.SUCCESS(activeVo);
     }
 
     /**
@@ -478,5 +492,10 @@ public class RedPacketServer {
             recordVo.setTotalAmount(recordVo.getTotalAmount().divide(VarParam.ONE_HUNDRED).setScale(2, BigDecimal.ROUND_DOWN));
         });
        return ResponseResult.SUCCESS(vsPayRecordVoPage);
+    }
+
+    public ResponseResult queryHtml() throws Exception{
+        VsHtml html = htmlService.getById(1L);
+        return ResponseResult.SUCCESS(html);
     }
 }
