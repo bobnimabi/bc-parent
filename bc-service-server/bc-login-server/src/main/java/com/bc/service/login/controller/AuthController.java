@@ -103,6 +103,7 @@ public class AuthController {
         ImageCode imageCode = validateCodeGenerator.createImageCode(request);
         //redis存一份
         redis.opsForValue().set(VarParam.Login.IMAGE_CODE + IpUtil.getIpAddress(request),imageCode.getCode(),imageCode.getExpireTime(), TimeUnit.SECONDS);
+        response.setHeader("Content-Type", "image/png");
         ImageIO.write(imageCode.getImage(), "JPEG", response.getOutputStream());
     }
 

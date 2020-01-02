@@ -19,4 +19,6 @@ public class AuthToken {
     private String username;
     private String name;
     private Integer utype;
+    private Long tenantId;
+    private Long channelId;
 }

@@ -793,7 +793,7 @@ public class RedPacketManagerController {
     @ApiOperation("富文本：查看")
     @GetMapping("/queryHtml")
     public ResponseResult queryHtml() throws Exception {
-        return rpmServer.queryHtml();
+        return rpmServer.queryHtml(1L);
     }
 
     @ApiOperation("富文本：更新")
@@ -802,7 +802,22 @@ public class RedPacketManagerController {
         if (null == html || StringUtils.isEmpty(html.getHtml())) {
             ResponseResult.FAIL("参数不全");
         }
-        return rpmServer.updateHtml(html);
+        return rpmServer.updateHtml(1L,html);
+    }
+
+    @ApiOperation("富文本H5：查看")
+    @GetMapping("/queryHtmlH5")
+    public ResponseResult queryHtmlH5() throws Exception {
+        return rpmServer.queryHtml(2L);
+    }
+
+    @ApiOperation("富文本H5：更新")
+    @PostMapping("/updateHtmlH5")
+    public ResponseResult updateHtmlH5(@RequestBody VsHtml html) throws Exception {
+        if (null == html || StringUtils.isEmpty(html.getHtml())) {
+            ResponseResult.FAIL("参数不全");
+        }
+        return rpmServer.updateHtml(2L,html);
     }
 
     @ApiOperation("测试")

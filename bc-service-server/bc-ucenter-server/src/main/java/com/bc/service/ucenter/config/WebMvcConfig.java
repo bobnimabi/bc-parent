@@ -46,10 +46,10 @@ public class WebMvcConfig implements WebMvcConfigurer {
     //添加拦截器
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(LogInterceptor())
-                .addPathPatterns("/**");
-        registry.addInterceptor(AuthInterceptor())
-                .addPathPatterns("/**");
+//        registry.addInterceptor(LogInterceptor())
+//                .addPathPatterns("/**");
+//        registry.addInterceptor(AuthInterceptor())
+//                .addPathPatterns("/**");
     }
 
     //将swagger-ui的静态资源文件加进去

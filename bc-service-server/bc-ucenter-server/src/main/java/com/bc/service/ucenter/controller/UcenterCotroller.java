@@ -77,7 +77,6 @@ public class UcenterCotroller {
         }
         String uid = XcCookieUtil.getTokenFormCookie(httpRequest);
         AuthToken authToken = XcTokenUtil.getUserToken(uid, stringRedisTemplate);
-
         return ucenterServer.addChildUser(authToken,userDto);
     }
 

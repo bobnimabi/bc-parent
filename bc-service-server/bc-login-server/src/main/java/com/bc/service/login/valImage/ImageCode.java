@@ -3,6 +3,7 @@ package com.bc.service.login.valImage;
 import java.awt.image.BufferedImage;
 import java.time.LocalDateTime;
 
+
 public class ImageCode {
 	
 	private BufferedImage image;
@@ -40,6 +41,5 @@ public class ImageCode {
 	public void setExpireTime(int expireTime) {
 		this.expireTime = expireTime;
 	}
-	
-	
+
 }

@@ -66,6 +66,8 @@ public class UcenterServer {
                                     "status",
                                     "create_time"
                             )
+                            .eq("company_id", user.getCompanyId())
+                            .eq("email", user.getEmail())
             );
             if (CollectionUtils.isEmpty(users)) return ResponseResult.SUCCESS(Collections.EMPTY_LIST);
             return ResponseResult.SUCCESS(users);

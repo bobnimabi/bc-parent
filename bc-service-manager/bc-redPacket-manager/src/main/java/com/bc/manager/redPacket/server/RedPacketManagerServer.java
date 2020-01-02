@@ -1051,13 +1051,13 @@ public class RedPacketManagerServer {
     }
 
 
-    public ResponseResult queryHtml() throws Exception{
-        VsHtml html = htmlService.getById(1L);
+    public ResponseResult queryHtml(long id) throws Exception{
+        VsHtml html = htmlService.getById(id);
         return ResponseResult.SUCCESS(html);
     }
 
-    public ResponseResult updateHtml(VsHtml html) throws Exception{
-        html.setId(1L);
+    public ResponseResult updateHtml(long id,VsHtml html) throws Exception{
+        html.setId(id);
         boolean isUpdate = htmlService.updateById(html);
         if (!isUpdate) {
             return ResponseResult.FAIL("修改失败");

@@ -14,7 +14,7 @@ public class CodeGenerator {
 
         /*********************************************红包系统***********************************************/
         //项目路径
-        String projectPath="F:\\javaCode\\bc-parent\\bc-service-common\\bc-redPacket-common"+"\\";
+        String projectPath="F:\\javacode\\bc-parent\\bc-service-common\\bc-redPacket-common"+"\\";
         //父package
         String parentName="com.bc.service.common";
         //模块名
@@ -22,14 +22,14 @@ public class CodeGenerator {
         String modelName="redPacket";
         //生成表的名称
         String[] tables={
-                "vs_html",
+                "vs_time",
 //                "vs_robot_record",
         };
 
         //配置数据库信息
-        String url="jdbc:mysql://localhost:3306/red_packet?useUnicode=true&useSSL=false&characterEncoding=utf8";
+        String url="jdbc:mysql://mysql.com:3306/red_packet?characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true";
         String username = "root";
-        String password = "c01tqdsqfz?G";
+        String password = "0PKpK0JJD?mM";
         /*********************************************红包系统***********************************************/
         //项目路径
 //        String projectPath="F:\\javaCode\\bc-parent\\bc-service-common\\bc-redPacket-common"+"\\";

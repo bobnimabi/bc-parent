@@ -72,14 +72,15 @@ public class VarParam {
         public static final int SIZE_RED = 10000;
         //布隆过滤器：错误率
         public static final double FPP_RED = 0.03;
+        private static final String domain = "https://ostaqv040.prealmd.com";
         //打款机器人：图片验证码url
-        public static final String CODE_URL = "https://ovwyfq040.prealmd.com/agent/validCode";
+        public static final String CODE_URL = domain+"/agent/validCode";
         //打款机器人：登录url
-        public static String LOGIN_URL = "https://ovwyfq040.prealmd.com/agent/agent";
+        public static String LOGIN_URL =domain+ "/agent/agent";
         //打款机器人：查询url
-        public static String QUERY_URL = "https://ovwyfq040.prealmd.com/agent/ComRecordServlet";
+        public static String QUERY_URL =domain+ "/agent/ComRecordServlet";
         //打款机器人：打款url
-        public static String PAY_URL = "https://ovwyfq040.prealmd.com/agent/ComRecordServlet";
+        public static String PAY_URL =domain+ "/agent/ComRecordServlet";
         //限制玩家11秒内不能重复打款
         public static final int WAIT_SECOND = 11;
         //机器人：平台密码加密

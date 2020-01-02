@@ -59,7 +59,7 @@ ribbon:
 
 #正式只放行test
 redPacket:
-  permitUrl: /test,/playRedPacket,/queryNav,/queryMyRecord
+  permitUrl: /test,/playRedPacket,/queryNav,/queryMyRecord,/queryHtml,/queryActive,/queryHtmlH5,/queryNewRecord
 
 
 #日志文件路径

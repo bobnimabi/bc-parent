@@ -11,6 +11,7 @@
 
     <artifactId>bc-service-common</artifactId>
     <packaging>pom</packaging>
+
     <modules>
         <module>bc-login-common</module>
         <module>bc-redPacket-common</module>

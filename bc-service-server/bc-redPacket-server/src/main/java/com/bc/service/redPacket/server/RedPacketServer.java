@@ -179,7 +179,7 @@ public class RedPacketServer {
             ExceptionCast.castFail("活动在 "+active.getTimeEnd().getMonthValue()+"月"+active.getTimeEnd().getDayOfMonth()+"日"+" 已结束");
         }
 
-        String time = DateUtil.HOUR_MIN_ONE.format(LocalDateTime.now());
+        String time = DateUtil.HOUR_MIN_TWO.format(LocalDateTime.now());
         //校验日活动时间
         if (active.getDayTimeStart().compareTo(time) > 0) {
             ExceptionCast.castFail("活动每日开始时间："+active.getDayTimeStart());
@@ -195,7 +195,7 @@ public class RedPacketServer {
      */
     private VsAwardPlayer checkUser(String userName) throws Exception{
         //查询用户是否存在
-        //布隆过滤器防止恶意点击，DOS攻击
+        //布隆过滤器防止恶意点击
         boolean exist = MyBloomFilter.isExist(
                 VarParam.RedPacketM.BLOOM_RED,
                 userName,
@@ -292,10 +292,10 @@ public class RedPacketServer {
     @Transactional
     public ResponseResult userPlay(VsAwardPlayer player,RedPacketDto redPacketDto) throws Exception{
         RedResultVo redResultVo = new RedResultVo();
-
         //先watch，获取要修改的值，多命令
         redis.watch(VarParam.RedPacketM.PRIZE_KEY);
         List<VsAwardPrize> prizeList = this.checkPrize();
+        log.info("抽奖前红包打印：{}", JSON.toJSONString(prizeList));
         //开启事务(预备减库存)
         redis.setEnableTransactionSupport(true);
         redis.multi();
@@ -348,7 +348,7 @@ public class RedPacketServer {
                         .set("join_times", player.getJoinTimes() - 1)
         );
         if (update) {
-            log.info("username:" + player.getUserName() + ",抽得：" + redResultVo.getAmount() + "分红包"+" mysql乐观锁：更新库存成功，剩余库存："+(player.getJoinTimes() - 1));
+            log.info("username:" + player.getUserName() + ",抽得：" + redResultVo.getAmount() + "分红包"+" mysql乐观锁：更新库存成功，会员剩余库存："+(player.getJoinTimes() - 1));
         } else {
             log.info("username:" + player.getUserName() + ",抽得：" + redResultVo.getAmount() + "分红包" + " mysql乐观锁：更新库存失败");
         }
@@ -396,7 +396,7 @@ public class RedPacketServer {
         Boolean add = redis.opsForZSet().add(
                 VarParam.RedPacketM.JUST_TASK_QUEUE,
                 JSON.toJSONString(new TaskAtom(player.getId(),player.getUserName(), record.getId())),
-                expireTime == -2L ? 0d : Double.valueOf(expireTime + "")
+                expireTime == -2L ? 50d : Double.valueOf(expireTime + "")
         );
         if (!add) {
             log.error("订单进入队列失败：userId:"+player.getId()+" recordId:"+record.getId());
@@ -494,8 +494,20 @@ public class RedPacketServer {
        return ResponseResult.SUCCESS(vsPayRecordVoPage);
     }
 
-    public ResponseResult queryHtml() throws Exception{
-        VsHtml html = htmlService.getById(1L);
+    public ResponseResult queryHtml(long id) throws Exception{
+        VsHtml html = htmlService.getById(id);
         return ResponseResult.SUCCESS(html);
+    }
+
+    public ResponseResult queryNewRecord() {
+        IPage<VsPayRecord> page = recordService.page(new Page<VsPayRecord>(1, 20),
+                new QueryWrapper<VsPayRecord>().orderByDesc("create_time")
+                        .eq("pay_status", 3)
+        );
+        BigDecimal oneHun = new BigDecimal(100);
+        for (VsPayRecord record : page.getRecords()) {
+            record.setTotalAmount(record.getTotalAmount().divide(oneHun).setScale(2, BigDecimal.ROUND_DOWN));
+        }
+        return ResponseResult.SUCCESS(page.getRecords());
     }
 }

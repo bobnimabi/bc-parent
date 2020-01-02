@@ -7,15 +7,19 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
+import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.http.client.OkHttp3ClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
+
 
 @EnableAutoConfiguration
 @EnableDiscoveryClient
 @EnableFeignClients
+@EnableEurekaClient
 @ComponentScan(basePackages={"com.bc.service.common.redPacket"})//扫描bc-login-common下的所有类
 @ComponentScan(basePackages={"com.bc.service.redPacket"})//扫描本服务下的所有类
 @ComponentScan(basePackages ={"com.bc.common"}) //扫描common
@@ -36,4 +40,5 @@ public class PacketServer {
     public FeignClientInterceptor getFeignClientInterceptor(){
         return new FeignClientInterceptor();
     }
+
 }

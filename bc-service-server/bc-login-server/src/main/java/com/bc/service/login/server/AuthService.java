@@ -84,7 +84,8 @@ public class AuthService {
         authToken.setUsername(user.getUsername());
         authToken.setName(user.getName());
         authToken.setUtype(user.getUtype());
-
+        authToken.setTenantId(user.getCompanyId());
+        authToken.setChannelId(Long.parseLong(user.getEmail()));
         //用户身份令牌
         String access_token = authToken.getAccess_token();
         //存储到redis中的内容
