@@ -47,7 +47,7 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * Created by mrt on 2019/4/12 0012 下午 9:26
  */
-@Service
+//@Service
 @Slf4j
 public class RobotServer{
     @Autowired

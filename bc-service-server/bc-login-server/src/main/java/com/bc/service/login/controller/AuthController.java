@@ -68,7 +68,7 @@ public class AuthController {
         //管理员则校验动态口令
         if (authService.checkUserType(loginParams.getUsername())) {
             if (!authService.googleAuth(loginParams.getVarCode(),loginParams.getUsername()))
-                ExceptionCast.castFail("口令错误");
+                ExceptionCast.castFail("OPT错误");
         }
 
         //校验用户名和密码
@@ -82,10 +82,10 @@ public class AuthController {
         String password = loginParams.getPassword();
 
         //校验是否重复登录
-        String usernameflag = redis.opsForValue().get(VarParam.Login.LOGIN_FLAG_PRE + username);
-        if (StringUtils.isNotEmpty(usernameflag)) {
-            ExceptionCast.castFail("不能重复登录");
-        }
+//        String usernameflag = redis.opsForValue().get(VarParam.Login.LOGIN_FLAG_PRE + username);
+//        if (StringUtils.isNotEmpty(usernameflag)) {
+//            ExceptionCast.castFail("不能重复登录");
+//        }
 
         //申请令牌
         AuthToken authToken =  authService.login(username,password,clientId,clientSecret,request.getRemoteHost());

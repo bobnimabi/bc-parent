@@ -14,7 +14,7 @@ import lombok.experimental.Accessors;
  * </p>
  *
  * @author admin
- * @since 2020-01-01
+ * @since 2020-01-02
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -32,5 +32,31 @@ public class VsTime implements Serializable {
     @ApiModelProperty(value = "红包雨结束时间")
     private LocalTime endTime;
 
+    public static long getSerialVersionUID() {
+        return serialVersionUID;
+    }
 
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public LocalTime getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(LocalTime startTime) {
+        this.startTime = startTime;
+    }
+
+    public LocalTime getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(LocalTime endTime) {
+        this.endTime = endTime;
+    }
 }

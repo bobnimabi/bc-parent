@@ -43,7 +43,7 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * Created by mrt on 2019/4/8 0008 下午 12:25
  */
-@Service
+//@Service
 @Slf4j
 public class RedPacketServer {
     @Autowired

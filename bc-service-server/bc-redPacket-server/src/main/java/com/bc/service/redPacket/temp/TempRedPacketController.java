@@ -5,6 +5,7 @@ import com.bc.common.Exception.ExceptionCast;
 import com.bc.common.constant.VarParam;
 import com.bc.common.response.ResponseResult;
 import com.bc.manager.redPacket.dto.VsPayRecordDto;
+import com.bc.service.common.redPacket.entity.VsPayRecord;
 import com.bc.service.redPacket.dto.RedPacketDto;
 import com.bc.utils.CheckMobile;
 import com.bc.utils.IpUtil;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 
 @Slf4j
@@ -40,7 +42,6 @@ public class TempRedPacketController {
         return tempPacketServer.playRedPacket(redPacketDto);
     }
 
-
     @ApiOperation("用户分页查询中奖纪录")
     @PostMapping("/queryMyRecord")
     public ResponseResult queryMyRecord(@RequestBody VsPayRecordDto recordDto) throws Exception{
@@ -53,8 +54,15 @@ public class TempRedPacketController {
     }
 
     @ApiOperation("查询红包是否开始")
-    @GetMapping("/queryNewRecord")
+    @GetMapping("/getStartTime")
     public ResponseResult getStartTime() throws Exception {
         return ResponseResult.SUCCESS(hongBaoServer.getHongBaoYuTime());
+    }
+
+    @ApiOperation("查询抽红包历史流水")
+    @GetMapping("/listRecord")
+    public ResponseResult listRecord() throws Exception {
+        List<VsPayRecord> record = hongBaoServer.listRecord();
+        return ResponseResult.SUCCESS(record);
     }
 }

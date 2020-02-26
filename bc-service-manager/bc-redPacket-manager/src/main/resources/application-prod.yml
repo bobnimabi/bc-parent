@@ -7,7 +7,7 @@ spring:
   jackson:
     default-property-inclusion: NON_EMPTY #不返回空值和null
   redis:
-    host: localhost
+    host: redPacket.redis.com
     port: 6379
     password: 'nmbW_y1:478!?renminbihenzhiqian'
     timeout: 5000 #连接超时 毫秒
@@ -19,10 +19,10 @@ spring:
         minIdle: 1
         maxWait: -1 #连接池最大等行时间 -1没有限制
   datasource:
-    username: 'auto_update'
+    username: 'auto_update12'
     password: 'akgdjl%_yr0QC?uto'
     driver-class-name: com.mysql.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/red_packet?characterEncoding=utf8
+    url: jdbc:mysql://redPacket.mysql.com:3306/red_packet?characterEncoding=utf8
     hikari:
       minimum-idle: 5
       maximum-pool-size: 20
@@ -55,7 +55,7 @@ eureka:
     #表示是否从Eureka Server获取注册信息，默认为true。
     #    fetch-registry: false
     serviceUrl:
-      defaultZone: http://localhost:8761/eureka
+      defaultZone: http://redPacket.eureka.com:8761/eureka
 
 ribbon:
   MaxAutoRetries: 2 #最大重试次数，当Eureka中可以找到服务，但是服务连不上时将会重试

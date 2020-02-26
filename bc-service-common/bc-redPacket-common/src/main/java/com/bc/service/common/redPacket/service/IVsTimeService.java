@@ -9,7 +9,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
  * </p>
  *
  * @author admin
- * @since 2020-01-01
+ * @since 2020-01-02
  */
 public interface IVsTimeService extends IService<VsTime> {
 

@@ -100,11 +100,6 @@ public class AuthService {
         return authToken;
     }
 
-
-
-
-
-
     //申请令牌
     private AuthToken applyToken(String username, String password, String clientId, String clientSecret) {
         String uri = "http://localhost:" + serverPort;
@@ -163,12 +158,20 @@ public class AuthService {
     }
 
     //获取httpbasic的串
-    private String getHttpBasic(String clientId, String clientSecret) {
+    private static String getHttpBasic(String clientId, String clientSecret) {
         String string = clientId + ":" + clientSecret;
         //将串进行base64编码
         byte[] encode = Base64Utils.encode(string.getBytes());
         return "Basic " + new String(encode);
     }
+
+//    public static void main(String[] args) {
+//        String httpBasic = getHttpBasic("f0jB665eADSQKEtk", "K5q8rkcbjkXeyBJW");
+//        System.out.println(httpBasic);
+//        //ZjBqQjY2NWVBRFNRS0V0azpLNXE4cmtjYmprWGV5QkpX
+//        //ZjBqQjY2NWVBRFNRS0V0azpLNXE4cmtjYmprWGV5QkpX
+//
+//    }
 
     public boolean checkUserType(String username) throws Exception{
         XcUser user = userService.getOne(new QueryWrapper<XcUser>().eq("username",username));

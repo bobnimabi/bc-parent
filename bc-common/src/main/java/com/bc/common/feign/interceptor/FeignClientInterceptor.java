@@ -18,8 +18,8 @@ import java.util.Enumeration;
 public class FeignClientInterceptor implements RequestInterceptor {
     @Override
     public void apply(RequestTemplate requestTemplate) {
-        requestTemplate.header("tenant_id", "11");
-        requestTemplate.header("channel_id", "11");
+        requestTemplate.header("tenant_id", "8");
+        requestTemplate.header("channel_id", "7");
         ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if(requestAttributes!=null){
             HttpServletRequest request = requestAttributes.getRequest();

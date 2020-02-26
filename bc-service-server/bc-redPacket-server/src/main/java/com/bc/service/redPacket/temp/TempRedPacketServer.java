@@ -170,31 +170,20 @@ public class TempRedPacketServer {
         if (null == player){
             ResponseResult exist = jiuWuClient.isExist(userName);
             if (exist.isSuccess()) {
-                VsConfigure configure = configureService.getById(20);
-                VsAwardPlayer awardPlayer = new VsAwardPlayer();
-                awardPlayer.setUserName(userName);
-                awardPlayer.setHasAmount(BigDecimal.ZERO);
-                awardPlayer.setJoinTimes(Integer.parseInt(configure.getConfigureValue()));
-                awardPlayer.setPlayerStatus(1);
-                playerService.save(awardPlayer);
+                VsConfigure configure = configureService.getOne(new QueryWrapper<VsConfigure>().eq("configure_key","play_times"));
+                int num = Integer.parseInt(configure.getConfigureValue());
+                player = new VsAwardPlayer();
+                player.setUserName(userName);
+                player.setHasAmount(BigDecimal.ZERO);
+                player.setJoinTimes(num);
+                player.setPlayerStatus(1);
+                player.setVersion(1);
+                playerService.save(player);
+
             } else {
-                VsAwardPlayer awardPlayer = new VsAwardPlayer();
-                awardPlayer.setUserName(userName);
-                awardPlayer.setHasAmount(BigDecimal.ZERO);
-                awardPlayer.setJoinTimes(0);
-                awardPlayer.setPlayerStatus(0);
-                playerService.save(awardPlayer);
-            }
-        }else {
-            Integer playerStatus = player.getPlayerStatus();
-            if (0 == playerStatus.intValue()) {
-                ExceptionCast.castFail("账号不存在");
+              ExceptionCast.castFail("账号不存在");
             }
         }
-
-        // 检查账号是否被锁定
-        if (VarParam.NO == player.getPlayerStatus())
-            ExceptionCast.castFail("账号被锁定");
 
         //检查账号库存
         if (player.getJoinTimes() <=0)
@@ -326,7 +315,6 @@ public class TempRedPacketServer {
             log.error("username:" + player.getUserName() + ",抽得：" + prizeNew.getPrizeName() + " 库存不足");
             ExceptionCast.cast(CommonCode.SERVER_ERROR);
         }
-
 
         //减少用户的库存（mysql乐观锁）
         boolean update = playerService.update(

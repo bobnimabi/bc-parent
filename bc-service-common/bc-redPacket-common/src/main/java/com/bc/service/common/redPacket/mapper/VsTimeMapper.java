@@ -9,7 +9,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
  * </p>
  *
  * @author admin
- * @since 2020-01-01
+ * @since 2020-01-02
  */
 public interface VsTimeMapper extends BaseMapper<VsTime> {
 

@@ -40,6 +40,7 @@ public class ExceptionCatch {
         //记录日志
         ResultCode resultCode = customException.getResultCode();
         log.error("错误信息："+resultCode.code()+":"+resultCode.message());
+        log.error("错误信息：",customException);
         return new ResponseResult(resultCode);
     }
 
@@ -53,7 +54,7 @@ public class ExceptionCatch {
         //记录日志
         CommonCode failCode = CommonCode.FAIL;
         failCode.setMes("权限不足");
-        log.error("错误信息："+failCode.code()+":"+failCode.message());
+        log.error("错误信息：", exception);
         return new ResponseResult(failCode);
     }
 
@@ -67,7 +68,7 @@ public class ExceptionCatch {
         //记录日志
         CommonCode invalidParamCode = CommonCode.INVALID_PARAM;
         invalidParamCode.setMes(e.getMessage());
-        log.error("错误信息："+invalidParamCode.code()+":"+invalidParamCode.message());
+        log.error("错误信息：", e);
         return new ResponseResult(invalidParamCode);
     }
 
@@ -77,7 +78,7 @@ public class ExceptionCatch {
     public ResponseResult exception(Exception exception){
         exception.printStackTrace();
         //记录日志
-        log.error("错误信息:{}",exception.getMessage());
+        log.error("错误信息：", exception);
         if(EXCEPTIONS == null){
             EXCEPTIONS = builder.build();//EXCEPTIONS构建成功
         }

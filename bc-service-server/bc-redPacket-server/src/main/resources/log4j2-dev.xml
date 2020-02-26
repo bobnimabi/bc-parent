@@ -22,7 +22,7 @@
         <RollingFile name="RollingFileInfo" fileName="${log.path}/logs/info.log"
                      filePattern="${log.path}/logs/$${date:yyyy-MM}/info-%d{yyyy-MM-dd}-%i.log">
             <!--控制台只输出level及以上级别的信息（onMatch），其他的直接拒绝（onMismatch）-->
-            <ThresholdFilter level="info" onMatch="ACCEPT" onMismatch="DENY"/>
+            <ThresholdFilter level="info" onMatch="ACCEPT"/>
             <PatternLayout pattern="[%d{HH:mm:ss:SSS}] [%p] - %l - %m%n"/>
             <Policies>
                 <TimeBasedTriggeringPolicy/>
@@ -55,8 +55,8 @@
         <!--过滤掉spring和mybatis的一些无用的DEBUG信息-->
         <logger name="org.springframework" level="INFO"></logger>
         <logger name="org.mybatis" level="INFO"></logger>
-        <logger name="com.bc" level="INFO"></logger>
-        <root level="info">
+        <logger name="com.bc" level="DEBUG"></logger>
+        <root level="DEBUG">
             <appender-ref ref="Console"/>
             <appender-ref ref="RollingFileInfo"/>
             <appender-ref ref="RollingFileWarn"/>

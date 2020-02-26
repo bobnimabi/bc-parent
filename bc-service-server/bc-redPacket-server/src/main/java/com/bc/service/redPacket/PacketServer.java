@@ -40,5 +40,4 @@ public class PacketServer {
     public FeignClientInterceptor getFeignClientInterceptor(){
         return new FeignClientInterceptor();
     }
-
 }

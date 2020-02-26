@@ -7,7 +7,7 @@ spring:
   jackson:
     default-property-inclusion: non_null #不返回空值和null
   redis:
-    host: redis.bbin.com
+    host: login.redis.bbin.com
     port: 6379
     password: 'nmbW_y1:478!?renminbihenzhiqian'
     timeout: 5000 #连接超时 毫秒
@@ -23,7 +23,7 @@ spring:
     username: 'auto_update'
     password: 'p7oXaL)(8det*&h^540k**76jfikc*f'
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://mysql.bbin.com:3306/xc_user?characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://login.mysql.bbin.com:3306/xc_user?characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true
     hikari:
       minimum-idle: 5
       maximum-pool-size: 20
@@ -40,14 +40,13 @@ server:
     context-path: /auth
 
 eureka:
+  instance:
+    lease-renewal-interval-in-seconds: 2
+    lease-expiration-duration-in-seconds: 3
+    prefer-ip-address: true
   client:
-    #表示是否将自己注册到Eureka Server，默认为true。
-    #    register-with-eureka: false
-    #表示是否从Eureka Server获取注册信息，默认为true。
-    #    fetch-registry: false
     serviceUrl:
-      defaultZone: http://prod.eureka.com:8761/eureka
-
+      defaultZone: http://login.prod.eureka.com:8761/eureka
 
 ribbon:
   MaxAutoRetries: 2 #最大重试次数，当Eureka中可以找到服务，但是服务连不上时将会重试
@@ -62,7 +61,7 @@ auth:
   tokenValiditySeconds: 1800  #token存储到redis的过期时间
   clientId: BcWebApp
   clientSecret: w90582144
-  cookieDomain: #域名
+  cookieDomain:  #域名
   cookieMaxAge: -1 #浏览器关闭cookie立刻失效
 
 #秘钥参数

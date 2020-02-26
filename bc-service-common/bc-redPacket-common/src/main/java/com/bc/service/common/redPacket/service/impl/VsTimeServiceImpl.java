@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
  * </p>
  *
  * @author admin
- * @since 2020-01-01
+ * @since 2020-01-02
  */
 @Service
 public class VsTimeServiceImpl extends ServiceImpl<VsTimeMapper, VsTime> implements IVsTimeService {
